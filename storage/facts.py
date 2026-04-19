@@ -24,6 +24,7 @@ class FactStore:
         self._lock = threading.RLock()
         self.facts: Dict[str, Any] = {}
         self._load_quarantined: bool = False
+        self._last_save_failed: bool = False
         self.load()
 
     def load(self):
@@ -179,5 +180,7 @@ class FactStore:
     def _save(self):
         try:
             save_json_file(self.file_path, self.facts)
+            self._last_save_failed = False
         except Exception as e:
+            self._last_save_failed = True
             print(f"Error saving facts: {e}")

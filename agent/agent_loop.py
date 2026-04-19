@@ -663,8 +663,10 @@ class AgentLoop:
             state_to_save = {k: v for k, v in self.current_state.items() if k != "_startup_warnings"}
             self._atomic_write_json(state_file, state_to_save)
             self.logger.info(f"Saved state to {state_file}")
+            self.current_state.pop("_state_save_failed", None)
         except Exception as e:
             self.logger.error(f"Failed to save state: {e}")
+            self.current_state["_state_save_failed"] = str(e)[:120]
 
     # ---------- observe ----------
     def _observe_environment(self) -> Dict[str, Any]:

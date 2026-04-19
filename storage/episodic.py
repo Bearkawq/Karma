@@ -24,6 +24,7 @@ class EpisodicStore:
         self.file_path = Path(file_path)
         self._lock = threading.RLock()
         self.log: List[Dict[str, Any]] = []
+        self._last_save_failed: bool = False
         self.load()
 
     def load(self):
@@ -61,7 +62,9 @@ class EpisodicStore:
                 with open(self.file_path, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(entry) + '\n')
                     f.flush()
+                self._last_save_failed = False
             except Exception as e:
+                self._last_save_failed = True
                 print(f"Error saving episodic memory: {e}")
 
     def get_events(self, event_type: str = None, limit: int = 100) -> List[Dict[str, Any]]:

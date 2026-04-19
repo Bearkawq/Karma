@@ -622,6 +622,26 @@ class StatusQueryService:
             if w not in warnings:
                 warnings.append(str(w)[:120])
 
+        # Live write-failure signals from storage layer
+        try:
+            if getattr(self._memory, "facts_save_failed", False):
+                w = "Facts file: last save failed — recent memory changes may not be persisted"
+                if w not in warnings:
+                    warnings.append(w)
+            if getattr(self._memory, "episodic_save_failed", False):
+                w = "Episodic log: last append failed — recent events may not be persisted"
+                if w not in warnings:
+                    warnings.append(w)
+        except Exception:
+            pass
+
+        # State-file write failure (set by AgentLoop._save_state)
+        state_save_err = self._state.get("_state_save_failed")
+        if state_save_err:
+            w = f"State file: last save failed — {state_save_err[:80]}"
+            if w not in warnings:
+                warnings.append(w)
+
         overall = "critical" if issues else ("warning" if warnings else "healthy")
         return {
             "status": overall,

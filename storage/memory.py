@@ -63,6 +63,16 @@ class MemorySystem:
         """True if the facts file was corrupt/unreadable at last load."""
         return self._facts._load_quarantined
 
+    @property
+    def facts_save_failed(self) -> bool:
+        """True if the most recent facts save attempt failed."""
+        return self._facts._last_save_failed
+
+    @property
+    def episodic_save_failed(self) -> bool:
+        """True if the most recent episodic append failed."""
+        return self._episodic._last_save_failed
+
     # ── load ──────────────────────────────────────────────────────
     def load_all(self):
         self._episodic.load()
