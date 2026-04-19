@@ -5,12 +5,13 @@ Extracted from MemorySystem for cleaner boundaries.
 
 from __future__ import annotations
 
+import json
 import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from storage.persistence import load_json_file, save_json_file
+from storage.persistence import load_json_file, quarantine_file, save_json_file
 
 _DECAY_RATE = 0.02
 
@@ -22,10 +23,21 @@ class FactStore:
         self.file_path = Path(file_path)
         self._lock = threading.RLock()
         self.facts: Dict[str, Any] = {}
+        self._load_quarantined: bool = False
         self.load()
 
     def load(self):
-        self.facts = load_json_file(self.file_path, {})
+        self._load_quarantined = False
+        if not self.file_path.exists():
+            self.facts = {}
+            return
+        try:
+            with open(self.file_path, 'r', encoding='utf-8') as f:
+                self.facts = json.load(f)
+        except Exception:
+            quarantine_file(self.file_path)
+            self._load_quarantined = True
+            self.facts = {}
 
     def save_fact(self, key: str, value: Any, source: str = 'agent',
                   confidence: float = 1.0, topic: str = '', stratum: str = ''):

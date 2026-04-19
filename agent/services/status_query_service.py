@@ -617,6 +617,11 @@ class StatusQueryService:
         except Exception:
             pass
 
+        # Startup quarantine/recovery warnings (set by AgentLoop.__init__)
+        for w in (self._state.get("_startup_warnings") or []):
+            if w not in warnings:
+                warnings.append(str(w)[:120])
+
         overall = "critical" if issues else ("warning" if warnings else "healthy")
         return {
             "status": overall,

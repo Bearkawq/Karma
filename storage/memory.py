@@ -58,6 +58,11 @@ class MemorySystem:
     def facts(self, value):
         self._facts.facts = value
 
+    @property
+    def facts_quarantined(self) -> bool:
+        """True if the facts file was corrupt/unreadable at last load."""
+        return self._facts._load_quarantined
+
     # ── load ──────────────────────────────────────────────────────
     def load_all(self):
         self._episodic.load()

@@ -117,6 +117,9 @@ class AgentLoop:
         self.config = config
         self.base_dir = Path(__file__).resolve().parent.parent
 
+        # Collect startup warnings before any load so _load_state and memory init can append
+        self._startup_warnings: list = []
+
         # Logging first (used by state loader)
         self._setup_logging()
         self.bus = EventBus(log_file=str(self.base_dir / "data" / "events.jsonl"))
@@ -135,6 +138,10 @@ class AgentLoop:
             facts_file=_rp("facts_file", "data/facts.json"),
             tasks_file=_rp("tasks_file", "data/tasks.json"),
         )
+        if self.memory.facts_quarantined:
+            self._startup_warnings.append(
+                "Facts file was corrupted and quarantined at startup — memory is empty. All stored facts lost."
+            )
 
         # Normalizer (loads language mappings from memory)
         langmap_facts = {
@@ -179,6 +186,10 @@ class AgentLoop:
         self.current_state = self._load_state()
         self.running = False
         self._run_lock = threading.RLock()
+
+        # Inject startup warnings so boot doctor can surface them (stripped before save)
+        if self._startup_warnings:
+            self.current_state["_startup_warnings"] = list(self._startup_warnings)
 
         # Mark session start so session-summary queries can filter execution_log
         self.current_state["session_start_ts"] = datetime.now().isoformat()
@@ -629,6 +640,9 @@ class AgentLoop:
             except Exception as e:
                 self.logger.error(f"Failed to load state: {e}")
                 self._quarantine_json(state_file)
+                self._startup_warnings.append(
+                    "Agent state file was corrupted and quarantined at startup — prior task history lost."
+                )
                 return self._create_initial_state()
         return self._create_initial_state()
 
@@ -645,7 +659,9 @@ class AgentLoop:
     def _save_state(self):
         state_file = self._state_file()
         try:
-            self._atomic_write_json(state_file, self.current_state)
+            # Strip ephemeral startup warnings — they are session-only, not persisted
+            state_to_save = {k: v for k, v in self.current_state.items() if k != "_startup_warnings"}
+            self._atomic_write_json(state_file, state_to_save)
             self.logger.info(f"Saved state to {state_file}")
         except Exception as e:
             self.logger.error(f"Failed to save state: {e}")
