@@ -509,10 +509,23 @@ class RetrieverAgent(BaseAgent):
 
         for item in items:
             try:
-                vec = adapter.embed(item)
+                # Prefer embedding file contents for richer vectors. Fall back to
+                # embedding the path string when file read or embedding fails.
+                full = os.path.join(root, item) if not os.path.isabs(item) else item
+                content = None
+                try:
+                    with open(full, 'r', encoding='utf-8', errors='ignore') as fh:
+                        content = fh.read(8192)  # limit read size
+                except Exception:
+                    content = None
+                if content:
+                    vec = adapter.embed(content)
+                else:
+                    vec = adapter.embed(item)
                 cls._persist_vector(item, vec, meta="bootstrap")
                 items_embedded += 1
             except Exception:
+                # keep going on any embed failure
                 pass
 
         con.execute(
