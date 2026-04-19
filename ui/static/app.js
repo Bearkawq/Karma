@@ -13,6 +13,33 @@
   setInterval(tick, 10000);
   tick();
 
+  // -- Pinned Status --
+  let pinnedInterval = null;
+  function updatePinnedStatus() {
+    fetch("/api/active_runtime").then(r => r.json()).then(j => {
+      const data = j.data || {};
+      const task = data.current_task || "idle";
+      const isActive = data.is_active;
+      
+      const indicator = document.querySelector(".ps-indicator");
+      const taskEl = $("#ps-task");
+      const lastEl = $("#ps-last");
+      
+      if (indicator) {
+        indicator.className = "ps-indicator";
+        if (isActive) {
+          indicator.classList.add("active");
+        } else if (data.posture === "ERROR" || data.posture === "DEGRADED") {
+          indicator.classList.add("failed");
+        }
+      }
+      if (taskEl) taskEl.textContent = task;
+      if (lastEl) lastEl.textContent = data.last_task || "";
+    }).catch(() => {});
+  }
+  updatePinnedStatus();
+  pinnedInterval = setInterval(updatePinnedStatus, 5000);
+
   // -- Navigation (1-7 keyboard shortcuts) --
   const viewNames = ["chat", "learn", "memory", "system", "evidence", "telemetry", "models"];
   let activeView = "chat";
@@ -479,10 +506,12 @@
                 <span class="rd-badge ${badgeClass}">${outcome || 'unknown'}</span>
                 ${kindLabel ? `<span class="rd-badge" style="background:var(--surface);color:var(--text)">${kindLabel}</span>` : ''}
                 ${run.tool ? `<span class="rd-badge" style="background:var(--cyan);color:#000">${run.tool}</span>` : ''}
+                ${run.recovered ? '<span class="rd-badge" style="background:var(--yellow);color:#000">recovered</span>' : ''}
               </div>
               <div class="rd-task">${toolLabel}${run.task || run.key}</div>
               ${run.summary ? `<div class="rd-summary">${run.summary}</div>` : ''}
-              ${run.error ? `<div class="rd-error">${esc(run.error)}</div>` : ''}
+              ${run.error ? `<div class="rd-error"><strong>Error:</strong> ${esc(run.error)}</div>` : ''}
+              ${(run.key_output || run.key_error) ? `<div class="rd-output">${run.key_output ? `<strong>Output:</strong> ${esc(String(run.key_output).slice(0, 200))}` : ''}</div>` : ''}
               ${criticHtml}
               <div class="rd-meta">
                 ${run.timestamp ? `<span>${run.timestamp.slice(0, 19)}</span>` : ''}
@@ -497,11 +526,17 @@
         }
       }
       
-      // Single runs list with click selection and critic indicators
+      // Single runs list with click selection and critic indicators - failures first
       const rlList = $("#sys-singles");
       if (rlList) {
+        // Sort: failures first, then recovered, then by timestamp desc
+        const sortedRuns = [...recentRuns].sort((a, b) => {
+          const aFail = a.outcome === 'failed' ? 0 : a.recovered ? 1 : 2;
+          const bFail = b.outcome === 'failed' ? 0 : b.recovered ? 1 : 2;
+          return aFail - bFail;
+        });
         rlList.innerHTML = "";
-        for (const r of recentRuns.slice(0, 10)) {
+        for (const r of sortedRuns.slice(0, 10)) {
           const row = document.createElement("div");
           row.className = "tl-entry" + (r.key === selectedRunKey ? " selected" : "");
           const outcome = r.outcome === 'success' ? 'ok' : r.recovered ? 'recovered' : r.outcome === 'failed' ? 'fail' : '';

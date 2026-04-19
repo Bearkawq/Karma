@@ -256,11 +256,13 @@ def get_recent_runs():
                         "summary": value.get("summary", "")[:100],
                         "run_kind": value.get("run_kind", ""),
                         "tool": value.get("tool", ""),
-                        "error": value.get("error", ""),
+                        "error": value.get("error", value.get("key_error", "")),
                         "recovered": value.get("recovered", False),
                         "timestamp": value.get("timestamp", ""),
                         "critic_issues": value.get("critic_issues", []),
                         "critic_lesson": value.get("critic_lesson", ""),
+                        "key_output": value.get("key_output", ""),
+                        "key_error": value.get("key_error", ""),
                     }
                 )
 
