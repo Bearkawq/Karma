@@ -114,6 +114,17 @@
     <div class="view-body">
       <div class="sys-grid">
         <div class="card">
+          <h3>Session</h3>
+          <div id="sys-session" class="kv-list"></div>
+          <div id="sys-session-summary" class="session-summary-box"></div>
+        </div>
+        <div class="card">
+          <h3>Self-Check</h3>
+          <div id="sys-selfcheck" class="selfcheck-box"></div>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
           <h3>Active Runtime</h3>
           <div id="sys-runtime" class="kv-list"></div>
         </div>
@@ -121,12 +132,18 @@
           <h3>Agent State</h3>
           <div id="sys-state" class="kv-list"></div>
         </div>
+      </div>
+      <div class="sys-grid">
         <div class="card">
           <h3>Recent Runs</h3>
           <div id="sys-runs" class="kv-list"></div>
-          <div id="sys-singles" class="tl-list" style="max-height:120px;overflow-y:auto;margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>Run Details</h3>
+          <div id="sys-run-detail" class="run-detail-box"></div>
         </div>
       </div>
+      <div class="tl-list" id="sys-singles" style="max-height:150px;overflow-y:auto;margin-top:8px"></div>
       <div class="sys-grid">
         <div class="card">
           <h3>System Map</h3>

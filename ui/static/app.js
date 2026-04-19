@@ -185,16 +185,17 @@
     addThinking();
 
     try {
-      const resp = await fetch("/api/command", {
+      const resp = await fetch("/api/chat", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({command: text}),
+        body: JSON.stringify({message: text}),
       });
       removeThinking();
       const data = await resp.json();
-      const cls = data.success ? "karma" : "karma error";
-      addMsg(data.result || "Done.", cls);
-      // Update confidence after command
+      const result = data.data?.response || data.result || "Done.";
+      const cls = data.ok ? "karma" : "karma error";
+      addMsg(result, cls);
+      // Update confidence after chat
       fetch("/api/confidence").then(r => r.json()).then(d => {
         if (d.current !== undefined) updateConfGauge(d.current);
       }).catch(() => {});
@@ -362,62 +363,149 @@
   // -- System View --
   let sysAutoInterval = null;
 
+  // Selected run key for detail panel
+  let selectedRunKey = null;
+
   async function refreshSystem() {
     try {
-      const [stateResp, toolsResp, logResp, mapResp, tlResp, capsResp, healthResp, confResp, runtimeResp, workersResp, runsResp] = await Promise.all([
+      const [stateResp, toolsResp, logResp, mapResp, tlResp, capsResp, healthResp, confResp, runtimeResp, workersResp, runsResp, sessionResp] = await Promise.all([
         fetch("/api/state"), fetch("/api/tools"), fetch("/api/log"),
         fetch("/api/system-map"), fetch("/api/timeline"), fetch("/api/capabilities"),
         fetch("/api/health"), fetch("/api/confidence"),
         fetch("/api/active_runtime"), fetch("/api/workers"),
-        fetch("/api/runs/recent")
+        fetch("/api/runs/recent"), fetch("/api/session")
       ]);
-      const state = await stateResp.json();
+      const state = (await stateResp.json()).data || {};
       const tools = await toolsResp.json();
       const log = await logResp.json();
       const sysMap = await mapResp.json();
       const timeline = await tlResp.json();
       const caps = await capsResp.json();
-      const health = await healthResp.json();
+      const health = (await healthResp.json()).data || {};
       const confData = await confResp.json();
-      const runtime = await runtimeResp.json();
-      const workers = await workersResp.json();
-      const runs = await runsResp.json();
+      const runtime = (await runtimeResp.json()).data || {};
+      const workers = (await workersResp.json()).data || [];
+      const runs = (await runsResp.json()).data || {};
+      const session = (await sessionResp.json()).data || {};
+      
+      // === SESSION PANEL ===
+      const sessionEl = $("#sys-session");
+      if (sessionEl) {
+        sessionEl.innerHTML = "";
+        const ss = session.summary || {};
+        addKV(sessionEl, "Started", session.session_start?.slice(11, 19) || "?");
+        addKV(sessionEl, "Runs", ss.total_runs || 0);
+        addKV(sessionEl, "Success", ss.ok_count || 0, (ss.ok_count || 0) > 0 ? "good" : "");
+        addKV(sessionEl, "Failed", ss.failed_count || 0, (ss.failed_count || 0) > 0 ? "warn" : "");
+        addKV(sessionEl, "Recovered", ss.recovered_count || 0, (ss.recovered_count || 0) > 0 ? "warn" : "");
+      }
+      
+      // Session summary formatted text
+      const ssBox = $("#sys-session-summary");
+      if (ssBox) {
+        if (session.formatted) {
+          ssBox.innerHTML = esc(session.formatted);
+        } else {
+          ssBox.innerHTML = '<div style="color:var(--text2)">No runs this session</div>';
+        }
+      }
+      
+      // === SELF-CHECK PANEL ===
+      const scBox = $("#sys-selfcheck");
+      if (scBox) {
+        const check = session.selfcheck;
+        if (check) {
+          scBox.textContent = check;
+          const issues = (session.summary?.issues || []).length;
+          scBox.className = "selfcheck-box " + (issues === 0 ? "sc-good" : issues <= 2 ? "sc-warn" : "sc-bad");
+        } else {
+          scBox.innerHTML = '<div style="color:var(--text2)">No issues detected</div>';
+          scBox.className = "selfcheck-box sc-good";
+        }
+      }
       
       // === RUNS PANEL ===
-      const runsData = runs.data || {};
-      const recentRuns = runsData.recent_runs || [];
+      const recentRuns = runs.recent_runs || [];
       
-      // Run stats
-      const failedRuns = runsData.failed_runs || [];
-      const recoveredRuns = runsData.recovered_runs || [];
-      const justRuns = recentRuns.filter(r => !r.run_kind || r.run_kind === 'primary');
-      const singleRuns = recentRuns.filter(r => r.run_kind === 'single');
+      // Compute run stats from actual data using run_kind semantics
+      const toolRuns = recentRuns.filter(r => r.run_kind === 'tool');
+      const primaryRuns = recentRuns.filter(r => r.run_kind === 'primary' || !r.run_kind);
+      const recoveryRuns = recentRuns.filter(r => r.run_kind === 'recovery');
+      
+      const failedRuns = recentRuns.filter(r => r.outcome === 'failed');
+      const successRuns = recentRuns.filter(r => r.outcome === 'success');
+      const recoveredRuns = recentRuns.filter(r => r.recovered);
       
       const rlStats = $("#sys-runs");
       if (rlStats) {
         rlStats.innerHTML = "";
         addKV(rlStats, "Total", recentRuns.length);
-        addKV(rlStats, "Success", justRuns.length - failedRuns.length - recoveredRuns.length);
+        addKV(rlStats, "Primary", primaryRuns.length);
+        addKV(rlStats, "Tool", toolRuns.length);
+        addKV(rlStats, "Recovery", recoveryRuns.length);
         addKV(rlStats, "Failed", failedRuns.length, failedRuns.length > 0 ? "warn" : "");
-        addKV(rlStats, "Recovered", recoveredRuns.length, recoveredRuns.length > 0 ? "good" : "");
-        if (runsData.last_task) {
-          addKV(rlStats, "Last", runsData.last_task, runsData.last_outcome === "failed" ? "warn" : "");
+        addKV(rlStats, "Success", successRuns.length, successRuns.length > 0 ? "good" : "");
+        addKV(rlStats, "Recovered", recoveredRuns.length, recoveredRuns.length > 0 ? "warn" : "");
+        if (runs.last_task) {
+          addKV(rlStats, "Last", runs.last_task, runs.last_outcome === "failed" ? "warn" : "");
         }
       }
       
-      // Single runs list
+      // Update run detail panel with selected run
+      const rdBox = $("#sys-run-detail");
+      if (rdBox) {
+        if (selectedRunKey) {
+          const run = recentRuns.find(r => r.key === selectedRunKey);
+          if (run) {
+            const outcome = run.outcome || "";
+            const badgeClass = outcome === 'success' ? 'ok' : run.recovered ? 'recovered' : outcome === 'failed' ? 'fail' : (run.run_kind === 'tool' ? 'tool' : 'primary');
+            const toolLabel = run.tool ? `[${run.tool}] ` : '';
+            const kindLabel = run.run_kind ? run.run_kind : '';
+            
+            // Critic findings
+            let criticHtml = '';
+            if (run.critic_issues && run.critic_issues.length) {
+              criticHtml = `<div class="rd-critic"><strong>Critic issues:</strong> ${run.critic_issues.map(i => `• ${i}`).join('<br>')}</div>`;
+            } else if (run.critic_lesson) {
+              criticHtml = `<div class="rd-critic"><strong>Lesson:</strong> ${run.critic_lesson}</div>`;
+            }
+            
+            rdBox.innerHTML = `
+              <div class="rd-header">
+                <span class="rd-badge ${badgeClass}">${outcome || 'unknown'}</span>
+                ${kindLabel ? `<span class="rd-badge" style="background:var(--surface);color:var(--text)">${kindLabel}</span>` : ''}
+              </div>
+              <div class="rd-task">${toolLabel}${run.task || run.key}</div>
+              ${run.summary ? `<div class="rd-summary">${run.summary}</div>` : ''}
+              ${run.error ? `<div class="rd-error">${esc(run.error)}</div>` : ''}
+              ${criticHtml}
+              ${run.timestamp ? `<div class="rd-time">${run.timestamp.slice(0, 19)}</div>` : ''}
+            `;
+          } else {
+            rdBox.innerHTML = '<div style="color:var(--text2)">Select a run from the list</div>';
+          }
+        } else {
+          rdBox.innerHTML = '<div style="color:var(--text2)">Click a run to see details</div>';
+        }
+      }
+      
+      // Single runs list with click selection
       const rlList = $("#sys-singles");
       if (rlList) {
         rlList.innerHTML = "";
         for (const r of recentRuns.slice(0, 10)) {
-          if (r.run_kind === 'tool' || (!r.run_kind)) {
-            const row = document.createElement("div");
-            row.className = "tl-entry";
-            const outcome = r.outcome === 'success' ? 'ok' : r.outcome === 'recovered' ? 'recovered' : r.outcome === 'failed' ? 'fail' : '';
-            const label = r.tool ? `[${r.tool}] ` : '';
-            row.innerHTML = `<span class="tl-dot ${outcome}"></span><span class="tl-intent">${label}${r.task || r.key}</span><span class="tl-conf">${r.outcome}</span>`;
-            rlList.appendChild(row);
-          }
+          const row = document.createElement("div");
+          row.className = "tl-entry" + (r.key === selectedRunKey ? " selected" : "");
+          const outcome = r.outcome === 'success' ? 'ok' : r.recovered ? 'recovered' : r.outcome === 'failed' ? 'fail' : '';
+          const label = r.tool ? `[${r.tool}] ` : '';
+          const kind = r.run_kind === 'tool' ? '[T]' : r.run_kind === 'recovery' ? '[R]' : '';
+          row.innerHTML = `<span class="tl-dot ${outcome}"></span><span class="tl-intent">${kind}${label}${r.task || r.key}</span><span class="tl-conf">${r.outcome}</span>`;
+          row.style.cursor = "pointer";
+          row.addEventListener("click", () => {
+            selectedRunKey = r.key;
+            refreshSystem();
+          });
+          rlList.appendChild(row);
         }
       }
 
@@ -425,7 +513,7 @@
       const rl = $("#sys-runtime");
       if (rl) {
         rl.innerHTML = "";
-        const rtd = runtime.data || {};
+        const rtd = runtime;
         const isActive = rtd.is_active;
         addKV(rl, "Status", isActive ? "ACTIVE" : "idle", isActive ? "good" : "");
         addKV(rl, "Role", rtd.current_role || "none");
@@ -765,7 +853,9 @@
         });
         removeThinking();
         const data = await resp.json();
-        addMsg(data.result || "Done.", data.success ? "karma" : "karma error");
+        const result = data.data?.result || data.result || "Done.";
+        const cls = data.ok ? "karma" : "karma error";
+        addMsg(result, cls);
       } catch(err) {
         removeThinking();
         addMsg("Error: " + err.message, "karma error");

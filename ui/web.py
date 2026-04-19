@@ -256,6 +256,11 @@ def get_recent_runs():
                         "summary": value.get("summary", "")[:100],
                         "run_kind": value.get("run_kind", ""),
                         "tool": value.get("tool", ""),
+                        "error": value.get("error", ""),
+                        "recovered": value.get("recovered", False),
+                        "timestamp": value.get("timestamp", ""),
+                        "critic_issues": value.get("critic_issues", []),
+                        "critic_lesson": value.get("critic_lesson", ""),
                     }
                 )
 
@@ -271,6 +276,76 @@ def get_recent_runs():
                 "last_task": last_exec.get("intent", {}).get("intent", ""),
                 "last_outcome": "success" if last_exec.get("success") else "failed",
                 "last_error": last_exec.get("execution_result", {}).get("error"),
+            },
+            revision=revision,
+        )
+    )
+
+
+@app.route("/api/runs/<path:run_key>")
+def get_run_detail(run_key):
+    """Get detailed run information by key."""
+    agent = get_agent()
+    revision = agent.get_revision()
+    memory = agent.memory
+
+    full_key = run_key if run_key.startswith("run:") else f"run:{run_key}"
+
+    if memory and hasattr(memory, "facts") and full_key in memory.facts:
+        val = memory.facts[full_key]
+        value = val.get("value", val) if isinstance(val, dict) else {}
+        return jsonify(
+            api_response(
+                data={
+                    "key": full_key,
+                    "task": value.get("task", ""),
+                    "outcome": value.get("outcome", ""),
+                    "summary": value.get("summary", ""),
+                    "run_kind": value.get("run_kind", ""),
+                    "tool": value.get("tool", ""),
+                    "error": value.get("error", ""),
+                    "recovered": value.get("recovered", False),
+                    "timestamp": value.get("timestamp", ""),
+                    "digest": value.get("digest", ""),
+                },
+                revision=revision,
+            )
+        )
+
+    return jsonify(
+        api_error("NOT_FOUND", f"Run {run_key} not found", revision=revision)
+    ), 404
+
+
+@app.route("/api/session")
+def get_session():
+    """Get session summary and self-check for operator visibility."""
+    agent = get_agent()
+    revision = agent.get_revision()
+
+    summary = agent._build_session_summary()
+    formatted = agent._format_session_summary(summary)
+    check = agent._try_self_check_response("self-check")
+
+    state_data = agent.current_state
+    exec_log = state_data.get("execution_log", [])
+
+    return jsonify(
+        api_response(
+            data={
+                "summary": summary,
+                "formatted": formatted,
+                "selfcheck": check,
+                "session_start": state_data.get("session_start_ts", ""),
+                "recent_outcomes": [
+                    {
+                        "intent": e.get("intent", {}).get("intent", ""),
+                        "success": e.get("success", False),
+                        "confidence": e.get("confidence", 0),
+                        "error": e.get("execution_result", {}).get("error", ""),
+                    }
+                    for e in exec_log[-10:]
+                ],
             },
             revision=revision,
         )

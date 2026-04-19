@@ -871,3 +871,109 @@ main {
   padding: 4px 12px;
   font-size: 11px;
 }
+
+/* Session Summary Box */
+.session-summary-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.session-summary-box .ss-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.session-summary-box .ss-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.session-summary-box .ss-stat .ss-num {
+  font-weight: 600;
+  font-size: 14px;
+}
+.session-summary-box .ss-stat.ok .ss-num { color: var(--green); }
+.session-summary-box .ss-stat.fail .ss-num { color: var(--red); }
+.session-summary-box .ss-stat.recovered .ss-num { color: var(--yellow); }
+
+/* Self-Check Box */
+.selfcheck-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.selfcheck-box.sc-good { border-left: 3px solid var(--green); }
+.selfcheck-box.sc-warn { border-left: 3px solid var(--yellow); }
+.selfcheck-box.sc-bad { border-left: 3px solid var(--red); }
+
+/* Run Detail Box */
+.run-detail-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.run-detail-box .rd-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.run-detail-box .rd-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.run-detail-box .rd-badge.ok { background: var(--green); color: #000; }
+.run-detail-box .rd-badge.fail { background: var(--red); color: #fff; }
+.run-detail-box .rd-badge.recovered { background: var(--yellow); color: #000; }
+.run-detail-box .rd-badge.tool { background: var(--cyan); color: #000; }
+.run-detail-box .rd-badge.primary { background: var(--accent); color: #fff; }
+.run-detail-box .rd-error {
+  background: rgba(255,92,92,.1);
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 8px;
+  color: var(--red);
+  font-family: monospace;
+  font-size: 11px;
+}
+.run-detail-box .rd-digest {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 8px;
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.run-detail-box .rd-critic {
+  background: rgba(255,153,68,.1);
+  border: 1px solid var(--orange);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
