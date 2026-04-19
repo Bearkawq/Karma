@@ -94,6 +94,105 @@ class RetrievalBus:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2, default=str))
 
+    # ── run_history prioritization helpers ─────────────────────────────────
+    def _is_recent_task_query(self, text: str) -> bool:
+        """Detect whether a text string is asking about recent runs/tasks.
+
+        Uses a conservative anti-token veto followed by trigger substring checks.
+        This mirrors RetrieverAgent's classifier but is kept local to RetrievalBus
+        to allow retrieval-level prioritization without changing higher layers.
+        """
+        if not text:
+            return False
+        q = text.lower().strip()
+        antitokens = (
+            "architecture",
+            "how does",
+            "explain the",
+            "what is karma",
+            "summarize the project",
+            "recent commit",
+            "recent version",
+            "git history",
+        )
+        for anti in antitokens:
+            if anti in q:
+                return False
+        triggers = (
+            "just did",
+            "just ran",
+            "just happened",
+            "just completed",
+            "just finished",
+            "last run",
+            "last task",
+            "last job",
+            "last execution",
+            "what happened",
+            "what ran",
+            "what did karma",
+            "what did you do",
+            "what was run",
+            "what just",
+            "what failed",
+            "what succeeded",
+            "failed recently",
+            "recent failure",
+            "recent error",
+            "recent run",
+            "run history",
+            "most recent",
+            "previous run",
+            "prior run",
+            "earlier today",
+            "recovery attempt",
+            "what was the last",
+            "show me the run",
+            "show last run",
+        )
+        for t in triggers:
+            if t in q:
+                return True
+        return False
+
+    def _retrieve_run_history_items(self, words: set, limit: int) -> List[EvidenceItem]:
+        """Return run_history facts as EvidenceItem objects, newest-first.
+
+        Creates EvidenceItem entries with high relevance so sorting pushes them to
+        the top of returned bundles when recent intent is detected.
+        """
+        items: List[EvidenceItem] = []
+        memory = getattr(self, "_memory", None)
+        if not memory or not hasattr(memory, "facts"):
+            return items
+
+        raw = []
+        for key, val in memory.facts.items():
+            if not isinstance(val, dict):
+                continue
+            if val.get("topic") == "run_history":
+                raw.append((key, val))
+        if not raw:
+            return items
+        # Sort newest-first by last_updated
+        raw.sort(key=lambda x: x[1].get("last_updated", ""), reverse=True)
+        seen_run_ids: set = set()
+        for key, outer in raw:
+            inner = outer.get("value", outer)
+            run_id = inner.get("run_id") if isinstance(inner, dict) else None
+            if run_id and run_id in seen_run_ids:
+                continue
+            if run_id:
+                seen_run_ids.add(run_id)
+            confidence = float(outer.get("confidence", 0.9)) if isinstance(outer.get("confidence", None), (int, float)) else 0.9
+            # Relevance boosted for recency-preferring queries
+            relevance = 0.95
+            recency = 1.0
+            items.append(EvidenceItem("run", inner, confidence, relevance, "run_history", "run_history", recency))
+            if len(items) >= limit:
+                break
+        return items
+
     def invalidate_cache(self):
         self._cache_generation += 1
         self._bundle_cache.clear()
@@ -107,6 +206,10 @@ class RetrievalBus:
 
         Modes: parse, plan, execute, respond, reflect, repair
         Optional shape context (intent, entities, tool) for shape-aware retrieval.
+
+        Added: prefer run_history evidence for clearly recent-run / recent-task
+        queries by injecting high-relevance run_history EvidenceItems before
+        general retrievals. This keeps retrieval logic narrow and explainable.
         """
         entities = entities or {}
         query = query or ""
@@ -130,6 +233,23 @@ class RetrievalBus:
 
         # Build shape for shape-aware retrievers
         shape = extract_shape(intent or query, entities, tool) if (intent or entities or tool) else None
+
+        # Detect recent-run / recent-task intent (use intent first, else query)
+        recent_signal = False
+        try:
+            recent_signal = self._is_recent_task_query(intent) or self._is_recent_task_query(query)
+        except Exception:
+            recent_signal = False
+
+        # If recent signal present, fetch run_history evidence as high-relevance items
+        if recent_signal:
+            try:
+                # Use mode limit as an upper bound for run_history items to avoid oversaturation
+                rh_limit = _MODE_LIMITS.get(mode, 7)
+                items.extend(self._retrieve_run_history_items(query_words, rh_limit))
+            except Exception:
+                # safe degrade
+                pass
 
         if mode == "parse":
             items.extend(self._retrieve_lexicon(query, query_words))
@@ -158,7 +278,7 @@ class RetrievalBus:
             items.extend(self._retrieve_dialogue_context(query, query_words, mode))
             items.extend(self._retrieve_world(query, query_words))
 
-        # Sort by relevance * confidence
+        # Sort by relevance * confidence. run_history items were created with high relevance
         items.sort(key=lambda e: e.relevance * e.confidence, reverse=True)
         # Track metrics
         self._metrics["total_hits"] += len(items)
