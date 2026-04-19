@@ -1,0 +1,5 @@
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W", "C90"]
+exclude = ["data", "docs", "tests/*", "*.pyc", "__pycache__"]
+# temporary: allow everything to exit-zero in CI until codebase linted
