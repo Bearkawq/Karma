@@ -18,6 +18,8 @@ LIVE_STATUS_TRIGGERS = (
     "what is blocked",
     "what's blocked",
     "whats blocked",
+    "whats the status",
+    "what is the status",
     "what failed",
     "what just failed",
     "what failed most recently",
@@ -103,32 +105,47 @@ SELF_CHECK_TRIGGERS = (
 # ---------------------------------------------------------------------------
 
 
+def _normalize_query(q: str) -> str:
+    if not q:
+        return ""
+    # Remove common apostrophes so "what's" -> "whats", then replace other
+    # punctuation with spaces and collapse whitespace, lowercase.
+    q2 = q.replace("'", "").replace("’", "")
+    cleaned = []
+    for ch in q2:
+        if ch.isalnum() or ch.isspace():
+            cleaned.append(ch)
+        else:
+            cleaned.append(" ")
+    return " ".join("".join(cleaned).split()).lower()
+
+
 def is_live_status_query(query: str) -> bool:
-    q = query.lower().strip()
+    q = _normalize_query(query)
     for anti in LIVE_STATUS_ANTITOKENS:
-        if anti in q:
+        if _normalize_query(anti) in q:
             return False
     for trigger in LIVE_STATUS_TRIGGERS:
-        if trigger in q:
+        if _normalize_query(trigger) in q:
             return True
     return False
 
 
 def is_session_summary_query(query: str) -> bool:
-    q = query.lower().strip()
+    q = _normalize_query(query)
     for anti in SESSION_SUMMARY_ANTITOKENS:
-        if anti in q:
+        if _normalize_query(anti) in q:
             return False
     for trigger in SESSION_SUMMARY_TRIGGERS:
-        if trigger in q:
+        if _normalize_query(trigger) in q:
             return True
     return False
 
 
 def is_self_check_query(query: str) -> bool:
-    q = query.lower().strip()
+    q = _normalize_query(query)
     for trigger in SELF_CHECK_TRIGGERS:
-        if trigger in q:
+        if _normalize_query(trigger) in q:
             return True
     return False
 
@@ -140,12 +157,13 @@ def is_self_check_query(query: str) -> bool:
 
 class StatusQueryService:
     def __init__(self, current_state: Dict[str, Any], memory, health,
-                 tool_builder=None) -> None:
+                 tool_builder=None, run_history_svc=None) -> None:
         # current_state is a mutable dict reference — reads are always live
         self._state = current_state
         self._memory = memory
         self._health = health
         self._tool_builder = tool_builder
+        self._run_history_svc = run_history_svc
 
     # -- live status ----------------------------------------------------------
 
@@ -635,6 +653,8 @@ class StatusQueryService:
                  "Tasks file: last save failed — task state may not be persisted"),
                 (getattr(self._tool_builder, "_last_save_failed", False),
                  "Tool registry: last save failed — custom tool registry may not be persisted"),
+                (getattr(self._run_history_svc, "_last_persist_failed", False),
+                 "Run history: last persist failed — run:last and status queries may return stale data"),
             ]
             for failed, msg in _write_failure_checks:
                 if failed and msg not in warnings:
