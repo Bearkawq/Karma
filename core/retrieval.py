@@ -278,6 +278,26 @@ class RetrievalBus:
             items.extend(self._retrieve_dialogue_context(query, query_words, mode))
             items.extend(self._retrieve_world(query, query_words))
 
+        # Deduplicate by (type, source, serialized value) to avoid duplicate
+        # evidence from multiple strata. Keep first-seen (highest-added) item.
+        seen = set()
+        deduped: List[EvidenceItem] = []
+        for e in items:
+            try:
+                if isinstance(e.value, (dict, list, tuple)):
+                    val_key = json.dumps(e.value, sort_keys=True)
+                else:
+                    val_key = str(e.value)
+            except Exception:
+                val_key = str(e.value)
+            # Deduplicate irrespective of source; keep first-seen evidence
+            key = (e.type, val_key)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(e)
+        items = deduped
+
         # Sort by relevance * confidence. run_history items were created with high relevance
         items.sort(key=lambda e: e.relevance * e.confidence, reverse=True)
         # Track metrics
