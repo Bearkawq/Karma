@@ -33,8 +33,11 @@ class ToolBuilder:
             self._register_tool(entry)
 
     def _save_registry(self):
-        with open(self.registry_file, "w") as f:
-            json.dump(self.registry, f, indent=2)
+        from storage.persistence import atomic_write_text
+        try:
+            atomic_write_text(self.registry_file, json.dumps(self.registry, indent=2))
+        except Exception as e:
+            print(f"ToolBuilder: registry save failed: {e}")
 
     # ── create ─────────────────────────────────────────────────
 
