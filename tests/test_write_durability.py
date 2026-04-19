@@ -664,3 +664,68 @@ class TestEpisodicPartialLineRecovery:
         assert store._last_save_failed
         store.save("recover")
         assert not store._last_save_failed
+
+
+# ---------------------------------------------------------------------------
+# EpisodicStore fsync-backed append
+# ---------------------------------------------------------------------------
+
+
+class TestEpisodicFsync:
+
+    def test_fsync_called_on_successful_append(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("os.fsync") as mock_fsync:
+            es.save("ev", {})
+        mock_fsync.assert_called_once()
+
+    def test_append_still_works_normally(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        es.save("alpha", {"k": "v"}, "success")
+        es.save("beta", {}, "failure")
+        assert not es._last_save_failed
+        assert len(es.log) == 2
+        store2 = EpisodicStore(tmp_path / "ep.jsonl")
+        assert [e["event"] for e in store2.log] == ["alpha", "beta"]
+
+    def test_fsync_failure_sets_flag(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("os.fsync", side_effect=OSError("fsync failed")):
+            es.save("ev", {})
+        assert es._last_save_failed
+
+    def test_fsync_failure_entry_still_in_memory(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("os.fsync", side_effect=OSError("fsync failed")):
+            es.save("ev", {})
+        assert any(e["event"] == "ev" for e in es.log)
+
+    def test_truncated_tail_recovery_still_works_with_fsync(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        ep_file.write_text(
+            '{"timestamp":"2026-01-01T00:00:00","event":"good","context":{},"outcome":null,"confidence":1.0}\n'
+            '{"truncated"',
+            encoding="utf-8",
+        )
+        es = EpisodicStore(ep_file)
+        assert len(es.log) == 1
+        es.save("after_truncation")
+        assert not es._last_save_failed
+        es2 = EpisodicStore(ep_file)
+        events = [e["event"] for e in es2.log]
+        assert "good" in events
+        assert "after_truncation" in events
+
+    def test_flag_cleared_after_fsync_recovery(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("os.fsync", side_effect=OSError("fsync failed")):
+            es.save("fail")
+        assert es._last_save_failed
+        es.save("ok")
+        assert not es._last_save_failed

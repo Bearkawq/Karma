@@ -6,6 +6,7 @@ Extracted from MemorySystem for cleaner boundaries.
 from __future__ import annotations
 
 import json
+import os
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -48,12 +49,21 @@ class EpisodicStore:
 
     def save(self, event: str, context: Dict[str, Any] = None,
              outcome: str = None, confidence: float = 1.0):
-        # Append guarantee: each entry is a single JSON line followed by '\n'.
-        # f.flush() pushes to the OS buffer; a crash after flush but before the
-        # OS writes to disk can lose the entry. A crash mid-write leaves a partial
-        # (non-JSON) last line, which load() silently skips — no data corruption
-        # to previously written entries. The in-memory log always reflects the
-        # append regardless of disk outcome; _last_save_failed tracks disk failures.
+        # Append guarantees:
+        # - Each entry is one JSON line terminated by '\n'.
+        # - If the file's last byte is not '\n' (truncated tail from a prior
+        #   interrupted write), a '\n' is prepended so the new entry starts on a
+        #   clean line. load() already skips the partial line; without this guard
+        #   the new entry would merge with it and be lost on reload.
+        # - flush() moves data from Python buffers to the OS page cache.
+        # - fsync() requests that the OS flush the page cache to durable storage.
+        #   A process crash after fsync() will not lose the entry; an OS/power
+        #   crash before fsync() completes may still lose it. This is stronger
+        #   than flush()-only but is not equivalent to a full transactional rewrite.
+        # - A crash mid-write (before flush/fsync) leaves a partial non-JSON last
+        #   line; load() skips it, leaving all prior entries intact.
+        # - The in-memory log always reflects the append regardless of disk outcome.
+        # - _last_save_failed is set on any exception, cleared on success.
         entry = {
             'timestamp': datetime.now().isoformat(),
             'event': event,
@@ -65,10 +75,6 @@ class EpisodicStore:
             self.log.append(entry)
             try:
                 self.file_path.parent.mkdir(parents=True, exist_ok=True)
-                # If the file has content not ending in '\n' (partial line from
-                # an interrupted prior write), prepend '\n' so this entry starts
-                # on a clean line. load() skips the partial line; without this
-                # the new entry would merge with it and also be lost on reload.
                 prefix = ''
                 if self.file_path.exists() and self.file_path.stat().st_size > 0:
                     with open(self.file_path, 'rb') as rf:
@@ -78,6 +84,7 @@ class EpisodicStore:
                 with open(self.file_path, 'a', encoding='utf-8') as f:
                     f.write(prefix + json.dumps(entry) + '\n')
                     f.flush()
+                    os.fsync(f.fileno())
                 self._last_save_failed = False
             except Exception as e:
                 self._last_save_failed = True
