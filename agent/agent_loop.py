@@ -659,8 +659,9 @@ class AgentLoop:
     def _save_state(self):
         state_file = self._state_file()
         try:
-            # Strip ephemeral startup warnings — they are session-only, not persisted
-            state_to_save = {k: v for k, v in self.current_state.items() if k != "_startup_warnings"}
+            # Strip ephemeral keys — session-only, not persisted to disk
+            _EPHEMERAL = frozenset({"_startup_warnings", "_state_save_failed"})
+            state_to_save = {k: v for k, v in self.current_state.items() if k not in _EPHEMERAL}
             self._atomic_write_json(state_file, state_to_save)
             self.logger.info(f"Saved state to {state_file}")
             self.current_state.pop("_state_save_failed", None)

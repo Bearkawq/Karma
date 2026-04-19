@@ -62,17 +62,15 @@ class TestFactStoreSaveFailure:
 
     def test_flag_set_on_write_failure(self, tmp_path):
         from storage.facts import FactStore
-        from storage import persistence
         fs = FactStore(tmp_path / "facts.json")
-        with patch.object(persistence, "save_json_file", side_effect=PermissionError("denied")):
+        with patch("storage.facts.save_json_file", side_effect=PermissionError("denied")):
             fs.save_fact("k", "v")
         assert fs._last_save_failed
 
     def test_flag_cleared_on_recovery(self, tmp_path):
         from storage.facts import FactStore
-        from storage import persistence
         fs = FactStore(tmp_path / "facts.json")
-        with patch.object(persistence, "save_json_file", side_effect=OSError("disk full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("disk full")):
             fs.save_fact("first", "val")
         assert fs._last_save_failed
         # Next save succeeds — flag should clear
@@ -81,34 +79,33 @@ class TestFactStoreSaveFailure:
 
     def test_in_memory_data_preserved_after_write_failure(self, tmp_path):
         from storage.facts import FactStore
-        from storage import persistence
         fs = FactStore(tmp_path / "facts.json")
-        with patch.object(persistence, "save_json_file", side_effect=OSError("disk full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("disk full")):
             fs.save_fact("important", "data")
         # In-memory data is still accessible
         assert fs.get_value("important") == "data"
 
     def test_permission_denied_sets_flag(self, tmp_path):
         from storage.facts import FactStore
-        p = tmp_path / "facts.json"
+        p = tmp_path / "subdir" / "facts.json"
+        p.parent.mkdir()
         fs = FactStore(p)
-        fs.save_fact("seed", "value")  # write once so file exists
-        # Make file read-only
-        p.chmod(stat.S_IRUSR | stat.S_IRGRP)
+        fs.save_fact("seed", "value")
+        # Make the parent directory read-only so temp file creation fails
+        p.parent.chmod(stat.S_IRUSR | stat.S_IXUSR)
         try:
-            fs.save_fact("new_key", "new_val")
-            # If chmod had no effect (root), skip the assertion
-            if os.getuid() != 0:
+            if os.getuid() != 0:  # root bypasses permission checks
+                fs.save_fact("new_key", "new_val")
                 assert fs._last_save_failed
         finally:
-            p.chmod(stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
+            p.parent.chmod(stat.S_IRWXU)
 
     def test_multiple_saves_after_failure_all_in_memory(self, tmp_path):
         from storage.facts import FactStore
-        from storage import persistence
+        import storage.facts as _facts_mod
         fs = FactStore(tmp_path / "facts.json")
         call_count = 0
-        original = persistence.save_json_file
+        original = _facts_mod.save_json_file
 
         def flaky(*a, **kw):
             nonlocal call_count
@@ -117,7 +114,7 @@ class TestFactStoreSaveFailure:
                 raise OSError("flaky disk")
             return original(*a, **kw)
 
-        with patch.object(persistence, "save_json_file", side_effect=flaky):
+        with patch("storage.facts.save_json_file", side_effect=flaky):
             fs.save_fact("a", 1)
             fs.save_fact("b", 2)
         # 3rd call succeeds (call_count==3 ≥ 3, doesn't raise)
@@ -192,9 +189,7 @@ class TestToolBuilderSaveRegistry:
 
     def _make_tb(self, tmp_path):
         from tools.tool_builder import ToolBuilder
-        from agent.agent_loop import load_config
-        cfg = load_config("config.json")
-        from tools.tool_manager import ToolManager
+        from tools.tool_interface import ToolManager
         tb = ToolBuilder(tmp_path, ToolManager())
         return tb
 
@@ -282,9 +277,8 @@ class TestMemorySystemWriteFlags:
         assert not mem.episodic_save_failed
 
     def test_facts_save_failed_reflects_store_flag(self, tmp_path):
-        from storage import persistence
         mem = _mem(tmp_path)
-        with patch.object(persistence, "save_json_file", side_effect=OSError("full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("full")):
             mem.save_fact("k", "v")
         assert mem.facts_save_failed
 
@@ -295,9 +289,8 @@ class TestMemorySystemWriteFlags:
         assert mem.episodic_save_failed
 
     def test_facts_save_failed_clears_after_recovery(self, tmp_path):
-        from storage import persistence
         mem = _mem(tmp_path)
-        with patch.object(persistence, "save_json_file", side_effect=OSError("full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("full")):
             mem.save_fact("k", "v")
         assert mem.facts_save_failed
         mem.save_fact("k2", "v2")
@@ -312,9 +305,8 @@ class TestMemorySystemWriteFlags:
 class TestBootDoctorWriteFailures:
 
     def test_facts_save_failure_surfaces_warning(self, tmp_path):
-        from storage import persistence
         mem = _mem(tmp_path)
-        with patch.object(persistence, "save_json_file", side_effect=OSError("disk full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("disk full")):
             mem.save_fact("k", "v")
         svc = _svc(mem)
         summary = svc.build_boot_doctor_summary()
@@ -349,9 +341,8 @@ class TestBootDoctorWriteFailures:
         assert save_warnings == []
 
     def test_multiple_write_failures_all_shown(self, tmp_path):
-        from storage import persistence
         mem = _mem(tmp_path)
-        with patch.object(persistence, "save_json_file", side_effect=OSError("full")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("full")):
             mem.save_fact("k", "v")
         with patch("builtins.open", side_effect=PermissionError("no write")):
             mem.save_episodic("event", {})
@@ -365,9 +356,8 @@ class TestBootDoctorWriteFailures:
         assert "state" in warn_text
 
     def test_boot_doctor_format_shows_write_failure(self, tmp_path):
-        from storage import persistence
         mem = _mem(tmp_path)
-        with patch.object(persistence, "save_json_file", side_effect=OSError("no space")):
+        with patch("storage.facts.save_json_file", side_effect=OSError("no space")):
             mem.save_fact("x", "y")
         svc = _svc(mem)
         summary = svc.build_boot_doctor_summary()
