@@ -1,0 +1,28 @@
+# Project Configuration - NEXUS-C
+
+Canonical metadata for the NEXUS-C project.
+
+## Project Info
+
+```yaml
+project:
+  name: "NEXUS-C"
+  path: "/home/mikoleye/karma/nexus-c"
+  type: "cli-agent"
+  language: "python"
+  framework: ""
+  
+entrypoint:
+  main: "prompt_studio.py"
+  tests: "tests.py"
+  docs: ""
+
+defaults:
+  role: "builder"
+  max_workers: 1
+  
+paths:
+  source: "."
+  gui: "nexus_gui.py"
+  core: "nexus_c.py"
+```

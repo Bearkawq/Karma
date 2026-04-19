@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-18T22:56:44.601537",
+  "updated": "2026-04-19T07:03:29.930234",
   "modules": {
     "karma_version.py": {
       "file_path": "karma_version.py",
@@ -2151,7 +2151,32 @@
         "agents.critic_agent",
         "agents.critic_agent",
         "agents.critic_agent",
+        "core.agent_model_manager",
         "agents.critic_agent",
+        "agents.base_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "core.agent_model_manager",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agents.critic_agent",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
         "core.agent_model_manager",
         "agents.retriever_agent",
         "agents.retriever_agent",
@@ -2325,6 +2350,13 @@
         "test_critic_agent_review_run_artifact_detects_recovery_failure",
         "test_critic_agent_review_run_artifact_clean_run_no_issues",
         "test_critic_run_artifact_multi_step_failure_structure_visible",
+        "test_critic_review_run_artifact_dict_failure_no_recovery",
+        "test_critic_review_run_artifact_dict_recovery_failed",
+        "test_critic_review_run_artifact_dict_clean_run_no_issues",
+        "test_critic_review_run_artifact_dict_timeout_flagged",
+        "test_critic_review_run_artifact_dict_recovery_stopped",
+        "test_critic_seat_passes_artifact_dict_not_formatted_string",
+        "test_critic_model_path_formats_dict_to_readable_string",
         "test_analyze_touched_paths_overlap_risk",
         "test_analyze_touched_paths_gap_risk",
         "test_analyze_touched_paths_weak_coverage",
@@ -2333,6 +2365,32 @@
         "test_review_run_artifact_with_recovery_adds_path_findings",
         "test_seat_critique_passes_touched_paths_to_critic",
         "test_seat_critique_attaches_path_findings_to_run_artifact",
+        "test_persist_run_digest_stores_critic_fields",
+        "test_persist_run_digest_no_critic_fields_when_no_critique",
+        "test_persist_run_digest_critic_truncates_to_3_issues",
+        "test_format_retrieval_results_shows_critic_issues",
+        "test_format_retrieval_results_no_critic_section_when_absent",
+        "test_format_retrieval_results_critic_lesson_fallback",
+        "test_format_retrieval_results_tool_run_shows_critic_when_present",
+        "test_format_retrieval_results_tool_run_no_critic_when_absent",
+        "test_critique_tool_failure_permission_denied",
+        "test_critique_tool_failure_not_found",
+        "test_critique_tool_failure_timeout",
+        "test_critique_tool_failure_connection_refused",
+        "test_critique_tool_failure_syntax_error",
+        "test_critique_tool_failure_unknown_error",
+        "test_critique_tool_failure_empty_error_returns_none",
+        "test_critique_single_tool_failure_returns_none_on_success",
+        "test_critique_single_tool_failure_returns_none_for_skip_names",
+        "test_critique_single_tool_failure_returns_none_when_no_error",
+        "test_critique_single_tool_failure_returns_none_for_seat_generated",
+        "test_critique_single_tool_failure_returns_none_when_plan_artifact_present",
+        "test_critique_single_tool_failure_fires_for_failed_non_skip",
+        "test_single_tool_critique_wired_into_main_loop",
+        "test_extract_critic_fields_parses_bullets",
+        "test_extract_critic_fields_non_bullet_fallback",
+        "test_extract_critic_fields_empty_returns_empty",
+        "test_seat_critique_attaches_to_run_artifact_on_persist",
         "test_persist_run_digest_stores_path_findings",
         "test_format_linked_run_result_renders_path_findings",
         "test_format_retrieval_results_renders_path_findings",
@@ -2705,6 +2763,7 @@
         "time",
         "agents.base_agent",
         "agents.base_agent",
+        "agent.services.run_history_service",
         "re"
       ],
       "exports": [],
@@ -2997,20 +3056,33 @@
         "core.actions.digest_handler",
         "core.actions.navigate_handler",
         "core.actions.pulse_handler",
+        "agent.services.status_query_service",
         "agent.bootstrap",
         "agent.bootstrap",
+        "agent.services.run_history_service",
+        "agent.services.status_query_service",
+        "agent.services.plan_execution_service",
         "research.session",
         "research.ingestor",
         "research.dropbox_digest",
         "navigator",
         "research.pulse",
         "research.pulse_words",
-        "re",
-        "os",
-        "hashlib",
-        "concurrent.futures",
-        "core.agent_model_manager",
-        "concurrent.futures",
+        "agents.critic_agent",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.status_query_service",
+        "agent.services.status_query_service",
+        "agent.services.status_query_service",
         "readline",
         "shutil",
         "subprocess",
@@ -3020,9 +3092,6 @@
         "core.agent_model_manager",
         "concurrent.futures",
         "core.agent_model_manager",
-        "core.agent_model_manager",
-        "agents.retriever_agent",
-        "agents.base_agent",
         "agents.critic_agent"
       ],
       "exports": [],
@@ -3301,6 +3370,8 @@
         "get_session_summary",
         "get_self_check",
         "get_recent_runs",
+        "get_run_detail",
+        "get_session",
         "get_facts",
         "get_tasks",
         "get_memory",
@@ -4651,6 +4722,97 @@
       ],
       "dependencies": [],
       "docstring": "Role Engine Runtime - loads, merges, validates role specs."
+    },
+    "agent/services/status_query_service.py": {
+      "file_path": "agent/services/status_query_service.py",
+      "module_name": "status_query_service",
+      "imports": [
+        "__future__",
+        "typing",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "agent.services.run_history_service",
+        "datetime",
+        "agents.retriever_agent",
+        "agents.base_agent",
+        "agent.services.run_history_service"
+      ],
+      "exports": [],
+      "classes": [
+        "StatusQueryService"
+      ],
+      "functions": [
+        "is_live_status_query",
+        "is_session_summary_query",
+        "is_self_check_query"
+      ],
+      "dependencies": [],
+      "docstring": "Live-status, session-summary, self-check, and run-history query handlers.\n\nExtracted from AgentLoop; AgentLoop delegates to StatusQueryService for all\npre-pass introspection responses. No UI or API su"
+    },
+    "agent/services/run_history_service.py": {
+      "file_path": "agent/services/run_history_service.py",
+      "module_name": "run_history_service",
+      "imports": [
+        "__future__",
+        "re",
+        "typing",
+        "os",
+        "hashlib",
+        "datetime",
+        "core.agent_model_manager"
+      ],
+      "exports": [],
+      "classes": [
+        "RunHistoryService"
+      ],
+      "functions": [
+        "outcome_badge",
+        "format_compact_output",
+        "format_error_compact",
+        "build_run_detail",
+        "failure_first_sort",
+        "extract_critic_fields",
+        "format_run_artifact_content",
+        "build_compact_digest_summary",
+        "extract_touched_paths",
+        "resolve_touched_paths",
+        "should_digest_single_tool",
+        "extract_tool_output",
+        "build_single_tool_artifact",
+        "format_review_targets",
+        "format_retrieval_results",
+        "format_linked_run_result"
+      ],
+      "dependencies": [],
+      "docstring": "Run history persistence, digest building, and artifact formatting.\n\nExtracted from AgentLoop; AgentLoop delegates to RunHistoryService for all\nrun-digest / artifact logic.  No UI or API surface touche"
+    },
+    "agent/services/__init__.py": {
+      "file_path": "agent/services/__init__.py",
+      "module_name": "__init__",
+      "imports": [],
+      "exports": [],
+      "classes": [],
+      "functions": [],
+      "dependencies": [],
+      "docstring": ""
+    },
+    "agent/services/plan_execution_service.py": {
+      "file_path": "agent/services/plan_execution_service.py",
+      "module_name": "plan_execution_service",
+      "imports": [
+        "__future__",
+        "typing",
+        "concurrent.futures",
+        "core.agent_model_manager",
+        "concurrent.futures"
+      ],
+      "exports": [],
+      "classes": [
+        "PlanExecutionService"
+      ],
+      "functions": [],
+      "dependencies": [],
+      "docstring": "Multi-step plan execution and adaptive replan logic.\n\nExtracted from AgentLoop; AgentLoop delegates to PlanExecutionService for all\nplan step execution and replan recovery. No UI or API surface touche"
     },
     "docs/archive/research_providers_legacy.py": {
       "file_path": "docs/archive/research_providers_legacy.py",
@@ -17484,7 +17646,7 @@
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
       "line": 266,
-      "end_line": 306,
+      "end_line": 309,
       "args": [],
       "docstring": "When _run_artifact is in execution_result, critic receives run_artifact content_type.",
       "references": []
@@ -17493,8 +17655,8 @@
       "name": "test_critic_run_artifact_fires_regardless_of_intent",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 309,
-      "end_line": 340,
+      "line": 312,
+      "end_line": 343,
       "args": [],
       "docstring": "Critic fires for any intent when _run_artifact is present (not gated by _CRITIC_INTENTS).",
       "references": []
@@ -17503,8 +17665,8 @@
       "name": "test_critic_legacy_path_still_gated_by_critic_intents",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 343,
-      "end_line": 363,
+      "line": 346,
+      "end_line": 366,
       "args": [],
       "docstring": "Without _run_artifact, critic is still gated to _CRITIC_INTENTS only.",
       "references": []
@@ -17513,8 +17675,8 @@
       "name": "test_critic_legacy_path_fires_for_critic_intent",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 366,
-      "end_line": 388,
+      "line": 369,
+      "end_line": 391,
       "args": [],
       "docstring": "Without _run_artifact, critic still fires normally for _CRITIC_INTENTS.",
       "references": []
@@ -17523,8 +17685,8 @@
       "name": "test_critic_skips_run_artifact_when_no_steps",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 391,
-      "end_line": 407,
+      "line": 394,
+      "end_line": 410,
       "args": [],
       "docstring": "If _run_artifact has no steps, critic returns None.",
       "references": []
@@ -17533,8 +17695,8 @@
       "name": "test_critic_agent_review_run_artifact_detects_failure_no_recovery",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 410,
-      "end_line": 431,
+      "line": 413,
+      "end_line": 434,
       "args": [],
       "docstring": "CriticAgent._review_run_artifact flags failed steps with no recovery.",
       "references": []
@@ -17543,8 +17705,8 @@
       "name": "test_critic_agent_review_run_artifact_detects_recovery_failure",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 434,
-      "end_line": 453,
+      "line": 437,
+      "end_line": 456,
       "args": [],
       "docstring": "CriticAgent._review_run_artifact flags recovery_failed outcome.",
       "references": []
@@ -17553,8 +17715,8 @@
       "name": "test_critic_agent_review_run_artifact_clean_run_no_issues",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 456,
-      "end_line": 471,
+      "line": 459,
+      "end_line": 474,
       "args": [],
       "docstring": "CriticAgent._review_run_artifact finds no issues for a clean successful run.",
       "references": []
@@ -17563,18 +17725,88 @@
       "name": "test_critic_run_artifact_multi_step_failure_structure_visible",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 474,
-      "end_line": 520,
+      "line": 477,
+      "end_line": 528,
       "args": [],
       "docstring": "Full path: _seat_critique with multi-step failure passes rich content to critic.",
+      "references": []
+    },
+    {
+      "name": "test_critic_review_run_artifact_dict_failure_no_recovery",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 534,
+      "end_line": 555,
+      "args": [],
+      "docstring": "_review_run_artifact accepts artifact dict and flags failed steps + no recovery.",
+      "references": []
+    },
+    {
+      "name": "test_critic_review_run_artifact_dict_recovery_failed",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 558,
+      "end_line": 576,
+      "args": [],
+      "docstring": "_review_run_artifact dict path flags recovery_failed outcome.",
+      "references": []
+    },
+    {
+      "name": "test_critic_review_run_artifact_dict_clean_run_no_issues",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 579,
+      "end_line": 597,
+      "args": [],
+      "docstring": "_review_run_artifact dict path finds no issues for a clean run.",
+      "references": []
+    },
+    {
+      "name": "test_critic_review_run_artifact_dict_timeout_flagged",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 600,
+      "end_line": 617,
+      "args": [],
+      "docstring": "_review_run_artifact dict path flags timeout in failed step error.",
+      "references": []
+    },
+    {
+      "name": "test_critic_review_run_artifact_dict_recovery_stopped",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 620,
+      "end_line": 637,
+      "args": [],
+      "docstring": "_review_run_artifact dict path flags recovery outcome 'stopped'.",
+      "references": []
+    },
+    {
+      "name": "test_critic_seat_passes_artifact_dict_not_formatted_string",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 640,
+      "end_line": 669,
+      "args": [],
+      "docstring": "_seat_critique passes the raw artifact dict as content (not a formatted string).",
+      "references": []
+    },
+    {
+      "name": "test_critic_model_path_formats_dict_to_readable_string",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 672,
+      "end_line": 707,
+      "args": [],
+      "docstring": "CriticAgent.run formats artifact dict to a readable string for the model prompt.",
       "references": []
     },
     {
       "name": "test_analyze_touched_paths_overlap_risk",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 526,
-      "end_line": 536,
+      "line": 713,
+      "end_line": 723,
       "args": [],
       "docstring": "Same path in parent and recovery triggers overlap risk finding.",
       "references": []
@@ -17583,8 +17815,8 @@
       "name": "test_analyze_touched_paths_gap_risk",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 539,
-      "end_line": 548,
+      "line": 726,
+      "end_line": 735,
       "args": [],
       "docstring": "Parent paths not addressed in recovery triggers gap finding.",
       "references": []
@@ -17593,8 +17825,8 @@
       "name": "test_analyze_touched_paths_weak_coverage",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 551,
-      "end_line": 560,
+      "line": 738,
+      "end_line": 747,
       "args": [],
       "docstring": "No overlap between parent and recovery paths triggers weak coverage.",
       "references": []
@@ -17603,8 +17835,8 @@
       "name": "test_analyze_touched_paths_absent_degrades_safely",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 563,
-      "end_line": 570,
+      "line": 750,
+      "end_line": 757,
       "args": [],
       "docstring": "Empty/None path lists produce no findings.",
       "references": []
@@ -17613,8 +17845,8 @@
       "name": "test_review_run_artifact_non_recovery_unchanged",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 573,
-      "end_line": 592,
+      "line": 760,
+      "end_line": 779,
       "args": [],
       "docstring": "_review_run_artifact with no recovery does not add path findings.",
       "references": []
@@ -17623,8 +17855,8 @@
       "name": "test_review_run_artifact_with_recovery_adds_path_findings",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 595,
-      "end_line": 620,
+      "line": 782,
+      "end_line": 807,
       "args": [],
       "docstring": "_review_run_artifact with recovery and overlapping paths adds path findings.",
       "references": []
@@ -17633,8 +17865,8 @@
       "name": "test_seat_critique_passes_touched_paths_to_critic",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 623,
-      "end_line": 673,
+      "line": 810,
+      "end_line": 860,
       "args": [],
       "docstring": "_seat_critique extracts and passes touched_paths_parent/recovery to critic context.",
       "references": []
@@ -17643,18 +17875,278 @@
       "name": "test_seat_critique_attaches_path_findings_to_run_artifact",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 679,
-      "end_line": 711,
+      "line": 866,
+      "end_line": 898,
       "args": [],
       "docstring": "_seat_critique attaches structured path_findings to _run_artifact when paths present.",
+      "references": []
+    },
+    {
+      "name": "test_persist_run_digest_stores_critic_fields",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 904,
+      "end_line": 927,
+      "args": [],
+      "docstring": "_persist_run_digest stores critic_issues and critic_lesson when artifact has critic.",
+      "references": []
+    },
+    {
+      "name": "test_persist_run_digest_no_critic_fields_when_no_critique",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 930,
+      "end_line": 947,
+      "args": [],
+      "docstring": "When artifact has no critic, digest omits critic_issues and critic_lesson.",
+      "references": []
+    },
+    {
+      "name": "test_persist_run_digest_critic_truncates_to_3_issues",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 950,
+      "end_line": 962,
+      "args": [],
+      "docstring": "_persist_run_digest stores at most 3 critic issues.",
+      "references": []
+    },
+    {
+      "name": "test_format_retrieval_results_shows_critic_issues",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 965,
+      "end_line": 990,
+      "args": [],
+      "docstring": "format_retrieval_results surfaces critic_issues for primary runs.",
+      "references": []
+    },
+    {
+      "name": "test_format_retrieval_results_no_critic_section_when_absent",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 993,
+      "end_line": 1015,
+      "args": [],
+      "docstring": "format_retrieval_results omits Critic: line when critic fields absent.",
+      "references": []
+    },
+    {
+      "name": "test_format_retrieval_results_critic_lesson_fallback",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1018,
+      "end_line": 1042,
+      "args": [],
+      "docstring": "format_retrieval_results uses critic_lesson when critic_issues absent.",
+      "references": []
+    },
+    {
+      "name": "test_format_retrieval_results_tool_run_shows_critic_when_present",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1045,
+      "end_line": 1070,
+      "args": [],
+      "docstring": "format_retrieval_results shows Critic: for tool-kind runs when critic_issues is present.",
+      "references": []
+    },
+    {
+      "name": "test_format_retrieval_results_tool_run_no_critic_when_absent",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1073,
+      "end_line": 1096,
+      "args": [],
+      "docstring": "format_retrieval_results omits Critic: for tool-kind runs when no critic fields.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_permission_denied",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1102,
+      "end_line": 1109,
+      "args": [],
+      "docstring": "_critique_tool_failure produces permission hint for permission-denied errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_not_found",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1112,
+      "end_line": 1118,
+      "args": [],
+      "docstring": "_critique_tool_failure produces path hint for not-found errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_timeout",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1121,
+      "end_line": 1127,
+      "args": [],
+      "docstring": "_critique_tool_failure produces scope hint for timeout errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_connection_refused",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1130,
+      "end_line": 1136,
+      "args": [],
+      "docstring": "_critique_tool_failure produces connectivity hint for network errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_syntax_error",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1139,
+      "end_line": 1145,
+      "args": [],
+      "docstring": "_critique_tool_failure produces fix-syntax hint for syntax errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_unknown_error",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1148,
+      "end_line": 1154,
+      "args": [],
+      "docstring": "_critique_tool_failure falls back to generic hint for unclassified errors.",
+      "references": []
+    },
+    {
+      "name": "test_critique_tool_failure_empty_error_returns_none",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1157,
+      "end_line": 1162,
+      "args": [],
+      "docstring": "_critique_tool_failure returns None when error is empty.",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_returns_none_on_success",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1168,
+      "end_line": 1176,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns None when execution succeeded.",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_returns_none_for_skip_names",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1179,
+      "end_line": 1188,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns None for skip-list actions.",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_returns_none_when_no_error",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1191,
+      "end_line": 1199,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns None when no error string present.",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_returns_none_for_seat_generated",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1202,
+      "end_line": 1210,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns None for seat-generated actions.",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_returns_none_when_plan_artifact_present",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1213,
+      "end_line": 1221,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns None when _run_artifact is present (plan path).",
+      "references": []
+    },
+    {
+      "name": "test_critique_single_tool_failure_fires_for_failed_non_skip",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1224,
+      "end_line": 1233,
+      "args": [],
+      "docstring": "_critique_single_tool_failure returns a compact critique for valid failed tool runs.",
+      "references": []
+    },
+    {
+      "name": "test_single_tool_critique_wired_into_main_loop",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1236,
+      "end_line": 1261,
+      "args": [],
+      "docstring": "Failed single-tool run: _critique is set and attached to st_artifact before persist.",
+      "references": []
+    },
+    {
+      "name": "test_extract_critic_fields_parses_bullets",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1264,
+      "end_line": 1270,
+      "args": [],
+      "docstring": "extract_critic_fields parses dash-prefixed bullet lines.",
+      "references": []
+    },
+    {
+      "name": "test_extract_critic_fields_non_bullet_fallback",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1273,
+      "end_line": 1279,
+      "args": [],
+      "docstring": "extract_critic_fields uses first non-empty line when no bullets present.",
+      "references": []
+    },
+    {
+      "name": "test_extract_critic_fields_empty_returns_empty",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1282,
+      "end_line": 1288,
+      "args": [],
+      "docstring": "extract_critic_fields returns {} for empty/whitespace input.",
+      "references": []
+    },
+    {
+      "name": "test_seat_critique_attaches_to_run_artifact_on_persist",
+      "type": "function",
+      "file_path": "tests/test_seat_loop_integration.py",
+      "line": 1291,
+      "end_line": 1318,
+      "args": [],
+      "docstring": "When _critique is non-None, it is attached to _run_artifact before _persist_run_digest.",
       "references": []
     },
     {
       "name": "test_persist_run_digest_stores_path_findings",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 714,
-      "end_line": 738,
+      "line": 1321,
+      "end_line": 1345,
       "args": [],
       "docstring": "_persist_run_digest stores path_findings field in the persisted digest.",
       "references": []
@@ -17663,8 +18155,8 @@
       "name": "test_format_linked_run_result_renders_path_findings",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 741,
-      "end_line": 767,
+      "line": 1348,
+      "end_line": 1374,
       "args": [],
       "docstring": "_format_linked_run_result includes Risks: line when path_findings present.",
       "references": []
@@ -17673,8 +18165,8 @@
       "name": "test_format_retrieval_results_renders_path_findings",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 770,
-      "end_line": 794,
+      "line": 1377,
+      "end_line": 1401,
       "args": [],
       "docstring": "_format_retrieval_results includes Risks: line for plain run_history with path_findings.",
       "references": []
@@ -17683,8 +18175,8 @@
       "name": "test_coherent_linked_answer_contains_all_lanes",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 797,
-      "end_line": 835,
+      "line": 1404,
+      "end_line": 1442,
       "args": [],
       "docstring": "Full linked run answer surfaces: task, outcome, review targets with risks, recovery, paths.",
       "references": []
@@ -17693,8 +18185,8 @@
       "name": "test_path_findings_absent_on_non_recovery_run",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 838,
-      "end_line": 855,
+      "line": 1445,
+      "end_line": 1462,
       "args": [],
       "docstring": "_seat_critique does not attach path_findings when run has no recovery.",
       "references": []
@@ -17703,8 +18195,8 @@
       "name": "test_run_history_response_surfaces_risks_when_present",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 861,
-      "end_line": 893,
+      "line": 1468,
+      "end_line": 1500,
       "args": [],
       "docstring": "_try_run_history_response includes Risks: lines when digest has path_findings.",
       "references": []
@@ -17713,8 +18205,8 @@
       "name": "test_recovery_query_triggers_linked_path",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 896,
-      "end_line": 901,
+      "line": 1503,
+      "end_line": 1508,
       "args": [],
       "docstring": "'last recovery' / 'latest recovery' triggers recovery-linked retriever path.",
       "references": []
@@ -17723,8 +18215,8 @@
       "name": "test_review_target_query_triggers_path_query",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 904,
-      "end_line": 909,
+      "line": 1511,
+      "end_line": 1516,
       "args": [],
       "docstring": "'what to review' / 'review targets' triggers path query.",
       "references": []
@@ -17733,8 +18225,8 @@
       "name": "test_run_history_response_plain_run_no_risks_unaffected",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 912,
-      "end_line": 938,
+      "line": 1519,
+      "end_line": 1545,
       "args": [],
       "docstring": "_try_run_history_response for plain success run does not emit spurious Risks: lines.",
       "references": []
@@ -17743,8 +18235,8 @@
       "name": "test_router_routes_question_to_planner",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 944,
-      "end_line": 949,
+      "line": 1551,
+      "end_line": 1556,
       "args": [],
       "docstring": "",
       "references": []
@@ -17753,8 +18245,8 @@
       "name": "test_router_routes_explain_to_planner",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 952,
-      "end_line": 957,
+      "line": 1559,
+      "end_line": 1564,
       "args": [],
       "docstring": "",
       "references": []
@@ -17763,8 +18255,8 @@
       "name": "test_router_does_not_match_run_inside_return",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 960,
-      "end_line": 969,
+      "line": 1567,
+      "end_line": 1576,
       "args": [],
       "docstring": "Short pattern 'run' should not match inside 'return'.",
       "references": []
@@ -17773,8 +18265,8 @@
       "name": "test_router_explicit_role_overrides_all",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 972,
-      "end_line": 977,
+      "line": 1579,
+      "end_line": 1584,
       "args": [],
       "docstring": "",
       "references": []
@@ -17783,8 +18275,8 @@
       "name": "test_router_search_routes_to_retriever",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 980,
-      "end_line": 985,
+      "line": 1587,
+      "end_line": 1592,
       "args": [],
       "docstring": "",
       "references": []
@@ -17793,8 +18285,8 @@
       "name": "test_seat_critique_no_output_returns_none",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 991,
-      "end_line": 994,
+      "line": 1598,
+      "end_line": 1601,
       "args": [],
       "docstring": "",
       "references": []
@@ -17803,8 +18295,8 @@
       "name": "test_planner_seat_no_plan_steps_returns_empty",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 997,
-      "end_line": 1011,
+      "line": 1604,
+      "end_line": 1618,
       "args": [],
       "docstring": "",
       "references": []
@@ -17813,8 +18305,8 @@
       "name": "test_execute_action_seat_generated_routes_to_executor_seat",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1017,
-      "end_line": 1050,
+      "line": 1624,
+      "end_line": 1657,
       "args": [],
       "docstring": "_seat_generated candidates must not hit 'Tool not found: None'.",
       "references": []
@@ -17823,8 +18315,8 @@
       "name": "test_execute_action_seat_generated_deterministic_fallback",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1053,
-      "end_line": 1081,
+      "line": 1660,
+      "end_line": 1688,
       "args": [],
       "docstring": "When executor seat fails, plan steps are returned as readable output.",
       "references": []
@@ -17833,8 +18325,8 @@
       "name": "test_execute_action_non_seat_still_hits_tool_not_found",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1084,
-      "end_line": 1090,
+      "line": 1691,
+      "end_line": 1697,
       "args": [],
       "docstring": "Normal (non-seat) candidates with tool=None still produce the expected error.",
       "references": []
@@ -17843,8 +18335,8 @@
       "name": "test_execute_action_seat_generated_passes_plan_steps_to_executor",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1096,
-      "end_line": 1144,
+      "line": 1703,
+      "end_line": 1751,
       "args": [],
       "docstring": "plan_steps from planner-seat candidate reaches executor seat context for every step.",
       "references": []
@@ -17853,8 +18345,8 @@
       "name": "test_execute_plan_steps_executes_all_steps",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1150,
-      "end_line": 1183,
+      "line": 1757,
+      "end_line": 1790,
       "args": [],
       "docstring": "2-step plan executes both steps, output contains both results.",
       "references": []
@@ -17863,8 +18355,8 @@
       "name": "test_execute_plan_steps_tracks_step_states",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1186,
-      "end_line": 1219,
+      "line": 1793,
+      "end_line": 1826,
       "args": [],
       "docstring": "_step_states reflects done/failed/skipped correctly.",
       "references": []
@@ -17873,8 +18365,8 @@
       "name": "test_execute_plan_steps_stops_on_failure_preserves_partial",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1222,
-      "end_line": 1253,
+      "line": 1829,
+      "end_line": 1860,
       "args": [],
       "docstring": "Failure on step 2 stops; step 1 output is preserved in result.",
       "references": []
@@ -17883,8 +18375,8 @@
       "name": "test_execute_plan_steps_single_step_works",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1256,
-      "end_line": 1279,
+      "line": 1863,
+      "end_line": 1886,
       "args": [],
       "docstring": "Single-step plan still executes correctly (regression guard).",
       "references": []
@@ -17893,8 +18385,8 @@
       "name": "test_execute_plan_steps_no_model_deterministic",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1282,
-      "end_line": 1300,
+      "line": 1889,
+      "end_line": 1907,
       "args": [],
       "docstring": "No-model mode returns all steps as deterministic text output.",
       "references": []
@@ -17903,8 +18395,8 @@
       "name": "test_execute_action_seat_generated_multi_step_both_steps_run",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1303,
-      "end_line": 1345,
+      "line": 1910,
+      "end_line": 1952,
       "args": [],
       "docstring": "_execute_action with 2-step _seat_generated plan calls executor twice.",
       "references": []
@@ -17913,8 +18405,8 @@
       "name": "test_execute_plan_steps_respects_max_cap",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1348,
-      "end_line": 1375,
+      "line": 1955,
+      "end_line": 1982,
       "args": [],
       "docstring": "Plans exceeding _MAX_PLAN_STEPS are truncated, not run indefinitely.",
       "references": []
@@ -17923,8 +18415,8 @@
       "name": "test_critic_timeout_degrades_safely",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1381,
-      "end_line": 1407,
+      "line": 1988,
+      "end_line": 2014,
       "args": [],
       "docstring": "Critic seat that times out returns None without blocking the loop.",
       "references": []
@@ -17933,8 +18425,8 @@
       "name": "test_critic_timeout_does_not_affect_fast_critic",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1410,
-      "end_line": 1434,
+      "line": 2017,
+      "end_line": 2041,
       "args": [],
       "docstring": "Fast critic (mocked) still returns its critique under timeout guard.",
       "references": []
@@ -17943,8 +18435,8 @@
       "name": "test_evict_stale_removes_old_rows",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1440,
-      "end_line": 1505,
+      "line": 2047,
+      "end_line": 2112,
       "args": [],
       "docstring": "Rows older than TTL are removed; bootstrap rows are kept.",
       "references": []
@@ -17953,8 +18445,8 @@
       "name": "test_evict_stale_enforces_max_rows",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1508,
-      "end_line": 1558,
+      "line": 2115,
+      "end_line": 2165,
       "args": [],
       "docstring": "When non-bootstrap rows exceed _EMBED_MAX_ROWS, oldest are removed.",
       "references": []
@@ -17963,8 +18455,8 @@
       "name": "test_evict_triggered_by_write_counter",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1561,
-      "end_line": 1588,
+      "line": 2168,
+      "end_line": 2195,
       "args": [],
       "docstring": "_evict_stale is called after _EVICT_EVERY_N_WRITES writes.",
       "references": []
@@ -17973,8 +18465,8 @@
       "name": "test_try_seat_response_fast_path_works",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1594,
-      "end_line": 1615,
+      "line": 2201,
+      "end_line": 2222,
       "args": [],
       "docstring": "Fast seat response is returned correctly under timeout guard.",
       "references": []
@@ -17983,8 +18475,8 @@
       "name": "test_try_seat_response_timeout_degrades_safely",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1618,
-      "end_line": 1635,
+      "line": 2225,
+      "end_line": 2242,
       "args": [],
       "docstring": "Timed-out seat response returns None without hanging.",
       "references": []
@@ -17993,8 +18485,8 @@
       "name": "test_try_seat_response_exception_degrades_safely",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1638,
-      "end_line": 1648,
+      "line": 2245,
+      "end_line": 2255,
       "args": [],
       "docstring": "Exception inside seat call returns None, does not propagate.",
       "references": []
@@ -18003,8 +18495,8 @@
       "name": "test_try_seat_response_no_model_mode_returns_none",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1651,
-      "end_line": 1662,
+      "line": 2258,
+      "end_line": 2269,
       "args": [],
       "docstring": "No-model mode skips seat call and returns None.",
       "references": []
@@ -18013,8 +18505,8 @@
       "name": "test_replan_after_failure_calls_planner_seat",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1668,
-      "end_line": 1712,
+      "line": 2275,
+      "end_line": 2319,
       "args": [],
       "docstring": "Step failure triggers _replan_after_failure; planner seat is called with failure context.",
       "references": []
@@ -18023,8 +18515,8 @@
       "name": "test_replan_recovery_steps_executed_with_recovery_prefix",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1715,
-      "end_line": 1757,
+      "line": 2322,
+      "end_line": 2364,
       "args": [],
       "docstring": "Recovery steps execute and output contains '[Recovery]' prefix.",
       "references": []
@@ -18033,8 +18525,8 @@
       "name": "test_replan_returns_stopped_when_planner_returns_empty",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1760,
-      "end_line": 1791,
+      "line": 2367,
+      "end_line": 2398,
       "args": [],
       "docstring": "When replanner returns [], artifact outcome is 'stopped', no recursion.",
       "references": []
@@ -18043,8 +18535,8 @@
       "name": "test_replan_not_triggered_when_allow_replan_false",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1794,
-      "end_line": 1820,
+      "line": 2401,
+      "end_line": 2427,
       "args": [],
       "docstring": "Recursive guard: allow_replan=False means no planner seat called on failure.",
       "references": []
@@ -18053,8 +18545,8 @@
       "name": "test_replan_exception_in_planner_degrades_cleanly",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1823,
-      "end_line": 1849,
+      "line": 2430,
+      "end_line": 2456,
       "args": [],
       "docstring": "Exception inside _replan_after_failure returns [] \u2014 no crash, stops cleanly.",
       "references": []
@@ -18063,8 +18555,8 @@
       "name": "test_step2_receives_prior_results_from_step1",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1855,
-      "end_line": 1898,
+      "line": 2462,
+      "end_line": 2505,
       "args": [],
       "docstring": "Step 2 executor call receives prior_results containing step 1 output.",
       "references": []
@@ -18073,8 +18565,8 @@
       "name": "test_run_artifact_always_present_on_success",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1901,
-      "end_line": 1937,
+      "line": 2508,
+      "end_line": 2544,
       "args": [],
       "docstring": "_run_artifact is present and correct on a clean 2-step success.",
       "references": []
@@ -18083,8 +18575,8 @@
       "name": "test_run_artifact_present_on_failure",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1940,
-      "end_line": 1970,
+      "line": 2547,
+      "end_line": 2577,
       "args": [],
       "docstring": "_run_artifact is present with outcome='failed' when a step fails.",
       "references": []
@@ -18093,8 +18585,8 @@
       "name": "test_run_artifact_no_model_mode",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1973,
-      "end_line": 1991,
+      "line": 2580,
+      "end_line": 2598,
       "args": [],
       "docstring": "No-model path also produces a structured _run_artifact.",
       "references": []
@@ -18103,8 +18595,8 @@
       "name": "test_replanner_receives_run_artifact_in_context",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 1994,
-      "end_line": 2032,
+      "line": 2601,
+      "end_line": 2639,
       "args": [],
       "docstring": "_replan_after_failure passes run_artifact in context to planner seat.",
       "references": []
@@ -18113,8 +18605,8 @@
       "name": "test_prior_results_empty_for_first_step",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2035,
-      "end_line": 2064,
+      "line": 2642,
+      "end_line": 2671,
       "args": [],
       "docstring": "Step 1 receives an empty prior_results list.",
       "references": []
@@ -18123,8 +18615,8 @@
       "name": "test_executor_includes_prior_results_in_prompt",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2089,
-      "end_line": 2114,
+      "line": 2696,
+      "end_line": 2721,
       "args": [],
       "docstring": "ExecutorAgent includes prior step outputs in the model prompt.",
       "references": []
@@ -18133,8 +18625,8 @@
       "name": "test_executor_empty_prior_results_gives_plain_prompt",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2117,
-      "end_line": 2136,
+      "line": 2724,
+      "end_line": 2743,
       "args": [],
       "docstring": "When prior_results is empty, executor prompt has no prior context block.",
       "references": []
@@ -18143,8 +18635,8 @@
       "name": "test_executor_model_path_runs_even_when_plan_steps_present",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2139,
-      "end_line": 2158,
+      "line": 2746,
+      "end_line": 2765,
       "args": [],
       "docstring": "plan_steps in context does NOT block the model path when task is set.",
       "references": []
@@ -18153,8 +18645,8 @@
       "name": "test_executor_deterministic_fallback_when_no_task",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2161,
-      "end_line": 2186,
+      "line": 2768,
+      "end_line": 2793,
       "args": [],
       "docstring": "When task is empty, executor falls through to deterministic plan_steps loop.",
       "references": []
@@ -18163,8 +18655,8 @@
       "name": "test_recovery_steps_inherit_original_prior_results",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2192,
-      "end_line": 2261,
+      "line": 2799,
+      "end_line": 2868,
       "args": [],
       "docstring": "Recovery steps start with the original run's completed prior_results.",
       "references": []
@@ -18173,8 +18665,8 @@
       "name": "test_format_run_artifact_content_success",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2267,
-      "end_line": 2286,
+      "line": 2874,
+      "end_line": 2893,
       "args": [],
       "docstring": "_format_run_artifact_content produces structured text from a clean run.",
       "references": []
@@ -18183,8 +18675,8 @@
       "name": "test_format_run_artifact_content_with_failure_and_recovery",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2289,
-      "end_line": 2309,
+      "line": 2896,
+      "end_line": 2916,
       "args": [],
       "docstring": "_format_run_artifact_content captures failure and recovery info.",
       "references": []
@@ -18193,8 +18685,8 @@
       "name": "test_seat_summarize_run_calls_summarizer_seat",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2312,
-      "end_line": 2349,
+      "line": 2919,
+      "end_line": 2956,
       "args": [],
       "docstring": "_seat_summarize_run calls summarizer seat with run_artifact content_type.",
       "references": []
@@ -18203,8 +18695,8 @@
       "name": "test_seat_summarize_run_fallback_on_no_model",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2352,
-      "end_line": 2372,
+      "line": 2959,
+      "end_line": 2979,
       "args": [],
       "docstring": "_seat_summarize_run falls back to deterministic content when no model.",
       "references": []
@@ -18213,8 +18705,8 @@
       "name": "test_persist_run_digest_writes_to_memory",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2375,
-      "end_line": 2409,
+      "line": 2982,
+      "end_line": 3016,
       "args": [],
       "docstring": "_persist_run_digest writes run:last and run:<hash> facts to memory.",
       "references": []
@@ -18223,8 +18715,8 @@
       "name": "test_run_artifact_propagates_through_execute_action",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2412,
-      "end_line": 2451,
+      "line": 3019,
+      "end_line": 3058,
       "args": [],
       "docstring": "_execute_action propagates _run_artifact from _execute_plan_steps.",
       "references": []
@@ -18233,8 +18725,8 @@
       "name": "test_summarizer_run_artifact_deterministic_fallback",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2454,
-      "end_line": 2472,
+      "line": 3061,
+      "end_line": 3079,
       "args": [],
       "docstring": "SummarizerAgent handles run_artifact content_type in deterministic path.",
       "references": []
@@ -18243,8 +18735,8 @@
       "name": "test_persist_run_digest_creates_linked_recovery_entry",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2535,
-      "end_line": 2553,
+      "line": 3142,
+      "end_line": 3160,
       "args": [],
       "docstring": "Parent + recovery both written to memory when recovery_execution is present.",
       "references": []
@@ -18253,8 +18745,8 @@
       "name": "test_parent_digest_references_recovery_run_id",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2556,
-      "end_line": 2573,
+      "line": 3163,
+      "end_line": 3180,
       "args": [],
       "docstring": "Parent digest contains recovery_run_id pointing to the child entry.",
       "references": []
@@ -18263,8 +18755,8 @@
       "name": "test_recovery_digest_references_parent_run_id",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2576,
-      "end_line": 2604,
+      "line": 3183,
+      "end_line": 3211,
       "args": [],
       "docstring": "Recovery child digest contains parent_run_id and run_kind='recovery'.",
       "references": []
@@ -18273,8 +18765,8 @@
       "name": "test_parent_summary_does_not_contain_full_child_body",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2607,
-      "end_line": 2623,
+      "line": 3214,
+      "end_line": 3230,
       "args": [],
       "docstring": "Parent digest summary is concise and does not inline the full recovery child.",
       "references": []
@@ -18283,8 +18775,8 @@
       "name": "test_no_recovery_present_behavior_unchanged",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2626,
-      "end_line": 2646,
+      "line": 3233,
+      "end_line": 3253,
       "args": [],
       "docstring": "Plain successful run with no recovery writes only parent keys, no recovery key.",
       "references": []
@@ -18293,8 +18785,8 @@
       "name": "test_nested_recovery_does_not_recurse",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2649,
-      "end_line": 2673,
+      "line": 3256,
+      "end_line": 3280,
       "args": [],
       "docstring": "recovery_execution has no nested recovery_execution \u2014 no infinite loop.",
       "references": []
@@ -18303,8 +18795,8 @@
       "name": "test_recovery_execution_in_execute_plan_steps",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2676,
-      "end_line": 2726,
+      "line": 3283,
+      "end_line": 3333,
       "args": [],
       "docstring": "End-to-end: _execute_plan_steps threads recovery _run_artifact into replan_artifact.",
       "references": []
@@ -18313,8 +18805,8 @@
       "name": "test_recovery_run_history_retrievable",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2729,
-      "end_line": 2744,
+      "line": 3336,
+      "end_line": 3351,
       "args": [],
       "docstring": "Recovery child is retrievable as a run_history fact via standard lookup.",
       "references": []
@@ -18323,8 +18815,8 @@
       "name": "test_parent_run_id_stable_and_unique",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2747,
-      "end_line": 2779,
+      "line": 3354,
+      "end_line": 3386,
       "args": [],
       "docstring": "Each _persist_run_digest call generates a unique run_id for the parent.",
       "references": []
@@ -18333,8 +18825,8 @@
       "name": "test_recovery_child_uses_compact_summary",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2797,
-      "end_line": 2809,
+      "line": 3404,
+      "end_line": 3416,
       "args": [],
       "docstring": "_persist_run_digest uses _build_compact_digest_summary for recovery child.",
       "references": []
@@ -18343,8 +18835,8 @@
       "name": "test_recovery_child_summary_contains_outcome",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2812,
-      "end_line": 2822,
+      "line": 3419,
+      "end_line": 3429,
       "args": [],
       "docstring": "Recovery child digest always has compact summary with outcome.",
       "references": []
@@ -18353,8 +18845,8 @@
       "name": "test_recovery_child_compact_format_single_line",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2825,
-      "end_line": 2836,
+      "line": 3432,
+      "end_line": 3443,
       "args": [],
       "docstring": "Recovery child digest summary is single-line compact, not multi-line artifact dump.",
       "references": []
@@ -18363,8 +18855,8 @@
       "name": "test_recovery_child_summary_differs_from_parent",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2839,
-      "end_line": 2857,
+      "line": 3446,
+      "end_line": 3464,
       "args": [],
       "docstring": "Parent and recovery child have independent compact summaries.",
       "references": []
@@ -18373,8 +18865,8 @@
       "name": "test_recovery_child_linkage_fields_intact",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2860,
-      "end_line": 2885,
+      "line": 3467,
+      "end_line": 3492,
       "args": [],
       "docstring": "Child has parent_run_id; parent has recovery_run_id pointing to child.",
       "references": []
@@ -18383,8 +18875,8 @@
       "name": "test_non_recovery_run_unchanged_by_summarizer_path",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2888,
-      "end_line": 2924,
+      "line": 3495,
+      "end_line": 3531,
       "args": [],
       "docstring": "Plain (non-recovery) runs are unaffected \u2014 no child entry, parent intact.",
       "references": []
@@ -18393,8 +18885,8 @@
       "name": "test_contains_parent_task",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2968,
-      "end_line": 2972,
+      "line": 3575,
+      "end_line": 3579,
       "args": [
         "self"
       ],
@@ -18405,8 +18897,8 @@
       "name": "test_contains_recovery_task",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2974,
-      "end_line": 2978,
+      "line": 3581,
+      "end_line": 3585,
       "args": [
         "self"
       ],
@@ -18417,8 +18909,8 @@
       "name": "test_contains_parent_outcome",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2980,
-      "end_line": 2986,
+      "line": 3587,
+      "end_line": 3593,
       "args": [
         "self"
       ],
@@ -18429,8 +18921,8 @@
       "name": "test_contains_recovery_outcome",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2988,
-      "end_line": 2994,
+      "line": 3595,
+      "end_line": 3601,
       "args": [
         "self"
       ],
@@ -18441,8 +18933,8 @@
       "name": "test_includes_recovery_summary",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 2996,
-      "end_line": 3002,
+      "line": 3603,
+      "end_line": 3609,
       "args": [
         "self"
       ],
@@ -18453,8 +18945,8 @@
       "name": "test_recovery_succeeded_note_when_no_failures",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3004,
-      "end_line": 3010,
+      "line": 3611,
+      "end_line": 3617,
       "args": [
         "self"
       ],
@@ -18465,8 +18957,8 @@
       "name": "test_remaining_failures_when_n_failed_nonzero",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3012,
-      "end_line": 3016,
+      "line": 3619,
+      "end_line": 3623,
       "args": [
         "self"
       ],
@@ -18477,8 +18969,8 @@
       "name": "test_empty_linked_dict_does_not_crash",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3018,
-      "end_line": 3022,
+      "line": 3625,
+      "end_line": 3629,
       "args": [
         "self"
       ],
@@ -18489,8 +18981,8 @@
       "name": "test_missing_parent_does_not_crash",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3024,
-      "end_line": 3028,
+      "line": 3631,
+      "end_line": 3635,
       "args": [
         "self"
       ],
@@ -18501,8 +18993,8 @@
       "name": "test_missing_recovery_does_not_crash",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3030,
-      "end_line": 3034,
+      "line": 3637,
+      "end_line": 3641,
       "args": [
         "self"
       ],
@@ -18513,8 +19005,8 @@
       "name": "test_returns_none_for_non_dict",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3040,
-      "end_line": 3043,
+      "line": 3647,
+      "end_line": 3650,
       "args": [
         "self"
       ],
@@ -18525,8 +19017,8 @@
       "name": "test_returns_none_when_no_results_key",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3045,
-      "end_line": 3048,
+      "line": 3652,
+      "end_line": 3655,
       "args": [
         "self"
       ],
@@ -18537,8 +19029,8 @@
       "name": "test_returns_none_when_no_method_key",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3050,
-      "end_line": 3053,
+      "line": 3657,
+      "end_line": 3660,
       "args": [
         "self"
       ],
@@ -18549,8 +19041,8 @@
       "name": "test_returns_none_when_results_empty",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3055,
-      "end_line": 3058,
+      "line": 3662,
+      "end_line": 3665,
       "args": [
         "self"
       ],
@@ -18561,8 +19053,8 @@
       "name": "test_linked_result_formatted_coherently",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3060,
-      "end_line": 3074,
+      "line": 3667,
+      "end_line": 3681,
       "args": [
         "self"
       ],
@@ -18573,8 +19065,8 @@
       "name": "test_plain_run_history_formatted",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3076,
-      "end_line": 3094,
+      "line": 3683,
+      "end_line": 3701,
       "args": [
         "self"
       ],
@@ -18585,8 +19077,8 @@
       "name": "test_malformed_linked_result_degrades_safely",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3096,
-      "end_line": 3110,
+      "line": 3703,
+      "end_line": 3717,
       "args": [
         "self"
       ],
@@ -18597,8 +19089,8 @@
       "name": "test_multiple_linked_results",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3112,
-      "end_line": 3132,
+      "line": 3719,
+      "end_line": 3739,
       "args": [
         "self"
       ],
@@ -18609,8 +19101,8 @@
       "name": "test_non_retriever_dict_returns_none",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3134,
-      "end_line": 3140,
+      "line": 3741,
+      "end_line": 3747,
       "args": [
         "self"
       ],
@@ -18621,8 +19113,8 @@
       "name": "test_unrelated_dict_returns_none",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3142,
-      "end_line": 3148,
+      "line": 3749,
+      "end_line": 3755,
       "args": [
         "self"
       ],
@@ -18633,8 +19125,8 @@
       "name": "test_recovery_query_invokes_retriever",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3154,
-      "end_line": 3196,
+      "line": 3761,
+      "end_line": 3803,
       "args": [
         "self"
       ],
@@ -18645,8 +19137,8 @@
       "name": "test_non_run_history_query_returns_none",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3198,
-      "end_line": 3201,
+      "line": 3805,
+      "end_line": 3808,
       "args": [
         "self"
       ],
@@ -18657,8 +19149,8 @@
       "name": "test_empty_memory_returns_none",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3203,
-      "end_line": 3206,
+      "line": 3810,
+      "end_line": 3813,
       "args": [
         "self"
       ],
@@ -18669,8 +19161,8 @@
       "name": "test_unrelated_query_returns_none",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3208,
-      "end_line": 3211,
+      "line": 3815,
+      "end_line": 3818,
       "args": [
         "self"
       ],
@@ -18681,8 +19173,8 @@
       "name": "test_retriever_output_formatted_not_raw",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3217,
-      "end_line": 3237,
+      "line": 3824,
+      "end_line": 3844,
       "args": [
         "self"
       ],
@@ -18693,8 +19185,8 @@
       "name": "test_non_retriever_dict_still_handled",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3239,
-      "end_line": 3248,
+      "line": 3846,
+      "end_line": 3855,
       "args": [
         "self"
       ],
@@ -18705,8 +19197,8 @@
       "name": "test_retriever_output_parent_only_shows_run",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3250,
-      "end_line": 3272,
+      "line": 3857,
+      "end_line": 3879,
       "args": [
         "self"
       ],
@@ -18717,8 +19209,8 @@
       "name": "test_extracts_absolute_paths",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3333,
-      "end_line": 3337,
+      "line": 3940,
+      "end_line": 3944,
       "args": [
         "self"
       ],
@@ -18729,8 +19221,8 @@
       "name": "test_extracts_relative_with_extension",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3339,
-      "end_line": 3345,
+      "line": 3946,
+      "end_line": 3952,
       "args": [
         "self"
       ],
@@ -18741,8 +19233,8 @@
       "name": "test_ignores_non_path_targets",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3347,
-      "end_line": 3352,
+      "line": 3954,
+      "end_line": 3959,
       "args": [
         "self"
       ],
@@ -18753,8 +19245,8 @@
       "name": "test_deduplicates",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3354,
-      "end_line": 3359,
+      "line": 3961,
+      "end_line": 3966,
       "args": [
         "self"
       ],
@@ -18765,8 +19257,8 @@
       "name": "test_empty_steps_returns_empty",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3361,
-      "end_line": 3365,
+      "line": 3968,
+      "end_line": 3972,
       "args": [
         "self"
       ],
@@ -18777,8 +19269,8 @@
       "name": "test_caps_at_20",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3367,
-      "end_line": 3372,
+      "line": 3974,
+      "end_line": 3979,
       "args": [
         "self"
       ],
@@ -18789,8 +19281,8 @@
       "name": "test_also_scans_plan",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3374,
-      "end_line": 3382,
+      "line": 3981,
+      "end_line": 3989,
       "args": [
         "self"
       ],
@@ -18801,8 +19293,8 @@
       "name": "test_dotslash_relative_path",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3384,
-      "end_line": 3388,
+      "line": 3991,
+      "end_line": 3995,
       "args": [
         "self"
       ],
@@ -18813,8 +19305,8 @@
       "name": "test_bare_word_without_extension_excluded",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3390,
-      "end_line": 3396,
+      "line": 3997,
+      "end_line": 4003,
       "args": [
         "self"
       ],
@@ -18825,8 +19317,8 @@
       "name": "test_parent_digest_includes_touched_paths",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3402,
-      "end_line": 3413,
+      "line": 4009,
+      "end_line": 4020,
       "args": [
         "self"
       ],
@@ -18837,8 +19329,8 @@
       "name": "test_parent_digest_empty_paths_when_no_file_targets",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3415,
-      "end_line": 3425,
+      "line": 4022,
+      "end_line": 4032,
       "args": [
         "self"
       ],
@@ -18849,8 +19341,8 @@
       "name": "test_recovery_child_digest_includes_its_own_paths",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3427,
-      "end_line": 3453,
+      "line": 4034,
+      "end_line": 4060,
       "args": [
         "self"
       ],
@@ -18861,8 +19353,8 @@
       "name": "test_parent_and_recovery_paths_are_distinct",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3455,
-      "end_line": 3488,
+      "line": 4062,
+      "end_line": 4095,
       "args": [
         "self"
       ],
@@ -18873,8 +19365,8 @@
       "name": "setup_method",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3494,
-      "end_line": 3497,
+      "line": 4101,
+      "end_line": 4104,
       "args": [
         "self"
       ],
@@ -18885,8 +19377,8 @@
       "name": "test_files_touched",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3499,
-      "end_line": 3500,
+      "line": 4106,
+      "end_line": 4107,
       "args": [
         "self"
       ],
@@ -18897,8 +19389,8 @@
       "name": "test_which_files",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3502,
-      "end_line": 3503,
+      "line": 4109,
+      "end_line": 4110,
       "args": [
         "self"
       ],
@@ -18909,8 +19401,8 @@
       "name": "test_what_file",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3505,
-      "end_line": 3506,
+      "line": 4112,
+      "end_line": 4113,
       "args": [
         "self"
       ],
@@ -18921,8 +19413,8 @@
       "name": "test_files_in_failed_run",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3508,
-      "end_line": 3509,
+      "line": 4115,
+      "end_line": 4116,
       "args": [
         "self"
       ],
@@ -18933,8 +19425,8 @@
       "name": "test_what_was_modified",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3511,
-      "end_line": 3512,
+      "line": 4118,
+      "end_line": 4119,
       "args": [
         "self"
       ],
@@ -18945,8 +19437,8 @@
       "name": "test_paths_involved",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3514,
-      "end_line": 3515,
+      "line": 4121,
+      "end_line": 4122,
       "args": [
         "self"
       ],
@@ -18957,8 +19449,8 @@
       "name": "test_non_path_query_returns_false",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3517,
-      "end_line": 3518,
+      "line": 4124,
+      "end_line": 4125,
       "args": [
         "self"
       ],
@@ -18969,8 +19461,8 @@
       "name": "test_architecture_query_returns_false",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3520,
-      "end_line": 3521,
+      "line": 4127,
+      "end_line": 4128,
       "args": [
         "self"
       ],
@@ -18981,8 +19473,8 @@
       "name": "test_empty_returns_false",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3523,
-      "end_line": 3524,
+      "line": 4130,
+      "end_line": 4131,
       "args": [
         "self"
       ],
@@ -18993,8 +19485,8 @@
       "name": "test_parent_paths_in_output",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3530,
-      "end_line": 3552,
+      "line": 4137,
+      "end_line": 4159,
       "args": [
         "self"
       ],
@@ -19005,8 +19497,8 @@
       "name": "test_recovery_paths_in_output",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3554,
-      "end_line": 3575,
+      "line": 4161,
+      "end_line": 4182,
       "args": [
         "self"
       ],
@@ -19017,8 +19509,8 @@
       "name": "test_parent_and_recovery_paths_distinct_in_output",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3577,
-      "end_line": 3604,
+      "line": 4184,
+      "end_line": 4211,
       "args": [
         "self"
       ],
@@ -19029,8 +19521,8 @@
       "name": "test_no_paths_does_not_add_empty_paths_line",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3606,
-      "end_line": 3628,
+      "line": 4213,
+      "end_line": 4235,
       "args": [
         "self"
       ],
@@ -19041,8 +19533,8 @@
       "name": "test_plain_run_history_with_paths_shows_paths",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3634,
-      "end_line": 3658,
+      "line": 4241,
+      "end_line": 4265,
       "args": [
         "self"
       ],
@@ -19053,8 +19545,8 @@
       "name": "test_no_paths_in_value_does_not_crash",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3660,
-      "end_line": 3678,
+      "line": 4267,
+      "end_line": 4285,
       "args": [
         "self"
       ],
@@ -19065,8 +19557,8 @@
       "name": "test_existing_file_classified_as_file",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3684,
-      "end_line": 3691,
+      "line": 4291,
+      "end_line": 4298,
       "args": [
         "self"
       ],
@@ -19077,8 +19569,8 @@
       "name": "test_existing_directory_classified_as_directory",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3693,
-      "end_line": 3698,
+      "line": 4300,
+      "end_line": 4305,
       "args": [
         "self"
       ],
@@ -19089,8 +19581,8 @@
       "name": "test_missing_path_classified_as_missing",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3700,
-      "end_line": 3707,
+      "line": 4307,
+      "end_line": 4314,
       "args": [
         "self"
       ],
@@ -19101,8 +19593,8 @@
       "name": "test_out_of_repo_classified_as_unresolvable",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3709,
-      "end_line": 3716,
+      "line": 4316,
+      "end_line": 4323,
       "args": [
         "self"
       ],
@@ -19113,8 +19605,8 @@
       "name": "test_empty_list_returns_empty",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3718,
-      "end_line": 3722,
+      "line": 4325,
+      "end_line": 4329,
       "args": [
         "self"
       ],
@@ -19125,8 +19617,8 @@
       "name": "test_none_item_skipped",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3724,
-      "end_line": 3730,
+      "line": 4331,
+      "end_line": 4337,
       "args": [
         "self"
       ],
@@ -19137,8 +19629,8 @@
       "name": "test_linked_result_shows_existing_vs_missing",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3736,
-      "end_line": 3760,
+      "line": 4343,
+      "end_line": 4367,
       "args": [
         "self"
       ],
@@ -19149,8 +19641,8 @@
       "name": "test_plain_result_shows_existing_vs_missing",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3762,
-      "end_line": 3789,
+      "line": 4369,
+      "end_line": 4396,
       "args": [
         "self"
       ],
@@ -19161,8 +19653,8 @@
       "name": "test_no_paths_unchanged_behavior",
       "type": "method",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3791,
-      "end_line": 3813,
+      "line": 4398,
+      "end_line": 4420,
       "args": [
         "self"
       ],
@@ -19173,8 +19665,8 @@
       "name": "test_should_digest_single_tool_true_for_real_tools",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3827,
-      "end_line": 3831,
+      "line": 4434,
+      "end_line": 4438,
       "args": [],
       "docstring": "",
       "references": []
@@ -19183,8 +19675,8 @@
       "name": "test_should_digest_single_tool_false_for_skip_list",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3834,
-      "end_line": 3839,
+      "line": 4441,
+      "end_line": 4446,
       "args": [],
       "docstring": "",
       "references": []
@@ -19193,8 +19685,8 @@
       "name": "test_should_digest_single_tool_false_for_seat_generated",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3842,
-      "end_line": 3845,
+      "line": 4449,
+      "end_line": 4452,
       "args": [],
       "docstring": "",
       "references": []
@@ -19203,8 +19695,8 @@
       "name": "test_build_single_tool_artifact_success",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3848,
-      "end_line": 3862,
+      "line": 4455,
+      "end_line": 4469,
       "args": [],
       "docstring": "",
       "references": []
@@ -19213,8 +19705,8 @@
       "name": "test_build_single_tool_artifact_failure",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3865,
-      "end_line": 3876,
+      "line": 4472,
+      "end_line": 4483,
       "args": [],
       "docstring": "",
       "references": []
@@ -19223,8 +19715,8 @@
       "name": "test_build_single_tool_artifact_uses_user_input_as_task",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3879,
-      "end_line": 3886,
+      "line": 4486,
+      "end_line": 4493,
       "args": [],
       "docstring": "",
       "references": []
@@ -19233,8 +19725,8 @@
       "name": "test_build_single_tool_artifact_falls_back_to_intent",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3889,
-      "end_line": 3896,
+      "line": 4496,
+      "end_line": 4503,
       "args": [],
       "docstring": "",
       "references": []
@@ -19243,8 +19735,8 @@
       "name": "test_compact_summary_tool_run_success",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3899,
-      "end_line": 3911,
+      "line": 4506,
+      "end_line": 4518,
       "args": [],
       "docstring": "",
       "references": []
@@ -19253,8 +19745,8 @@
       "name": "test_compact_summary_tool_run_failure",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3914,
-      "end_line": 3926,
+      "line": 4521,
+      "end_line": 4533,
       "args": [],
       "docstring": "",
       "references": []
@@ -19263,8 +19755,8 @@
       "name": "test_persist_run_digest_stores_tool_run",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3929,
-      "end_line": 3948,
+      "line": 4536,
+      "end_line": 4555,
       "args": [],
       "docstring": "",
       "references": []
@@ -19273,8 +19765,8 @@
       "name": "test_persist_run_digest_tool_run_no_recovery_child",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3951,
-      "end_line": 3962,
+      "line": 4558,
+      "end_line": 4569,
       "args": [],
       "docstring": "",
       "references": []
@@ -19283,8 +19775,8 @@
       "name": "test_planned_run_not_affected_by_single_tool_changes",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3965,
-      "end_line": 3980,
+      "line": 4572,
+      "end_line": 4587,
       "args": [],
       "docstring": "Multi-step planned run digest still uses run_kind=primary.",
       "references": []
@@ -19293,8 +19785,8 @@
       "name": "test_session_summary_reflects_tool_run_via_run_last",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 3983,
-      "end_line": 4000,
+      "line": 4590,
+      "end_line": 4607,
       "args": [],
       "docstring": "Session summary fallback shows tool run from run:last when no session logs.",
       "references": []
@@ -19303,8 +19795,8 @@
       "name": "test_run_history_lookup_no_duplicate_run_last",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4025,
-      "end_line": 4038,
+      "line": 4632,
+      "end_line": 4645,
       "args": [],
       "docstring": "_run_history_lookup deduplicates run:last vs run:<hash> by run_id.",
       "references": []
@@ -19313,8 +19805,8 @@
       "name": "test_run_history_lookup_returns_multiple_runs",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4041,
-      "end_line": 4059,
+      "line": 4648,
+      "end_line": 4666,
       "args": [],
       "docstring": "_run_history_lookup returns all unique runs up to limit.",
       "references": []
@@ -19323,8 +19815,8 @@
       "name": "test_retrieve_linked_run_history_no_duplicate_run_last",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4062,
-      "end_line": 4072,
+      "line": 4669,
+      "end_line": 4679,
       "args": [],
       "docstring": "_retrieve_linked_run_history deduplicates run:last vs run:<hash>.",
       "references": []
@@ -19333,8 +19825,8 @@
       "name": "test_extract_tool_output_string",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4075,
-      "end_line": 4077,
+      "line": 4682,
+      "end_line": 4684,
       "args": [],
       "docstring": "",
       "references": []
@@ -19343,8 +19835,8 @@
       "name": "test_extract_tool_output_none",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4080,
-      "end_line": 4082,
+      "line": 4687,
+      "end_line": 4689,
       "args": [],
       "docstring": "",
       "references": []
@@ -19353,8 +19845,8 @@
       "name": "test_extract_tool_output_dict_output_key",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4085,
-      "end_line": 4087,
+      "line": 4692,
+      "end_line": 4694,
       "args": [],
       "docstring": "",
       "references": []
@@ -19363,8 +19855,8 @@
       "name": "test_extract_tool_output_dict_stdout",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4090,
-      "end_line": 4092,
+      "line": 4697,
+      "end_line": 4699,
       "args": [],
       "docstring": "",
       "references": []
@@ -19373,8 +19865,8 @@
       "name": "test_extract_tool_output_dict_files_list",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4095,
-      "end_line": 4099,
+      "line": 4702,
+      "end_line": 4706,
       "args": [],
       "docstring": "",
       "references": []
@@ -19383,8 +19875,8 @@
       "name": "test_extract_tool_output_list",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4102,
-      "end_line": 4105,
+      "line": 4709,
+      "end_line": 4712,
       "args": [],
       "docstring": "",
       "references": []
@@ -19393,8 +19885,8 @@
       "name": "test_format_retrieval_results_tool_run_compact",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4108,
-      "end_line": 4124,
+      "line": 4715,
+      "end_line": 4731,
       "args": [],
       "docstring": "Tool runs render as [tool] single-line, not Run: header.",
       "references": []
@@ -19403,8 +19895,8 @@
       "name": "test_format_retrieval_results_primary_strips_prefix",
       "type": "function",
       "file_path": "tests/test_seat_loop_integration.py",
-      "line": 4127,
-      "end_line": 4147,
+      "line": 4734,
+      "end_line": 4754,
       "args": [],
       "docstring": "Planned run summary sub-line strips 'task: outcome | ' prefix.",
       "references": []
@@ -20498,7 +20990,7 @@
       "type": "method",
       "file_path": "agents/critic_agent.py",
       "line": 43,
-      "end_line": 93,
+      "end_line": 102,
       "args": [
         "self",
         "context"
@@ -20510,8 +21002,8 @@
       "name": "_review_plan",
       "type": "method",
       "file_path": "agents/critic_agent.py",
-      "line": 95,
-      "end_line": 124,
+      "line": 104,
+      "end_line": 133,
       "args": [
         "self",
         "plan"
@@ -20523,8 +21015,8 @@
       "name": "_review_result",
       "type": "method",
       "file_path": "agents/critic_agent.py",
-      "line": 126,
-      "end_line": 146,
+      "line": 135,
+      "end_line": 155,
       "args": [
         "self",
         "result"
@@ -20536,23 +21028,23 @@
       "name": "_review_run_artifact",
       "type": "method",
       "file_path": "agents/critic_agent.py",
-      "line": 148,
-      "end_line": 226,
+      "line": 157,
+      "end_line": 262,
       "args": [
         "self",
         "content",
         "parent_paths",
         "recovery_paths"
       ],
-      "docstring": "Deterministic review of a pre-formatted run artifact content string.\n\nChecks for: failed steps, wasted/skipped steps, poor recovery, empty outcome.\nWhen recovery is present and touched_paths are supplied, also checks for\nstructural path issues (overlap, gap, weak coverage, broad spread).\nContent is the formatted string produced by _format_run_artifact_content.",
+      "docstring": "Deterministic review of a run artifact.\n\nAccepts either:\n- dict: the full _run_artifact struct (preferred \u2014 no parsing needed)\n- str: the formatted string from _format_run_artifact_content (legacy)\n\nChecks for: failed steps, wasted/skipped steps, poor recovery, empty outcome.\nWhen recovery is present and touched_paths are supplied, also checks for\nstructural path issues (overlap, gap, weak coverage, broad spread).",
       "references": []
     },
     {
       "name": "_analyze_touched_paths",
       "type": "method",
       "file_path": "agents/critic_agent.py",
-      "line": 229,
-      "end_line": 280,
+      "line": 265,
+      "end_line": 316,
       "args": [
         "parent_paths",
         "recovery_paths"
@@ -20561,11 +21053,24 @@
       "references": []
     },
     {
+      "name": "_critique_tool_failure",
+      "type": "method",
+      "file_path": "agents/critic_agent.py",
+      "line": 319,
+      "end_line": 350,
+      "args": [
+        "tool_name",
+        "error"
+      ],
+      "docstring": "Deterministic single-line critique for a failed tool execution.\n\nReturns a compact bullet string or None when there is nothing actionable to say.\nNever calls a model \u2014 zero latency.",
+      "references": []
+    },
+    {
       "name": "_review_general",
       "type": "method",
       "file_path": "agents/critic_agent.py",
-      "line": 282,
-      "end_line": 287,
+      "line": 352,
+      "end_line": 357,
       "args": [
         "self",
         "content"
@@ -20577,8 +21082,8 @@
       "name": "create_critic_agent",
       "type": "function",
       "file_path": "agents/critic_agent.py",
-      "line": 290,
-      "end_line": 292,
+      "line": 360,
+      "end_line": 362,
       "args": [],
       "docstring": "Factory function to create critic agent.",
       "references": []
@@ -22135,7 +22640,7 @@
       "type": "method",
       "file_path": "agent/agent_loop.py",
       "line": 116,
-      "end_line": 275,
+      "end_line": 283,
       "args": [
         "self",
         "config"
@@ -22147,8 +22652,8 @@
       "name": "_setup_logging",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 278,
-      "end_line": 296,
+      "line": 286,
+      "end_line": 304,
       "args": [
         "self"
       ],
@@ -22159,8 +22664,8 @@
       "name": "_register_tools_from_config",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 298,
-      "end_line": 374,
+      "line": 306,
+      "end_line": 382,
       "args": [
         "self"
       ],
@@ -22171,8 +22676,8 @@
       "name": "_register_default_rules",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 376,
-      "end_line": 481,
+      "line": 384,
+      "end_line": 489,
       "args": [
         "self"
       ],
@@ -22183,8 +22688,8 @@
       "name": "_state_file",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 484,
-      "end_line": 489,
+      "line": 492,
+      "end_line": 497,
       "args": [
         "self"
       ],
@@ -22195,8 +22700,8 @@
       "name": "increment_revision",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 492,
-      "end_line": 500,
+      "line": 500,
+      "end_line": 508,
       "args": [
         "self",
         "source"
@@ -22208,8 +22713,8 @@
       "name": "get_revision",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 502,
-      "end_line": 503,
+      "line": 510,
+      "end_line": 511,
       "args": [
         "self"
       ],
@@ -22220,8 +22725,8 @@
       "name": "get_last_mutation",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 505,
-      "end_line": 506,
+      "line": 513,
+      "end_line": 514,
       "args": [
         "self"
       ],
@@ -22232,8 +22737,8 @@
       "name": "set_safe_mode",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 508,
-      "end_line": 510,
+      "line": 516,
+      "end_line": 518,
       "args": [
         "self",
         "enabled"
@@ -22245,8 +22750,8 @@
       "name": "is_safe_mode",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 512,
-      "end_line": 513,
+      "line": 520,
+      "end_line": 521,
       "args": [
         "self"
       ],
@@ -22257,8 +22762,8 @@
       "name": "get_current_lane",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 515,
-      "end_line": 516,
+      "line": 523,
+      "end_line": 524,
       "args": [
         "self"
       ],
@@ -22269,8 +22774,8 @@
       "name": "_determine_lane",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 518,
-      "end_line": 579,
+      "line": 526,
+      "end_line": 587,
       "args": [
         "self",
         "user_input",
@@ -22284,8 +22789,8 @@
       "name": "_quarantine_json",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 581,
-      "end_line": 593,
+      "line": 589,
+      "end_line": 601,
       "args": [
         "self",
         "path",
@@ -22298,8 +22803,8 @@
       "name": "_atomic_write_json",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 595,
-      "end_line": 611,
+      "line": 603,
+      "end_line": 619,
       "args": [
         "self",
         "path",
@@ -22312,8 +22817,8 @@
       "name": "_load_state",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 613,
-      "end_line": 625,
+      "line": 621,
+      "end_line": 633,
       "args": [
         "self"
       ],
@@ -22324,8 +22829,8 @@
       "name": "_create_initial_state",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 627,
-      "end_line": 635,
+      "line": 635,
+      "end_line": 643,
       "args": [
         "self"
       ],
@@ -22336,8 +22841,8 @@
       "name": "_save_state",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 637,
-      "end_line": 643,
+      "line": 645,
+      "end_line": 651,
       "args": [
         "self"
       ],
@@ -22348,8 +22853,8 @@
       "name": "_observe_environment",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 646,
-      "end_line": 659,
+      "line": 654,
+      "end_line": 667,
       "args": [
         "self"
       ],
@@ -22360,8 +22865,8 @@
       "name": "_get_uptime",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 661,
-      "end_line": 667,
+      "line": 669,
+      "end_line": 675,
       "args": [
         "self"
       ],
@@ -22372,8 +22877,8 @@
       "name": "_get_memory_usage",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 669,
-      "end_line": 683,
+      "line": 677,
+      "end_line": 691,
       "args": [
         "self"
       ],
@@ -22384,8 +22889,8 @@
       "name": "_get_disk_usage",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 685,
-      "end_line": 697,
+      "line": 693,
+      "end_line": 705,
       "args": [
         "self"
       ],
@@ -22396,8 +22901,8 @@
       "name": "_get_running_processes",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 699,
-      "end_line": 709,
+      "line": 707,
+      "end_line": 717,
       "args": [
         "self"
       ],
@@ -22408,8 +22913,8 @@
       "name": "_split_chain",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 716,
-      "end_line": 719,
+      "line": 724,
+      "end_line": 727,
       "args": [
         "self",
         "text"
@@ -22421,8 +22926,8 @@
       "name": "_resolve_references",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 730,
-      "end_line": 752,
+      "line": 738,
+      "end_line": 760,
       "args": [
         "self",
         "text",
@@ -22435,8 +22940,8 @@
       "name": "_build_context",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 755,
-      "end_line": 786,
+      "line": 763,
+      "end_line": 794,
       "args": [
         "self",
         "user_input"
@@ -22448,8 +22953,8 @@
       "name": "_record_dialogue",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 788,
-      "end_line": 833,
+      "line": 796,
+      "end_line": 841,
       "args": [
         "self",
         "user_input",
@@ -22465,8 +22970,8 @@
       "name": "_dialogue_uncertain",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 835,
-      "end_line": 847,
+      "line": 843,
+      "end_line": 855,
       "args": [
         "self",
         "mode"
@@ -22478,8 +22983,8 @@
       "name": "_is_junk_artifact",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 854,
-      "end_line": 855,
+      "line": 862,
+      "end_line": 863,
       "args": [
         "self",
         "name"
@@ -22491,8 +22996,8 @@
       "name": "_register_result_artifacts",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 857,
-      "end_line": 896,
+      "line": 865,
+      "end_line": 904,
       "args": [
         "self",
         "execution_result",
@@ -22505,8 +23010,8 @@
       "name": "_clarification_prompt",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 898,
-      "end_line": 899,
+      "line": 906,
+      "end_line": 907,
       "args": [
         "self",
         "user_input"
@@ -22518,8 +23023,8 @@
       "name": "_build_dialogue_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 901,
-      "end_line": 903,
+      "line": 909,
+      "end_line": 911,
       "args": [
         "self",
         "user_input",
@@ -22532,8 +23037,8 @@
       "name": "_handle_introspection",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 905,
-      "end_line": 906,
+      "line": 913,
+      "end_line": 914,
       "args": [
         "self",
         "user_input"
@@ -22545,8 +23050,8 @@
       "name": "_handle_dialogue_turn",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 908,
-      "end_line": 926,
+      "line": 916,
+      "end_line": 934,
       "args": [
         "self",
         "user_input",
@@ -22559,8 +23064,8 @@
       "name": "_record_command",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 928,
-      "end_line": 941,
+      "line": 936,
+      "end_line": 949,
       "args": [
         "self",
         "user_input",
@@ -22574,8 +23079,8 @@
       "name": "_parse_intent",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 944,
-      "end_line": 1019,
+      "line": 952,
+      "end_line": 1027,
       "args": [
         "self",
         "input_text",
@@ -22588,8 +23093,8 @@
       "name": "_generate_candidates",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1052,
-      "end_line": 1101,
+      "line": 1060,
+      "end_line": 1109,
       "args": [
         "self",
         "intent",
@@ -22602,8 +23107,8 @@
       "name": "_score_candidates",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1103,
-      "end_line": 1161,
+      "line": 1111,
+      "end_line": 1169,
       "args": [
         "self",
         "intent",
@@ -22616,8 +23121,8 @@
       "name": "_select_action",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1163,
-      "end_line": 1172,
+      "line": 1171,
+      "end_line": 1180,
       "args": [
         "self",
         "scored_candidates"
@@ -22629,8 +23134,8 @@
       "name": "_run_golearn",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1175,
-      "end_line": 1266,
+      "line": 1183,
+      "end_line": 1274,
       "args": [
         "self",
         "params"
@@ -22642,8 +23147,8 @@
       "name": "_run_ingest",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1268,
-      "end_line": 1340,
+      "line": 1276,
+      "end_line": 1348,
       "args": [
         "self",
         "params"
@@ -22655,8 +23160,8 @@
       "name": "_run_digest",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1342,
-      "end_line": 1379,
+      "line": 1350,
+      "end_line": 1387,
       "args": [
         "self",
         "params"
@@ -22668,8 +23173,8 @@
       "name": "_run_navigate",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1381,
-      "end_line": 1449,
+      "line": 1389,
+      "end_line": 1457,
       "args": [
         "self",
         "params"
@@ -22681,8 +23186,8 @@
       "name": "_run_pulse",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1451,
-      "end_line": 1539,
+      "line": 1459,
+      "end_line": 1547,
       "args": [
         "self",
         "params"
@@ -22694,8 +23199,8 @@
       "name": "_run_salvage_golearn",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1541,
-      "end_line": 1590,
+      "line": 1549,
+      "end_line": 1598,
       "args": [
         "self",
         "params"
@@ -22707,8 +23212,8 @@
       "name": "_execute_action",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1592,
-      "end_line": 1827,
+      "line": 1600,
+      "end_line": 1835,
       "args": [
         "self",
         "action"
@@ -22720,8 +23225,8 @@
       "name": "_post_execute",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1829,
-      "end_line": 1831,
+      "line": 1837,
+      "end_line": 1839,
       "args": [
         "self",
         "action",
@@ -22734,8 +23239,8 @@
       "name": "_calculate_confidence",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1834,
-      "end_line": 1837,
+      "line": 1842,
+      "end_line": 1845,
       "args": [
         "self",
         "intent",
@@ -22748,8 +23253,8 @@
       "name": "_reflect",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1839,
-      "end_line": 1847,
+      "line": 1847,
+      "end_line": 1855,
       "args": [
         "self",
         "intent",
@@ -22763,8 +23268,8 @@
       "name": "_update_state",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1849,
-      "end_line": 1850,
+      "line": 1857,
+      "end_line": 1858,
       "args": [
         "self",
         "reflection"
@@ -22776,8 +23281,8 @@
       "name": "_calculate_success_rate",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1852,
-      "end_line": 1853,
+      "line": 1860,
+      "end_line": 1861,
       "args": [
         "self"
       ],
@@ -22788,8 +23293,8 @@
       "name": "_calculate_average_confidence",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1855,
-      "end_line": 1856,
+      "line": 1863,
+      "end_line": 1864,
       "args": [
         "self"
       ],
@@ -22800,8 +23305,8 @@
       "name": "_planner_seat_candidates",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1877,
-      "end_line": 1932,
+      "line": 1885,
+      "end_line": 1940,
       "args": [
         "self",
         "intent"
@@ -22813,8 +23318,8 @@
       "name": "_seat_critique",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 1934,
-      "end_line": 2036,
+      "line": 1942,
+      "end_line": 2044,
       "args": [
         "self",
         "execution_result",
@@ -22824,11 +23329,26 @@
       "references": []
     },
     {
+      "name": "_critique_single_tool_failure",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2046,
+      "end_line": 2078,
+      "args": [
+        "self",
+        "execution_result",
+        "selected_action",
+        "intent"
+      ],
+      "docstring": "Deterministic critique for failed single-tool runs.\n\nFires only when:\n- execution failed (success=False)\n- no _run_artifact (single-tool path, not a plan)\n- action is not in skip list and not seat-generated\n- an error string is present\n\nReturns a compact bullet critique string or None.",
+      "references": []
+    },
+    {
       "name": "_try_seat_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2038,
-      "end_line": 2083,
+      "line": 2080,
+      "end_line": 2125,
       "args": [
         "self",
         "user_input"
@@ -22840,8 +23360,8 @@
       "name": "_seat_summarize",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2085,
-      "end_line": 2112,
+      "line": 2127,
+      "end_line": 2154,
       "args": [
         "self",
         "text"
@@ -22853,124 +23373,185 @@
       "name": "_format_run_artifact_content",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2115,
-      "end_line": 2161,
+      "line": 2157,
+      "end_line": 2159,
       "args": [
         "run_artifact"
       ],
-      "docstring": "Format _run_artifact into a compact content string for summarization.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_build_compact_digest_summary",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2164,
-      "end_line": 2203,
+      "line": 2162,
+      "end_line": 2164,
       "args": [
         "run_artifact"
       ],
-      "docstring": "Build a short \u22645-line deterministic digest summary, operator-readable.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_extract_touched_paths",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2206,
-      "end_line": 2229,
+      "line": 2167,
+      "end_line": 2169,
       "args": [
         "run_artifact"
       ],
-      "docstring": "Extract file/path targets from a run artifact's step records.\n\nOnly keeps targets that look like filesystem paths (absolute, relative,\nor bare names with a file extension). Returns a deduplicated ordered list\ncapped at 20 entries. Returns [] when no path-like targets are found.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_resolve_touched_paths",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2232,
-      "end_line": 2303,
+      "line": 2172,
+      "end_line": 2177,
       "args": [
         "paths",
         "base_dir"
       ],
-      "docstring": "Resolve touched paths against filesystem state.\n\nReturns a list of resolved path info dicts with keys:\n  - path: original path string\n  - status: \"file\" | \"directory\" | \"missing\" | \"unresolvable\"\n  - resolved: absolute path if resolved, else original\n\nUses optional base_dir to resolve relative paths; defaults to cwd.\nSkips paths outside base_dir or that can't be safely resolved.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_seat_summarize_run",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2305,
-      "end_line": 2335,
+      "line": 2179,
+      "end_line": 2180,
       "args": [
         "self",
         "run_artifact"
       ],
-      "docstring": "Generate a compact summary of a completed run via summarizer seat.\n\nReturns a short digest string. Falls back to deterministic format on failure.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_should_digest_single_tool",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2344,
-      "end_line": 2352,
+      "line": 2189,
+      "end_line": 2191,
       "args": [
         "selected_action"
       ],
-      "docstring": "Return True if this single-tool execution is worth persisting as a digest.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_extract_tool_output",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2355,
-      "end_line": 2385,
+      "line": 2194,
+      "end_line": 2196,
       "args": [
         "raw_output",
         "max_len"
       ],
-      "docstring": "Extract a clean string from a tool execution output value.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_build_single_tool_artifact",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2388,
-      "end_line": 2425,
+      "line": 2199,
+      "end_line": 2206,
       "args": [
         "intent",
         "selected_action",
         "execution_result",
         "user_input"
       ],
-      "docstring": "Build a minimal _run_artifact-compatible dict for a single-tool execution.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_persist_run_digest",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2427,
-      "end_line": 2567,
+      "line": 2208,
+      "end_line": 2209,
       "args": [
         "self",
         "run_artifact",
         "summary"
       ],
-      "docstring": "Persist a compact run digest to Karma memory, plus a linked child entry\nif the run contains a completed recovery execution.\n\nParent writes:\n- run:last          \u2014 always the most recent parent run (overwritten)\n- run:<hash8>       \u2014 stable per-run key; stored as digest[\"run_id\"]\n\nRecovery child writes (when recovery_execution is present):\n- run:recovery:<hash8>  \u2014 linked child entry; stored as digest[\"run_id\"]\nChild digest references parent via parent_run_id; parent digest references\nchild via recovery_run_id.\n\nRecursion safety: recovery artifacts produced by allow_replan=False cannot\ncontain recovery_execution themselves, so this method never recurses.",
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "build_operator_summary",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2213,
+      "end_line": 2215,
+      "args": [
+        "self"
+      ],
+      "docstring": "Return unified operator payload (task, last run, failure, health, session).",
+      "references": []
+    },
+    {
+      "name": "format_operator_summary",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2217,
+      "end_line": 2220,
+      "args": [
+        "self"
+      ],
+      "docstring": "Return operator summary as compact multi-line text.",
+      "references": []
+    },
+    {
+      "name": "build_boot_doctor_summary",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2222,
+      "end_line": 2224,
+      "args": [
+        "self"
+      ],
+      "docstring": "Return boot-time health + last-run-state payload.",
+      "references": []
+    },
+    {
+      "name": "format_boot_doctor_summary",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2226,
+      "end_line": 2229,
+      "args": [
+        "self"
+      ],
+      "docstring": "Return boot doctor as compact multi-line text.",
+      "references": []
+    },
+    {
+      "name": "get_run_detail",
+      "type": "method",
+      "file_path": "agent/agent_loop.py",
+      "line": 2231,
+      "end_line": 2234,
+      "args": [
+        "self",
+        "run_key"
+      ],
+      "docstring": "Return enriched run detail for a given run key (default: last run).",
       "references": []
     },
     {
       "name": "_execute_plan_steps",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2569,
-      "end_line": 2818,
+      "line": 2236,
+      "end_line": 2243,
       "args": [
         "self",
         "steps",
@@ -22978,15 +23559,15 @@
         "allow_replan",
         "seed_prior"
       ],
-      "docstring": "Execute planner-seat-generated steps in sequence.\n\nPer-step states: pending \u2192 running \u2192 done | failed | skipped.\nPolicy: stop on first failure; preserve partial output from completed steps.\nReturns a standard execution-result dict with '_step_states' attached.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_replan_after_failure",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2820,
-      "end_line": 2888,
+      "line": 2245,
+      "end_line": 2256,
       "args": [
         "self",
         "failed_state",
@@ -22996,130 +23577,130 @@
         "mgr",
         "run_artifact"
       ],
-      "docstring": "Ask planner seat for a recovery plan after a step failure.\n\nPasses structured run history to planner seat so it can make informed\nrecovery decisions. Returns parsed plan_steps (or [] on any failure).",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_format_review_targets",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2912,
-      "end_line": 2976,
+      "line": 2281,
+      "end_line": 2287,
       "args": [
         "touched_paths",
         "path_findings",
         "label_prefix"
       ],
-      "docstring": "Format a prioritized review-target list from touched_paths + path_findings.\n\nRisk-implicated paths appear first (overlap_risk / gap_risk / broad_spread),\nthen remaining touched paths grouped as existing vs missing.\nReturns empty string when no paths are available.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_format_linked_run_result",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 2979,
-      "end_line": 3030,
+      "line": 2290,
+      "end_line": 2292,
       "args": [
         "linked"
       ],
-      "docstring": "Format a linked_run_history dict into a coherent structured explanation.\n\nExpects linked = {\"kind\": \"linked_run_history\", \"parent\": {...}, \"recovery\": {...}}.\nUses available summaries and outcome fields; never dumps raw nested structures.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_format_retrieval_results",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3033,
-      "end_line": 3130,
+      "line": 2295,
+      "end_line": 2297,
       "args": [
         "output"
       ],
-      "docstring": "Format a retriever output dict into human-readable text.\n\nReturns None if `output` is not a retriever result dict (no \"results\"/\"method\" keys).\nHandles linked_run_history results with a structured path; falls back to plain\nrun_history summary lines for non-linked entries.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_try_run_history_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3132,
-      "end_line": 3162,
+      "line": 2299,
+      "end_line": 2300,
       "args": [
         "self",
         "user_input"
       ],
-      "docstring": "Pre-pass for free-form run-history and recovery-oriented queries.\n\nDetects whether the query is about recent execution history or a recovery\nattempt, invokes the retriever directly, and formats the result.\nReturns formatted text or None (caller falls through to other paths).",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_is_live_status_query",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3211,
-      "end_line": 3220,
+      "line": 2314,
+      "end_line": 2316,
       "args": [
         "cls",
         "query"
       ],
-      "docstring": "Return True when query is asking about current agent state.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_get_live_status_snapshot",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3222,
-      "end_line": 3242,
+      "line": 2318,
+      "end_line": 2319,
       "args": [
         "self"
       ],
-      "docstring": "Build a compact status snapshot from current_state + memory run:last.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_find_most_recent_run_digest",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3244,
-      "end_line": 3260,
+      "line": 2321,
+      "end_line": 2322,
       "args": [
         "self"
       ],
-      "docstring": "Return the most recent run:<hash> digest from memory, or None.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_format_live_status",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3262,
-      "end_line": 3365,
+      "line": 2324,
+      "end_line": 2325,
       "args": [
         "self",
         "snap",
         "query"
       ],
-      "docstring": "Format a concise answer to a live-status query from a snapshot.\n\nRoutes to sub-format based on query keywords. Returns None when the\nsnapshot has no useful state (avoids fake 'currently running' claims).",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_try_live_status_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3367,
-      "end_line": 3376,
+      "line": 2327,
+      "end_line": 2328,
       "args": [
         "self",
         "user_input"
       ],
-      "docstring": "Pre-pass for live-status / current-state queries.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_is_session_summary_query",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3407,
-      "end_line": 3415,
+      "line": 2333,
+      "end_line": 2335,
       "args": [
         "cls",
         "query"
@@ -23131,46 +23712,46 @@
       "name": "_build_session_summary",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3417,
-      "end_line": 3473,
+      "line": 2337,
+      "end_line": 2338,
       "args": [
         "self"
       ],
-      "docstring": "Build a compact summary of the current session from execution_log.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_format_session_summary",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3475,
-      "end_line": 3508,
+      "line": 2340,
+      "end_line": 2341,
       "args": [
         "self",
         "summary"
       ],
-      "docstring": "Format session summary dict into compact human-readable text.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_try_session_summary_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3510,
-      "end_line": 3519,
+      "line": 2343,
+      "end_line": 2344,
       "args": [
         "self",
         "user_input"
       ],
-      "docstring": "Pre-pass for session/boot-summary queries.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_is_self_check_query",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3537,
-      "end_line": 3542,
+      "line": 2349,
+      "end_line": 2351,
       "args": [
         "cls",
         "query"
@@ -23182,21 +23763,21 @@
       "name": "_try_self_check_response",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3544,
-      "end_line": 3570,
+      "line": 2353,
+      "end_line": 2354,
       "args": [
         "self",
         "user_input"
       ],
-      "docstring": "Run health.run_check() and format results compactly.",
+      "docstring": "",
       "references": []
     },
     {
       "name": "_result_to_text",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3573,
-      "end_line": 3653,
+      "line": 2357,
+      "end_line": 2437,
       "args": [
         "execution_result"
       ],
@@ -23207,8 +23788,8 @@
       "name": "_format_capabilities",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3656,
-      "end_line": 3665,
+      "line": 2440,
+      "end_line": 2449,
       "args": [
         "out"
       ],
@@ -23219,8 +23800,8 @@
       "name": "_dict_to_text",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3668,
-      "end_line": 3696,
+      "line": 2452,
+      "end_line": 2480,
       "args": [
         "d",
         "indent"
@@ -23232,8 +23813,8 @@
       "name": "run",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3699,
-      "end_line": 3711,
+      "line": 2483,
+      "end_line": 2495,
       "args": [
         "self",
         "user_input"
@@ -23245,8 +23826,8 @@
       "name": "_run_single",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 3713,
-      "end_line": 4011,
+      "line": 2497,
+      "end_line": 2804,
       "args": [
         "self",
         "user_input"
@@ -23258,8 +23839,8 @@
       "name": "stop",
       "type": "method",
       "file_path": "agent/agent_loop.py",
-      "line": 4013,
-      "end_line": 4018,
+      "line": 2806,
+      "end_line": 2811,
       "args": [
         "self"
       ],
@@ -23270,8 +23851,8 @@
       "name": "load_config",
       "type": "function",
       "file_path": "agent/agent_loop.py",
-      "line": 4021,
-      "end_line": 4024,
+      "line": 2814,
+      "end_line": 2817,
       "args": [
         "path"
       ],
@@ -24267,17 +24848,39 @@
       "type": "function",
       "file_path": "ui/web.py",
       "line": 240,
-      "end_line": 277,
+      "end_line": 282,
       "args": [],
       "docstring": "Get recent run history with outcomes.",
+      "references": []
+    },
+    {
+      "name": "get_run_detail",
+      "type": "function",
+      "file_path": "ui/web.py",
+      "line": 286,
+      "end_line": 317,
+      "args": [
+        "run_key"
+      ],
+      "docstring": "Get detailed run information by key.",
+      "references": []
+    },
+    {
+      "name": "get_session",
+      "type": "function",
+      "file_path": "ui/web.py",
+      "line": 321,
+      "end_line": 352,
+      "args": [],
+      "docstring": "Get session summary and self-check for operator visibility.",
       "references": []
     },
     {
       "name": "get_facts",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 281,
-      "end_line": 290,
+      "line": 356,
+      "end_line": 365,
       "args": [],
       "docstring": "",
       "references": []
@@ -24286,8 +24889,8 @@
       "name": "get_tasks",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 294,
-      "end_line": 300,
+      "line": 369,
+      "end_line": 375,
       "args": [],
       "docstring": "",
       "references": []
@@ -24296,8 +24899,8 @@
       "name": "get_memory",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 304,
-      "end_line": 310,
+      "line": 379,
+      "end_line": 385,
       "args": [],
       "docstring": "",
       "references": []
@@ -24306,8 +24909,8 @@
       "name": "get_tools",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 314,
-      "end_line": 325,
+      "line": 389,
+      "end_line": 400,
       "args": [],
       "docstring": "",
       "references": []
@@ -24316,8 +24919,8 @@
       "name": "get_system_map",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 329,
-      "end_line": 363,
+      "line": 404,
+      "end_line": 438,
       "args": [],
       "docstring": "Return live system resource snapshot.",
       "references": []
@@ -24326,8 +24929,8 @@
       "name": "get_timeline",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 367,
-      "end_line": 382,
+      "line": 442,
+      "end_line": 457,
       "args": [],
       "docstring": "Return recent execution log entries for timeline display.",
       "references": []
@@ -24336,8 +24939,8 @@
       "name": "get_capabilities",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 386,
-      "end_line": 410,
+      "line": 461,
+      "end_line": 485,
       "args": [],
       "docstring": "Return all agent capabilities with v2 operational data.",
       "references": []
@@ -24346,8 +24949,8 @@
       "name": "get_health",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 414,
-      "end_line": 423,
+      "line": 489,
+      "end_line": 498,
       "args": [],
       "docstring": "Return health report with repair classes and success rates.",
       "references": []
@@ -24356,8 +24959,8 @@
       "name": "safe_mode",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 430,
-      "end_line": 451,
+      "line": 505,
+      "end_line": 526,
       "args": [],
       "docstring": "Get or set safe mode.\n\nWhen safe mode is enabled, free-form natural language always goes to chat\nand is never routed to file/path/system tools.",
       "references": []
@@ -24366,8 +24969,8 @@
       "name": "get_revision",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 455,
-      "end_line": 466,
+      "line": 530,
+      "end_line": 541,
       "args": [],
       "docstring": "Get current state revision and last mutation info.",
       "references": []
@@ -24376,8 +24979,8 @@
       "name": "get_lane",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 470,
-      "end_line": 481,
+      "line": 545,
+      "end_line": 556,
       "args": [],
       "docstring": "Get current routing lane for diagnostics.",
       "references": []
@@ -24386,8 +24989,8 @@
       "name": "get_capability_map",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 485,
-      "end_line": 488,
+      "line": 560,
+      "end_line": 563,
       "args": [],
       "docstring": "Return full capability map with operational data.",
       "references": []
@@ -24396,8 +24999,8 @@
       "name": "get_retrieval_stats",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 492,
-      "end_line": 495,
+      "line": 567,
+      "end_line": 570,
       "args": [],
       "docstring": "Return retrieval bus metrics.",
       "references": []
@@ -24406,8 +25009,8 @@
       "name": "get_repair_history",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 499,
-      "end_line": 502,
+      "line": 574,
+      "end_line": 577,
       "args": [],
       "docstring": "Return repair outcome history.",
       "references": []
@@ -24416,8 +25019,8 @@
       "name": "get_confidence",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 506,
-      "end_line": 524,
+      "line": 581,
+      "end_line": 599,
       "args": [],
       "docstring": "Return confidence trend from execution log.",
       "references": []
@@ -24426,8 +25029,8 @@
       "name": "get_diagnostic",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 528,
-      "end_line": 548,
+      "line": 603,
+      "end_line": 623,
       "args": [],
       "docstring": "Runtime diagnostic \u2014 verify code path and dialogue state.",
       "references": []
@@ -24436,8 +25039,8 @@
       "name": "start_golearn",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 563,
-      "end_line": 605,
+      "line": 638,
+      "end_line": 680,
       "args": [],
       "docstring": "",
       "references": []
@@ -24446,8 +25049,8 @@
       "name": "golearn_status",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 609,
-      "end_line": 614,
+      "line": 684,
+      "end_line": 689,
       "args": [],
       "docstring": "",
       "references": []
@@ -24456,8 +25059,8 @@
       "name": "event_stream",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 621,
-      "end_line": 653,
+      "line": 696,
+      "end_line": 728,
       "args": [],
       "docstring": "Server-Sent Events stream from events.jsonl.",
       "references": []
@@ -24466,8 +25069,8 @@
       "name": "get_log",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 660,
-      "end_line": 668,
+      "line": 735,
+      "end_line": 743,
       "args": [],
       "docstring": "",
       "references": []
@@ -24476,8 +25079,8 @@
       "name": "get_telemetry",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 675,
-      "end_line": 682,
+      "line": 750,
+      "end_line": 757,
       "args": [],
       "docstring": "Get telemetry snapshot.",
       "references": []
@@ -24486,8 +25089,8 @@
       "name": "get_telemetry_events",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 686,
-      "end_line": 699,
+      "line": 761,
+      "end_line": 774,
       "args": [],
       "docstring": "Get recent telemetry events.",
       "references": []
@@ -24496,8 +25099,8 @@
       "name": "get_route_trace",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 706,
-      "end_line": 716,
+      "line": 781,
+      "end_line": 791,
       "args": [],
       "docstring": "Get latest route trace.",
       "references": []
@@ -24506,8 +25109,8 @@
       "name": "get_all_route_traces",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 720,
-      "end_line": 728,
+      "line": 795,
+      "end_line": 803,
       "args": [],
       "docstring": "Get all route traces.",
       "references": []
@@ -24516,8 +25119,8 @@
       "name": "get_receipts",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 735,
-      "end_line": 743,
+      "line": 810,
+      "end_line": 818,
       "args": [],
       "docstring": "Get recent action receipts.",
       "references": []
@@ -24526,8 +25129,8 @@
       "name": "get_receipts_summary",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 747,
-      "end_line": 754,
+      "line": 822,
+      "end_line": 829,
       "args": [],
       "docstring": "Get receipts summary.",
       "references": []
@@ -24536,8 +25139,8 @@
       "name": "get_mutations",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 761,
-      "end_line": 769,
+      "line": 836,
+      "end_line": 844,
       "args": [],
       "docstring": "Get recent mutations.",
       "references": []
@@ -24546,8 +25149,8 @@
       "name": "get_posture",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 776,
-      "end_line": 785,
+      "line": 851,
+      "end_line": 860,
       "args": [],
       "docstring": "Get current system posture.",
       "references": []
@@ -24556,8 +25159,8 @@
       "name": "get_provider_health",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 792,
-      "end_line": 799,
+      "line": 867,
+      "end_line": 874,
       "args": [],
       "docstring": "Get provider health status.",
       "references": []
@@ -24566,8 +25169,8 @@
       "name": "get_artifacts",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 806,
-      "end_line": 814,
+      "line": 881,
+      "end_line": 889,
       "args": [],
       "docstring": "Get recent artifacts.",
       "references": []
@@ -24576,8 +25179,8 @@
       "name": "search_artifacts",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 818,
-      "end_line": 827,
+      "line": 893,
+      "end_line": 902,
       "args": [],
       "docstring": "Search artifacts.",
       "references": []
@@ -24586,8 +25189,8 @@
       "name": "get_scratchpad",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 834,
-      "end_line": 850,
+      "line": 909,
+      "end_line": 925,
       "args": [],
       "docstring": "Get scratchpad notes.",
       "references": []
@@ -24596,8 +25199,8 @@
       "name": "add_scratchpad_note",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 854,
-      "end_line": 870,
+      "line": 929,
+      "end_line": 945,
       "args": [],
       "docstring": "Add a scratchpad note.",
       "references": []
@@ -24606,8 +25209,8 @@
       "name": "get_dropbay",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 877,
-      "end_line": 884,
+      "line": 952,
+      "end_line": 959,
       "args": [],
       "docstring": "Get drop bay status.",
       "references": []
@@ -24616,8 +25219,8 @@
       "name": "get_dropbay_items",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 888,
-      "end_line": 895,
+      "line": 963,
+      "end_line": 970,
       "args": [],
       "docstring": "Get drop bay items.",
       "references": []
@@ -24626,8 +25229,8 @@
       "name": "scan_models",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 902,
-      "end_line": 931,
+      "line": 977,
+      "end_line": 1006,
       "args": [],
       "docstring": "Scan a path for local models.",
       "references": []
@@ -24636,8 +25239,8 @@
       "name": "get_last_scan",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 935,
-      "end_line": 958,
+      "line": 1010,
+      "end_line": 1033,
       "args": [],
       "docstring": "Get the last scan receipt.",
       "references": []
@@ -24646,8 +25249,8 @@
       "name": "get_slots",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 965,
-      "end_line": 976,
+      "line": 1040,
+      "end_line": 1051,
       "args": [],
       "docstring": "Get all slots and their assignments.",
       "references": []
@@ -24656,8 +25259,8 @@
       "name": "assign_slot",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 980,
-      "end_line": 1011,
+      "line": 1055,
+      "end_line": 1086,
       "args": [],
       "docstring": "Assign a model to a slot or role.",
       "references": []
@@ -24666,8 +25269,8 @@
       "name": "get_agents",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1018,
-      "end_line": 1047,
+      "line": 1093,
+      "end_line": 1122,
       "args": [],
       "docstring": "Get all registered agents with status.",
       "references": []
@@ -24676,8 +25279,8 @@
       "name": "get_models",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1051,
-      "end_line": 1066,
+      "line": 1126,
+      "end_line": 1141,
       "args": [],
       "docstring": "Get all registered models with status.",
       "references": []
@@ -24686,8 +25289,8 @@
       "name": "register_model",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1070,
-      "end_line": 1104,
+      "line": 1145,
+      "end_line": 1179,
       "args": [],
       "docstring": "Register a discovered model.",
       "references": []
@@ -24696,8 +25299,8 @@
       "name": "load_model",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1108,
-      "end_line": 1127,
+      "line": 1183,
+      "end_line": 1202,
       "args": [],
       "docstring": "Load a model into memory.",
       "references": []
@@ -24706,8 +25309,8 @@
       "name": "unload_model",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1131,
-      "end_line": 1152,
+      "line": 1206,
+      "end_line": 1227,
       "args": [],
       "docstring": "Unload a model from memory.",
       "references": []
@@ -24716,8 +25319,8 @@
       "name": "get_pipeline_status",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1156,
-      "end_line": 1181,
+      "line": 1231,
+      "end_line": 1256,
       "args": [],
       "docstring": "Get agent/model pipeline status.",
       "references": []
@@ -24726,8 +25329,8 @@
       "name": "execute_pipeline",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1185,
-      "end_line": 1221,
+      "line": 1260,
+      "end_line": 1296,
       "args": [],
       "docstring": "Execute a task through the pipeline.",
       "references": []
@@ -24736,8 +25339,8 @@
       "name": "get_active_runtime",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1228,
-      "end_line": 1306,
+      "line": 1303,
+      "end_line": 1381,
       "args": [],
       "docstring": "Get current runtime state - role, slot, model, node, execution mode.",
       "references": []
@@ -24746,8 +25349,8 @@
       "name": "get_workers",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1313,
-      "end_line": 1344,
+      "line": 1388,
+      "end_line": 1419,
       "args": [],
       "docstring": "Get all registered workers with status.",
       "references": []
@@ -24756,8 +25359,8 @@
       "name": "get_worker",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1348,
-      "end_line": 1388,
+      "line": 1423,
+      "end_line": 1463,
       "args": [
         "worker_id"
       ],
@@ -24768,8 +25371,8 @@
       "name": "get_scheduler_summary",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1392,
-      "end_line": 1402,
+      "line": 1467,
+      "end_line": 1477,
       "args": [],
       "docstring": "Get scheduler summary with role assignments.",
       "references": []
@@ -24778,8 +25381,8 @@
       "name": "execute_scheduler",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1406,
-      "end_line": 1451,
+      "line": 1481,
+      "end_line": 1526,
       "args": [],
       "docstring": "Execute a role via scheduler.",
       "references": []
@@ -24788,8 +25391,8 @@
       "name": "get_nodes_health",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1455,
-      "end_line": 1465,
+      "line": 1530,
+      "end_line": 1540,
       "args": [],
       "docstring": "Get health status of all worker nodes.",
       "references": []
@@ -24798,8 +25401,8 @@
       "name": "get_predictions",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1472,
-      "end_line": 1503,
+      "line": 1547,
+      "end_line": 1578,
       "args": [],
       "docstring": "Get prediction engine summary.",
       "references": []
@@ -24808,8 +25411,8 @@
       "name": "get_prediction_mismatches",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1507,
-      "end_line": 1536,
+      "line": 1582,
+      "end_line": 1611,
       "args": [],
       "docstring": "Get recent prediction mismatches.",
       "references": []
@@ -24818,8 +25421,8 @@
       "name": "get_telemetry_dashboard",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1543,
-      "end_line": 1593,
+      "line": 1618,
+      "end_line": 1668,
       "args": [],
       "docstring": "Get complete telemetry dashboard data.",
       "references": []
@@ -24828,8 +25431,8 @@
       "name": "main",
       "type": "function",
       "file_path": "ui/web.py",
-      "line": 1599,
-      "end_line": 1609,
+      "line": 1674,
+      "end_line": 1684,
       "args": [],
       "docstring": "",
       "references": []
@@ -32191,6 +32794,513 @@
       "references": []
     },
     {
+      "name": "is_live_status_query",
+      "type": "function",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 106,
+      "end_line": 114,
+      "args": [
+        "query"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "is_session_summary_query",
+      "type": "function",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 117,
+      "end_line": 125,
+      "args": [
+        "query"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "is_self_check_query",
+      "type": "function",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 128,
+      "end_line": 133,
+      "args": [
+        "query"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "__init__",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 142,
+      "end_line": 146,
+      "args": [
+        "self",
+        "current_state",
+        "memory",
+        "health"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "get_live_status_snapshot",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 150,
+      "end_line": 170,
+      "args": [
+        "self"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "find_most_recent_run_digest",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 172,
+      "end_line": 187,
+      "args": [
+        "self"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "format_live_status",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 189,
+      "end_line": 282,
+      "args": [
+        "self",
+        "snap",
+        "query"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "try_live_status_response",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 284,
+      "end_line": 292,
+      "args": [
+        "self",
+        "user_input"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "build_session_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 296,
+      "end_line": 348,
+      "args": [
+        "self"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "format_session_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 350,
+      "end_line": 382,
+      "args": [
+        "self",
+        "summary"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "try_session_summary_response",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 384,
+      "end_line": 392,
+      "args": [
+        "self",
+        "user_input"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "try_self_check_response",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 396,
+      "end_line": 422,
+      "args": [
+        "self",
+        "user_input",
+        "health"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "build_operator_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 426,
+      "end_line": 509,
+      "args": [
+        "self"
+      ],
+      "docstring": "Single compact payload combining all operator-relevant state.\n\nCombines: current task / blocked state, last run + badge, last failure,\nlatest recovery, session counts, self-check health.\nSwallows all errors \u2014 always returns a dict.",
+      "references": []
+    },
+    {
+      "name": "format_operator_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 511,
+      "end_line": 565,
+      "args": [
+        "self",
+        "summary"
+      ],
+      "docstring": "Format operator summary as compact multi-line text.",
+      "references": []
+    },
+    {
+      "name": "build_boot_doctor_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 569,
+      "end_line": 630,
+      "args": [
+        "self"
+      ],
+      "docstring": "Boot-time compact health + state summary.\n\nChecks: system health, last run outcome, memory size.\nReturns a dict suitable for display or programmatic use.",
+      "references": []
+    },
+    {
+      "name": "format_boot_doctor_summary",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 632,
+      "end_line": 654,
+      "args": [
+        "self",
+        "summary"
+      ],
+      "docstring": "Format boot doctor as compact multi-line text for startup display.",
+      "references": []
+    },
+    {
+      "name": "try_run_history_response",
+      "type": "method",
+      "file_path": "agent/services/status_query_service.py",
+      "line": 658,
+      "end_line": 684,
+      "args": [
+        "self",
+        "user_input"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "outcome_badge",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 58,
+      "end_line": 60,
+      "args": [
+        "outcome"
+      ],
+      "docstring": "Return compact badge label for a run outcome string.",
+      "references": []
+    },
+    {
+      "name": "format_compact_output",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 63,
+      "end_line": 86,
+      "args": [
+        "value",
+        "max_len"
+      ],
+      "docstring": "Compact, copy-friendly rendering of tool output for digest storage.",
+      "references": []
+    },
+    {
+      "name": "format_error_compact",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 89,
+      "end_line": 99,
+      "args": [
+        "error"
+      ],
+      "docstring": "Compact error: surface the root message, strip traceback noise.",
+      "references": []
+    },
+    {
+      "name": "build_run_detail",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 102,
+      "end_line": 139,
+      "args": [
+        "run_key",
+        "memory"
+      ],
+      "docstring": "Return enriched run detail dict for operator display.\n\nIncludes run_kind, outcome_badge, critic fields, recovery linkage,\nkey output/error, step counts.  Returns None when key is absent.",
+      "references": []
+    },
+    {
+      "name": "failure_first_sort",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 142,
+      "end_line": 159,
+      "args": [
+        "results"
+      ],
+      "docstring": "Re-sort retrieval result entries so failures surface before successes.\n\nOrder: failed / recovery_failed / empty  \u2192  recovered  \u2192  success / other.\nStable sort preserves timestamp ordering within each tier.",
+      "references": []
+    },
+    {
+      "name": "extract_critic_fields",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 162,
+      "end_line": 192,
+      "args": [
+        "critique"
+      ],
+      "docstring": "Extract compact critic fields from a critique string.\n\nReturns {\"critic_issues\": [...], \"critic_lesson\": \"...\"} or {} if empty.\nIssues are parsed from bullet lines; lesson is the first issue.\nEach issue is truncated to 120 chars; at most 3 issues stored.",
+      "references": []
+    },
+    {
+      "name": "format_run_artifact_content",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 195,
+      "end_line": 247,
+      "args": [
+        "run_artifact"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "build_compact_digest_summary",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 250,
+      "end_line": 289,
+      "args": [
+        "run_artifact"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "extract_touched_paths",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 292,
+      "end_line": 305,
+      "args": [
+        "run_artifact"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "resolve_touched_paths",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 308,
+      "end_line": 346,
+      "args": [
+        "paths",
+        "base_dir"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "should_digest_single_tool",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 349,
+      "end_line": 355,
+      "args": [
+        "selected_action"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "extract_tool_output",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 358,
+      "end_line": 387,
+      "args": [
+        "raw_output",
+        "max_len"
+      ],
+      "docstring": "Extract the most useful string from tool output.\n\nString values are preserved verbatim (with newlines) up to max_len \u2014 this\nkeeps stdout/command output copy-friendly.  Non-string types (dict, list)\nuse format_compact_output for compact rendering.",
+      "references": []
+    },
+    {
+      "name": "build_single_tool_artifact",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 390,
+      "end_line": 429,
+      "args": [
+        "intent",
+        "selected_action",
+        "execution_result",
+        "user_input"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "format_review_targets",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 432,
+      "end_line": 494,
+      "args": [
+        "touched_paths",
+        "path_findings",
+        "label_prefix"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "format_retrieval_results",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 537,
+      "end_line": 650,
+      "args": [
+        "output",
+        "failure_first"
+      ],
+      "docstring": "Format run history results from retriever for display.\n\nfailure_first=True re-sorts results so failed/recovery_failed entries\nsurface before successful ones (same-tier entries keep timestamp order).",
+      "references": []
+    },
+    {
+      "name": "format_linked_run_result",
+      "type": "function",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 653,
+      "end_line": 703,
+      "args": [
+        "linked"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "__init__",
+      "type": "method",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 738,
+      "end_line": 739,
+      "args": [
+        "self",
+        "memory"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "seat_summarize_run",
+      "type": "method",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 741,
+      "end_line": 766,
+      "args": [
+        "self",
+        "run_artifact"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "persist_run_digest",
+      "type": "method",
+      "file_path": "agent/services/run_history_service.py",
+      "line": 768,
+      "end_line": 921,
+      "args": [
+        "self",
+        "run_artifact",
+        "summary"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "__init__",
+      "type": "method",
+      "file_path": "agent/services/plan_execution_service.py",
+      "line": 17,
+      "end_line": 19,
+      "args": [
+        "self",
+        "memory",
+        "logger"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "execute_plan_steps",
+      "type": "method",
+      "file_path": "agent/services/plan_execution_service.py",
+      "line": 21,
+      "end_line": 222,
+      "args": [
+        "self",
+        "steps",
+        "task_desc",
+        "allow_replan",
+        "seed_prior"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
+      "name": "replan_after_failure",
+      "type": "method",
+      "file_path": "agent/services/plan_execution_service.py",
+      "line": 224,
+      "end_line": 287,
+      "args": [
+        "self",
+        "failed_state",
+        "completed_states",
+        "remaining_steps",
+        "task_desc",
+        "mgr",
+        "run_artifact"
+      ],
+      "docstring": "",
+      "references": []
+    },
+    {
       "name": "__init__",
       "type": "method",
       "file_path": "docs/archive/research_providers_legacy.py",
@@ -34181,10 +35291,10 @@
     "research/index.py": [],
     "research/semantic_preparation.py": [],
     "research/session.py": [
-      "research/timekeeper.py",
-      "research/index.py",
       "research/pulse.py",
+      "research/index.py",
       "research/brancher.py",
+      "research/timekeeper.py",
       "research/pulse_words.py"
     ],
     "research/ingestor.py": [],
@@ -34227,6 +35337,10 @@
     "nexus/budget/__init__.py": [],
     "nexus/deliberation/__init__.py": [],
     "orchestrator/roles/runtime/role_engine.py": [],
+    "agent/services/status_query_service.py": [],
+    "agent/services/run_history_service.py": [],
+    "agent/services/__init__.py": [],
+    "agent/services/plan_execution_service.py": [],
     "docs/archive/research_providers_legacy.py": [],
     "research/providers/retry_provider.py": [
       "research/providers/base.py"
@@ -34242,15 +35356,15 @@
       "research/providers/base.py"
     ],
     "research/providers/__init__.py": [
-      "research/providers/brave_provider.py",
-      "research/providers/multi_provider.py",
-      "research/providers/rate_limiter.py",
       "research/providers/duckduckgo_provider.py",
-      "research/providers/browser_provider.py",
       "research/providers/retry_provider.py",
-      "research/providers/bing_provider.py",
       "research/providers/base.py",
-      "research/providers/cached_provider.py"
+      "research/providers/multi_provider.py",
+      "research/providers/bing_provider.py",
+      "research/providers/cached_provider.py",
+      "research/providers/brave_provider.py",
+      "research/providers/rate_limiter.py",
+      "research/providers/browser_provider.py"
     ],
     "research/providers/brave_provider.py": [
       "research/providers/base.py"

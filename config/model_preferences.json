@@ -1,0 +1,15 @@
+{
+  "role_preferences": {
+    "planner":   { "preferred_model": "qwen3:4b",          "fallback_models": ["granite3.3:2b"] },
+    "executor":  { "preferred_model": "qwen3:4b",          "fallback_models": ["granite3.3:2b"] },
+    "critic":    { "preferred_model": "qwen3:4b",          "fallback_models": ["granite3.3:2b"] },
+    "summarizer":{ "preferred_model": "granite3.3:2b",     "fallback_models": ["qwen3:4b"] },
+    "navigator": { "preferred_model": "granite3.3:2b",     "fallback_models": ["qwen3:4b"] },
+    "retriever": { "preferred_model": "nomic-embed-text",  "fallback_models": [] }
+  },
+  "general": {
+    "auto_select": true,
+    "prefer_local": true,
+    "max_memory_mb": 8192
+  }
+}

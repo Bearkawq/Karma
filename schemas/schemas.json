@@ -1,0 +1,119 @@
+{
+  "intent": {
+    "type": "object",
+    "properties": {
+      "intent": { "type": "string" },
+      "confidence": { "type": "number" },
+      "entities": {
+        "type": "object",
+        "additionalProperties": {
+          "type": ["string", "number", "boolean"]
+        }
+      }
+    },
+    "required": ["intent", "confidence"]
+  },
+  "action": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "preconditions": { "type": "array", "items": { "type": "string" } },
+      "effects": { "type": "array", "items": { "type": "string" } },
+      "cost": { "type": "number" },
+      "parameters": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "type": { "type": "string" },
+            "required": { "type": "boolean" }
+          },
+          "required": ["name", "type"]
+        }
+      },
+      "failure_modes": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["name", "preconditions", "effects", "cost"]
+  },
+  "task": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "goal": { "type": "string" },
+      "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "failed"] },
+      "created_at": { "type": "string", "format": "date-time" },
+      "updated_at": { "type": "string", "format": "date-time" },
+      "priority": { "type": "number" },
+      "subtasks": { "type": "array", "items": { "type": "string" } },
+      "context": { "type": "object" }
+    },
+    "required": ["id", "goal", "status", "created_at"]
+  },
+  "memory": {
+    "type": "object",
+    "properties": {
+      "episodic": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "event": { "type": "string" },
+          "context": { "type": "object" },
+          "outcome": { "type": "string" },
+          "confidence": { "type": "number" }
+        },
+        "required": ["timestamp", "event"]
+      },
+      "facts": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string" },
+          "value": { "type": "any" },
+          "source": { "type": "string" },
+          "confidence": { "type": "number" },
+          "last_updated": { "type": "string", "format": "date-time" }
+        },
+        "required": ["key", "value"]
+      }
+    }
+  },
+  "decision": {
+    "type": "object",
+    "properties": {
+      "cycle": { "type": "number" },
+      "timestamp": { "type": "string", "format": "date-time" },
+      "state": { "type": "object" },
+      "candidates": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string" },
+            "symbolic_score": { "type": "number" },
+            "ml_score": { "type": "number" },
+            "total_score": { "type": "number" },
+            "preconditions_met": { "type": "boolean" },
+            "reasoning": { "type": "string" }
+          },
+          "required": ["action", "symbolic_score", "total_score"]
+        }
+      },
+      "selected": { "type": "string" },
+      "outcome": { "type": "string" },
+      "execution_time": { "type": "number" }
+    },
+    "required": ["cycle", "timestamp", "selected"]
+  },
+  "ml_model": {
+    "type": "object",
+    "properties": {
+      "type": { "type": "string", "enum": ["naive_bayes", "logistic_regression"] },
+      "classes": { "type": "array", "items": { "type": "string" } },
+      "feature_counts": { "type": "object" },
+      "class_counts": { "type": "object" },
+      "total_count": { "type": "number" },
+      "coefficients": { "type": "object" },
+      "intercept": { "type": "number" }
+    }
+  }
+}

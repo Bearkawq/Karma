@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+data/learn/
+data/logs/
+data/events.jsonl
+data/episodic.jsonl
+data/facts.json
+data/tasks.json
+data/agent_state.json
+data/ml_models/
+data/decision_trace.jsonl
+data/user_tools/
+data/responses.json
+*.egg-info/

@@ -2208,6 +2208,35 @@ class AgentLoop:
     def _persist_run_digest(self, run_artifact: Dict[str, Any], summary: str) -> None:
         self._run_history_svc.persist_run_digest(run_artifact, summary)
 
+    # ---------- operator-facing summary / doctor API ----------
+
+    def build_operator_summary(self) -> Dict[str, Any]:
+        """Return unified operator payload (task, last run, failure, health, session)."""
+        self._status_query_svc._health = self.health
+        return self._status_query_svc.build_operator_summary()
+
+    def format_operator_summary(self) -> str:
+        """Return operator summary as compact multi-line text."""
+        self._status_query_svc._health = self.health
+        summary = self._status_query_svc.build_operator_summary()
+        return self._status_query_svc.format_operator_summary(summary)
+
+    def build_boot_doctor_summary(self) -> Dict[str, Any]:
+        """Return boot-time health + last-run-state payload."""
+        self._status_query_svc._health = self.health
+        return self._status_query_svc.build_boot_doctor_summary()
+
+    def format_boot_doctor_summary(self) -> str:
+        """Return boot doctor as compact multi-line text."""
+        self._status_query_svc._health = self.health
+        summary = self._status_query_svc.build_boot_doctor_summary()
+        return self._status_query_svc.format_boot_doctor_summary(summary)
+
+    def get_run_detail(self, run_key: str = "run:last") -> Optional[Dict[str, Any]]:
+        """Return enriched run detail for a given run key (default: last run)."""
+        from agent.services.run_history_service import build_run_detail
+        return build_run_detail(run_key, self.memory)
+
     def _execute_plan_steps(
         self,
         steps: List[Dict[str, Any]],

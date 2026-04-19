@@ -421,6 +421,238 @@ class StatusQueryService:
         except Exception:
             return None
 
+    # -- unified operator summary ---------------------------------------------
+
+    def build_operator_summary(self) -> Dict[str, Any]:
+        """Single compact payload combining all operator-relevant state.
+
+        Combines: current task / blocked state, last run + badge, last failure,
+        latest recovery, session counts, self-check health.
+        Swallows all errors — always returns a dict.
+        """
+        from agent.services.run_history_service import outcome_badge as _badge
+        from datetime import datetime
+
+        snap = self.get_live_status_snapshot()
+        session = self.build_session_summary()
+        run_last = snap.get("run_last") or {}
+
+        # Health (non-blocking)
+        health_summary: Optional[Dict[str, Any]] = None
+        try:
+            if self._health:
+                report = self._health.run_check()
+                n_issues = report.get("issues_found", 0)
+                top_issue = None
+                for issue in report.get("issues") or []:
+                    if issue.get("severity") in ("critical", "error", "warn"):
+                        top_issue = issue.get("issue", "")[:80]
+                        break
+                health_summary = {
+                    "status": report.get("status", "unknown"),
+                    "issues_found": n_issues,
+                    "top_issue": top_issue,
+                }
+        except Exception:
+            pass
+
+        # Latest recovery linkage
+        latest_recovery: Optional[Dict[str, Any]] = None
+        if run_last.get("recovery_run_id"):
+            try:
+                rec = self._memory.get_fact_value(run_last["recovery_run_id"])
+                if isinstance(rec, dict):
+                    latest_recovery = {
+                        "task": rec.get("task"),
+                        "outcome": rec.get("outcome"),
+                        "outcome_badge": rec.get("outcome_badge") or _badge(rec.get("outcome", "")),
+                        "run_id": rec.get("run_id"),
+                    }
+            except Exception:
+                pass
+        elif run_last.get("recovery_outcome"):
+            latest_recovery = {
+                "task": run_last.get("task"),
+                "outcome": run_last.get("recovery_outcome"),
+                "outcome_badge": _badge(run_last.get("recovery_outcome", "")),
+                "run_id": run_last.get("recovery_run_id"),
+            }
+
+        raw_outcome = run_last.get("outcome", "")
+        last_run_entry: Optional[Dict[str, Any]] = None
+        if run_last.get("task"):
+            last_run_entry = {
+                "task": run_last.get("task"),
+                "outcome": raw_outcome,
+                "outcome_badge": run_last.get("outcome_badge") or _badge(raw_outcome),
+                "ts": run_last.get("ts"),
+                "critic_lesson": run_last.get("critic_lesson"),
+                "run_id": run_last.get("run_id"),
+            }
+
+        return {
+            "current_task": snap.get("current_task"),
+            "blocked_reason": snap.get("blocked_reason"),
+            "confidence": snap.get("confidence", 0.0),
+            "last_run": last_run_entry,
+            "last_failure": snap.get("last_failure"),
+            "latest_recovery": latest_recovery,
+            "session": {
+                "start": session.get("session_start", ""),
+                "total": session.get("total", 0),
+                "succeeded": session.get("n_succeeded", 0),
+                "failed": session.get("n_failed", 0),
+                "fail_entries": session.get("fail_entries") or [],
+            },
+            "health": health_summary,
+            "ts": datetime.now().isoformat(timespec="seconds"),
+        }
+
+    def format_operator_summary(self, summary: Dict[str, Any]) -> str:
+        """Format operator summary as compact multi-line text."""
+        lines: List[str] = []
+
+        if summary.get("blocked_reason"):
+            lines.append(f"BLOCKED: {summary['blocked_reason']}")
+
+        last_run = summary.get("last_run")
+        if last_run and last_run.get("task"):
+            badge = last_run.get("outcome_badge") or last_run.get("outcome", "unknown")
+            lines.append(f"Last run: {last_run['task']} [{badge}]")
+            if last_run.get("critic_lesson"):
+                lines.append(f"  Lesson: {last_run['critic_lesson'][:100]}")
+
+        lf = summary.get("last_failure")
+        if lf and lf.get("intent"):
+            err = (lf.get("error") or "")
+            lines.append(
+                f"Last failure: {lf['intent']}" + (f" — {err[:80]}" if err else "")
+            )
+
+        lr = summary.get("latest_recovery")
+        if lr and lr.get("task"):
+            lines.append(
+                f"Recovery: {lr['task']} [{lr.get('outcome_badge') or lr.get('outcome', '?')}]"
+            )
+
+        conf = summary.get("confidence", 0.0)
+        if conf > 0:
+            lines.append(f"Confidence: {conf:.0%}")
+
+        sess = summary.get("session") or {}
+        total = sess.get("total", 0)
+        ok = sess.get("succeeded", 0)
+        fail = sess.get("failed", 0)
+        if total:
+            lines.append(f"Session: {total} task(s) — {ok} ok, {fail} failed")
+            for fe in (sess.get("fail_entries") or [])[:2]:
+                intent = fe.get("intent", "?")
+                err = (fe.get("error") or "")[:60]
+                lines.append(f"  Failed: {intent}" + (f" — {err}" if err else ""))
+
+        health = summary.get("health")
+        if health:
+            hstatus = health.get("status", "unknown")
+            n = health.get("issues_found", 0)
+            top = health.get("top_issue") or ""
+            if n > 0:
+                lines.append(
+                    f"Health: {hstatus} ({n} issue(s))" + (f" — {top[:60]}" if top else "")
+                )
+            else:
+                lines.append(f"Health: {hstatus}")
+
+        return "\n".join(lines) if lines else "No state recorded yet."
+
+    # -- boot doctor ----------------------------------------------------------
+
+    def build_boot_doctor_summary(self) -> Dict[str, Any]:
+        """Boot-time compact health + state summary.
+
+        Checks: system health, last run outcome, memory size.
+        Returns a dict suitable for display or programmatic use.
+        """
+        issues: List[str] = []
+        warnings: List[str] = []
+        recommend_recovery = False
+        health_status = "unknown"
+
+        # Health check
+        try:
+            if self._health:
+                report = self._health.run_check()
+                health_status = report.get("status", "unknown")
+                for issue in report.get("issues") or []:
+                    sev = issue.get("severity", "info")
+                    text = (issue.get("issue") or "")[:100]
+                    if sev in ("critical", "error"):
+                        issues.append(text)
+                    elif sev in ("warning", "warn"):
+                        warnings.append(text)
+        except Exception as e:
+            warnings.append(f"Health check unavailable: {str(e)[:60]}")
+
+        # Check last run for failures
+        last_run_status: Optional[Dict[str, Any]] = None
+        last_incomplete_task: Optional[Dict[str, Any]] = None
+        try:
+            run_last = self._memory.get_fact_value("run:last")
+            if isinstance(run_last, dict):
+                outcome = run_last.get("outcome", "")
+                task = run_last.get("task", "")
+                ts = run_last.get("ts", "")
+                last_run_status = {"task": task, "outcome": outcome, "ts": ts}
+                if outcome in ("failed", "recovery_failed"):
+                    last_incomplete_task = {"task": task, "outcome": outcome, "ts": ts}
+                    recommend_recovery = True
+                    warnings.append(f"Last run failed: '{task}' [{outcome}]")
+        except Exception:
+            pass
+
+        # Memory size check
+        try:
+            fact_count = len(self._memory.facts) if hasattr(self._memory, "facts") else 0
+            if fact_count > 10000:
+                warnings.append(f"Memory large ({fact_count} facts) — consider pruning")
+        except Exception:
+            pass
+
+        overall = "critical" if issues else ("warning" if warnings else "healthy")
+        return {
+            "status": overall,
+            "health_status": health_status,
+            "issues": issues[:5],
+            "warnings": warnings[:5],
+            "last_run": last_run_status,
+            "last_incomplete_task": last_incomplete_task,
+            "recommend_recovery": recommend_recovery,
+            "session_start": self._state.get("session_start_ts", ""),
+        }
+
+    def format_boot_doctor_summary(self, summary: Dict[str, Any]) -> str:
+        """Format boot doctor as compact multi-line text for startup display."""
+        lines: List[str] = []
+        status = summary.get("status", "unknown")
+        lines.append(f"Boot check: {status}")
+
+        for issue in summary.get("issues") or []:
+            lines.append(f"  [critical] {issue[:100]}")
+        for warning in summary.get("warnings") or []:
+            lines.append(f"  [warn] {warning[:100]}")
+
+        last_run = summary.get("last_run")
+        if last_run and last_run.get("task"):
+            badge = last_run.get("outcome", "unknown")
+            ts = (last_run.get("ts") or "")[:19]
+            lines.append(
+                f"Last run: '{last_run['task']}' [{badge}]" + (f" at {ts}" if ts else "")
+            )
+
+        if summary.get("recommend_recovery"):
+            lines.append("  → Recovery recommended before next run")
+
+        return "\n".join(lines)
+
     # -- run history ----------------------------------------------------------
 
     def try_run_history_response(self, user_input: str) -> Optional[str]:
@@ -446,6 +678,7 @@ class StatusQueryService:
             result = agent.run(ctx)
             if not result.success or not result.output:
                 return None
-            return format_retrieval_results(result.output)
+            # Use failure-first sort so failed/recovered runs surface before noise
+            return format_retrieval_results(result.output, failure_first=True)
         except Exception:
             return None

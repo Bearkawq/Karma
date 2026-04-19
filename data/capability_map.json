@@ -1,7 +1,7 @@
 {
   "tools": {
     "file": {
-      "successes": 5173,
+      "successes": 5940,
       "failures": 48,
       "tasks": [
         "list_files",
@@ -107,13 +107,13 @@
     }
   },
   "intent_counts": {
-    "list_files": 4130,
+    "list_files": 4741,
     "run_shell": 13,
     "read_file": 43,
-    "self_check": 709,
+    "self_check": 813,
     "repair_report": 7,
     "crystallize": 5,
-    "list_capabilities": 1074,
+    "list_capabilities": 1217,
     "test_act": 2,
     "_ti": 2,
     "_pi": 6,
@@ -121,7 +121,7 @@
     "tx": 2,
     "golearn": 75,
     "run_custom_tool": 2,
-    "search_files": 1044,
+    "search_files": 1200,
     "pulse": 11,
     "status_query": 48,
     "digest": 1,
@@ -150,5 +150,5 @@
     "navigate": 0,
     "code_test": 2
   },
-  "updated": "2026-04-18T22:56:37.970585"
+  "updated": "2026-04-19T07:03:22.838764"
 }

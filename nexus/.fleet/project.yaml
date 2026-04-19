@@ -1,0 +1,33 @@
+# Project Configuration - NEXUS
+
+Canonical metadata for the NEXUS project.
+
+## Project Info
+
+```yaml
+project:
+  name: "NEXUS"
+  path: "/home/mikoleye/karma/nexus"
+  type: "agent-framework"
+  language: "python"
+  framework: ""
+  
+entrypoint:
+  main: "nexus/__main__.py"
+  tests: "tests/"
+  docs: "docs/"
+
+defaults:
+  role: "builder"
+  max_workers: 2
+  
+paths:
+  core: "core/"
+  agents: "agents/"
+  storage: "storage/"
+  memory: "memory/"
+  deliberation: "deliberation/"
+  archaeology: "archaeology/"
+  budget: "budget/"
+  cli: "cli/"
+```

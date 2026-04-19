@@ -1,0 +1,36 @@
+{
+  "roles": {
+    "planner": {
+      "enabled": true,
+      "requires_model": false,
+      "fallback": "executor"
+    },
+    "executor": {
+      "enabled": true,
+      "requires_model": false
+    },
+    "retriever": {
+      "enabled": true,
+      "requires_model": false
+    },
+    "summarizer": {
+      "enabled": true,
+      "requires_model": true,
+      "model_role": "summarizer"
+    },
+    "critic": {
+      "enabled": true,
+      "requires_model": false,
+      "model_role": "coder"
+    },
+    "navigator": {
+      "enabled": true,
+      "requires_model": false
+    }
+  },
+  "defaults": {
+    "auto_mode": true,
+    "force_deterministic": false,
+    "fallback_role": "executor"
+  }
+}

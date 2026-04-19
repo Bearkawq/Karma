@@ -40,9 +40,123 @@ CRITIC_TRIVIAL_TOOLS: frozenset = frozenset(
     }
 )
 
+# Outcome → compact badge label
+_OUTCOME_BADGE_MAP: Dict[str, str] = {
+    "success": "ok",
+    "recovered": "recovered",
+    "failed": "failed",
+    "recovery_failed": "recovery_failed",
+    "partial": "partial",
+    "empty": "empty",
+}
+
 # ---------------------------------------------------------------------------
 # Pure static helpers (no external state)
 # ---------------------------------------------------------------------------
+
+
+def outcome_badge(outcome: str) -> str:
+    """Return compact badge label for a run outcome string."""
+    return _OUTCOME_BADGE_MAP.get((outcome or "").lower(), "unknown")
+
+
+def format_compact_output(value: Any, max_len: int = 200) -> str:
+    """Compact, copy-friendly rendering of tool output for digest storage."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        # Collapse internal whitespace; preserve newlines as \\n for copy-friendliness
+        lines = [l.rstrip() for l in value.strip().splitlines() if l.strip()]
+        cleaned = " | ".join(lines) if len(lines) > 1 else (lines[0] if lines else "")
+        return cleaned[:max_len]
+    if isinstance(value, (list, tuple)):
+        items = [str(x) for x in value[:10]]
+        joined = ", ".join(items)
+        suffix = f" (+{len(value) - 10} more)" if len(value) > 10 else ""
+        return (joined + suffix)[:max_len]
+    if isinstance(value, dict):
+        if len(value) <= 5:
+            parts = [
+                f"{k}={v}" for k, v in list(value.items())[:5]
+                if v not in (None, "", False)
+            ]
+            return (", ".join(parts))[:max_len]
+        keys = list(value.keys())[:6]
+        return f"{{{', '.join(str(k) for k in keys)}}}"[:max_len]
+    return str(value)[:max_len]
+
+
+def format_error_compact(error: str) -> str:
+    """Compact error: surface the root message, strip traceback noise."""
+    if not error:
+        return ""
+    lines = [l.strip() for l in error.strip().splitlines() if l.strip()]
+    # Prefer the last line that contains a known error pattern
+    for line in reversed(lines):
+        if any(p in line for p in ("Error:", "Exception:", "FATAL:", "failed:", "error:")):
+            return line[:120]
+    # Fall back to last non-empty line (often the actual message)
+    return lines[-1][:120] if lines else error[:120]
+
+
+def build_run_detail(run_key: str, memory) -> Optional[Dict[str, Any]]:
+    """Return enriched run detail dict for operator display.
+
+    Includes run_kind, outcome_badge, critic fields, recovery linkage,
+    key output/error, step counts.  Returns None when key is absent.
+    """
+    try:
+        fact = memory.get_fact_value(run_key)
+    except Exception:
+        return None
+    if not isinstance(fact, dict):
+        return None
+
+    raw_outcome = fact.get("outcome", "")
+    badge = fact.get("outcome_badge") or outcome_badge(raw_outcome)
+
+    return {
+        "run_id": fact.get("run_id", run_key),
+        "run_kind": fact.get("run_kind", "primary"),
+        "outcome_badge": badge,
+        "task": fact.get("task"),
+        "outcome": raw_outcome,
+        "ts": fact.get("ts"),
+        "n_steps": fact.get("n_steps", 0),
+        "n_failed": fact.get("n_failed", 0),
+        "n_skipped": fact.get("n_skipped", 0),
+        "completed_steps": (fact.get("completed_steps") or [])[:8],
+        "failed_steps": (fact.get("failed_steps") or [])[:3],
+        "key_output": fact.get("key_output", ""),
+        "key_error": fact.get("key_error", ""),
+        "recovery_outcome": fact.get("recovery_outcome"),
+        "recovery_run_id": fact.get("recovery_run_id"),
+        "path_findings": fact.get("path_findings") or [],
+        "touched_paths": fact.get("touched_paths") or [],
+        "critic_issues": fact.get("critic_issues") or [],
+        "critic_lesson": fact.get("critic_lesson", ""),
+        "summary": fact.get("summary", ""),
+    }
+
+
+def failure_first_sort(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Re-sort retrieval result entries so failures surface before successes.
+
+    Order: failed / recovery_failed / empty  →  recovered  →  success / other.
+    Stable sort preserves timestamp ordering within each tier.
+    """
+    _PRIORITY: Dict[str, int] = {
+        "failed": 0, "recovery_failed": 0, "empty": 1,
+        "recovered": 2,
+    }
+
+    def _key(r: Dict[str, Any]) -> int:
+        val = r.get("value") if isinstance(r, dict) else {}
+        if not isinstance(val, dict):
+            val = {}
+        return _PRIORITY.get(val.get("outcome", "success"), 3)
+
+    return sorted(results, key=_key)
 
 
 def extract_critic_fields(critique: str) -> Dict[str, Any]:
@@ -242,43 +356,35 @@ def should_digest_single_tool(selected_action: Dict[str, Any]) -> bool:
 
 
 def extract_tool_output(raw_output: Any, max_len: int = 200) -> str:
+    """Extract the most useful string from tool output.
+
+    String values are preserved verbatim (with newlines) up to max_len — this
+    keeps stdout/command output copy-friendly.  Non-string types (dict, list)
+    use format_compact_output for compact rendering.
+    """
     if raw_output is None:
         return ""
     if isinstance(raw_output, str):
         return raw_output[:max_len].strip()
     if isinstance(raw_output, (list, tuple)):
-        items = [str(x) for x in raw_output[:12]]
-        return ", ".join(items)[:max_len]
+        return format_compact_output(raw_output, max_len)
     if isinstance(raw_output, dict):
-        for key in (
-            "output",
-            "stdout",
-            "content",
-            "text",
-            "result",
-            "summary",
-            "message",
-        ):
+        for key in ("output", "stdout", "content", "text", "result", "summary", "message"):
             v = raw_output.get(key)
             if v and isinstance(v, str) and v.strip():
                 return v[:max_len].strip()
         for key in ("files", "items", "results", "lines", "entries"):
             v = raw_output.get(key)
             if v and isinstance(v, (list, tuple)):
-                items = [str(x) for x in v[:12]]
-                return ", ".join(items)[:max_len]
+                return format_compact_output(v, max_len)
         skip = {"success", "error", "exit_code", "stderr", "returncode"}
         meaningful = {
-            k: v
-            for k, v in raw_output.items()
+            k: v for k, v in raw_output.items()
             if k not in skip and v not in (None, "", False)
         }
         if meaningful:
-            vals = list(meaningful.values())
-            if len(vals) == 1:
-                return str(vals[0])[:max_len]
-            return str(meaningful)[:max_len]
-    return str(raw_output)[:max_len]
+            return format_compact_output(meaningful, max_len)
+    return format_compact_output(raw_output, max_len)
 
 
 def build_single_tool_artifact(
@@ -428,8 +534,12 @@ def _should_include_critic(val: Dict[str, Any]) -> bool:
     return True
 
 
-def format_retrieval_results(output: Any) -> Optional[str]:
-    """Format run history results from retriever for display."""
+def format_retrieval_results(output: Any, failure_first: bool = False) -> Optional[str]:
+    """Format run history results from retriever for display.
+
+    failure_first=True re-sorts results so failed/recovery_failed entries
+    surface before successful ones (same-tier entries keep timestamp order).
+    """
     if not isinstance(output, dict):
         return None
     if "results" not in output or "method" not in output:
@@ -438,6 +548,9 @@ def format_retrieval_results(output: Any) -> Optional[str]:
     results = output.get("results") or []
     if not results:
         return None
+
+    if failure_first:
+        results = failure_first_sort(results)
 
     sections: list = []
     seen_critic: set = set()
@@ -719,6 +832,7 @@ class RunHistoryService:
                             if s.get("error")
                         )
                     )[:3],
+                    "outcome_badge": outcome_badge(rec_outcome),
                     "summary": rec_compact,
                     "ts": rec_ts,
                     "touched_paths": rec_paths,
@@ -776,13 +890,14 @@ class RunHistoryService:
                 "summary": compact_summary,
                 "ts": ts,
                 "touched_paths": parent_paths,
+                "outcome_badge": outcome_badge(outcome),
                 "path_findings": run_artifact.get("path_findings") or [],
             }
             if run_kind == "tool":
                 digest["tool"] = run_artifact.get("tool", "")
                 digest["target"] = run_artifact.get("target", "")
                 digest["key_output"] = run_artifact.get("key_output", "")
-                digest["key_error"] = run_artifact.get("key_error", "")
+                digest["key_error"] = format_error_compact(run_artifact.get("key_error", ""))
 
             critic_fields = extract_critic_fields(run_artifact.get("critic", ""))
             if critic_fields:

@@ -1,0 +1,27 @@
+{
+  "models": [
+    {
+      "model_id": "qwen3:4b",
+      "type": "llm",
+      "backend": "ollama",
+      "roles": ["planner", "executor", "critic"],
+      "context_window": 32768,
+      "max_tokens": 4096
+    },
+    {
+      "model_id": "granite3.3:2b",
+      "type": "llm",
+      "backend": "ollama",
+      "roles": ["summarizer", "navigator"],
+      "context_window": 8192,
+      "max_tokens": 2048
+    },
+    {
+      "model_id": "nomic-embed-text",
+      "type": "embedding",
+      "backend": "ollama",
+      "roles": ["retriever"],
+      "embedding_dim": 768
+    }
+  ]
+}

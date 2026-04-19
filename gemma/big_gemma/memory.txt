@@ -1,0 +1,46 @@
+# Big Gemma Memory
+
+## Role
+STG deep reasoning specialist, escalation target from phone
+
+## System Info
+- Location: /home/mikoleye/karma/gemma/big_gemma/
+- Karma Root: /home/mikoleye/karma/
+- Bridge: /home/mikoleye/karma/bridge/
+- Platform: STG desktop with NVIDIA RTX 2060 (6GB VRAM)
+
+## GPU/Compute
+- NVIDIA GeForce RTX 2060
+- 6GB VRAM (5.3GB currently free)
+- Can run ~4-7B params comfortably, 14B with quantization
+
+## Model Selection - ACTUAL
+- **Chosen: qwen2.5-coder:7b** (practical stable choice)
+- **Why:** 
+  - gemma4 requires Ollama v0.20.0+ (current: v0.18.3)
+  - qwen2.5-coder:7b fits comfortably in 6GB VRAM
+  - 14B too large for stable inference on 6GB
+  - 7B is proven stable and responsive
+- **Future:** Update Ollama, pull gemma4:2b when available
+
+## Known Workers
+- goose: Planner-orchestrator on STG
+- little_gemma: Phone-side command center
+- opencode: General coding agent
+- codex: Specialist worker
+
+## Bridge Paths
+- Inbox: /home/mikoleye/karma/bridge/inbox/
+- Outbox: /home/mikoleye/karma/bridge/outbox/
+- Planner: /home/mikoleye/karma/bridge/planner/
+
+## Commands
+- Check status: python3 /home/mikoleye/karma/gemma/big_gemma/big_gemma.py status
+- Check inbox: python3 /home/mikoleye/karma/gemma/big_gemma/big_gemma.py inbox
+- Run model: ollama run qwen2.5-coder:7b
+
+## Notes
+- Created 2026-04-03
+- Updated 2026-04-04 with qwen2.5-coder:7b as practical fallback
+- Role prompt injected and verified
+- Ready for deep reasoning tasks (using qwen2.5)

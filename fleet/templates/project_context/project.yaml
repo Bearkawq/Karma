@@ -1,0 +1,32 @@
+# Project Configuration
+
+Canonical metadata for this project.
+
+## Fields
+
+```yaml
+project:
+  name: ""           # Human-readable project name
+  path: ""           # Absolute path to project root
+  type: ""           # Type: app, library, service, etc.
+  language: ""       # Primary language
+  framework: ""      # Primary framework (optional)
+  
+entrypoint:
+  main: ""           # Main entry point
+  tests: ""          # Test location
+  docs: ""           # Documentation location
+
+defaults:
+  role: builder      # Default role for this project
+  max_workers: 2    # Max concurrent workers
+  
+paths:
+  src: src/          # Source code directory
+  tests: tests/     # Test directory
+  docs: docs/       # Documentation directory
+```
+
+## Usage
+
+This file is the single source of truth for project metadata. Other .fleet files reference this.
