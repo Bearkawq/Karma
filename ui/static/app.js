@@ -462,24 +462,32 @@
             const toolLabel = run.tool ? `[${run.tool}] ` : '';
             const kindLabel = run.run_kind ? run.run_kind : '';
             
-            // Critic findings
+            // Critic findings - show prominently when present
             let criticHtml = '';
-            if (run.critic_issues && run.critic_issues.length) {
-              criticHtml = `<div class="rd-critic"><strong>Critic issues:</strong> ${run.critic_issues.map(i => `• ${i}`).join('<br>')}</div>`;
-            } else if (run.critic_lesson) {
-              criticHtml = `<div class="rd-critic"><strong>Lesson:</strong> ${run.critic_lesson}</div>`;
+            const issues = run.critic_issues || [];
+            const lesson = run.critic_lesson || '';
+            if (issues.length || lesson) {
+              criticHtml = `<div class="rd-critic-box">
+                <div class="rd-critic-header">Critic Findings</div>
+                ${issues.length ? `<div class="rd-issues">${issues.map((i, idx) => `<div class="rd-issue">${idx+1}. ${esc(i)}</div>`).join('')}</div>` : ''}
+                ${lesson && (!issues.length || issues[0] !== lesson) ? `<div class="rd-lesson"><strong>Lesson:</strong> ${esc(lesson)}</div>` : ''}
+              </div>`;
             }
             
             rdBox.innerHTML = `
               <div class="rd-header">
                 <span class="rd-badge ${badgeClass}">${outcome || 'unknown'}</span>
                 ${kindLabel ? `<span class="rd-badge" style="background:var(--surface);color:var(--text)">${kindLabel}</span>` : ''}
+                ${run.tool ? `<span class="rd-badge" style="background:var(--cyan);color:#000">${run.tool}</span>` : ''}
               </div>
               <div class="rd-task">${toolLabel}${run.task || run.key}</div>
               ${run.summary ? `<div class="rd-summary">${run.summary}</div>` : ''}
               ${run.error ? `<div class="rd-error">${esc(run.error)}</div>` : ''}
               ${criticHtml}
-              ${run.timestamp ? `<div class="rd-time">${run.timestamp.slice(0, 19)}</div>` : ''}
+              <div class="rd-meta">
+                ${run.timestamp ? `<span>${run.timestamp.slice(0, 19)}</span>` : ''}
+                ${run.key ? `<span class="rd-key">${run.key}</span>` : ''}
+              </div>
             `;
           } else {
             rdBox.innerHTML = '<div style="color:var(--text2)">Select a run from the list</div>';
@@ -489,7 +497,7 @@
         }
       }
       
-      // Single runs list with click selection
+      // Single runs list with click selection and critic indicators
       const rlList = $("#sys-singles");
       if (rlList) {
         rlList.innerHTML = "";
@@ -497,9 +505,10 @@
           const row = document.createElement("div");
           row.className = "tl-entry" + (r.key === selectedRunKey ? " selected" : "");
           const outcome = r.outcome === 'success' ? 'ok' : r.recovered ? 'recovered' : r.outcome === 'failed' ? 'fail' : '';
+          const hasCritic = (r.critic_issues && r.critic_issues.length) || r.critic_lesson;
           const label = r.tool ? `[${r.tool}] ` : '';
           const kind = r.run_kind === 'tool' ? '[T]' : r.run_kind === 'recovery' ? '[R]' : '';
-          row.innerHTML = `<span class="tl-dot ${outcome}"></span><span class="tl-intent">${kind}${label}${r.task || r.key}</span><span class="tl-conf">${r.outcome}</span>`;
+          row.innerHTML = `<span class="tl-dot ${outcome}"></span><span class="tl-intent">${kind}${label}${r.task || r.key}</span>${hasCritic ? '<span class="tl-critic-dot" title="Has critic">●</span>' : ''}<span class="tl-conf">${r.outcome}</span>`;
           row.style.cursor = "pointer";
           row.addEventListener("click", () => {
             selectedRunKey = r.key;
