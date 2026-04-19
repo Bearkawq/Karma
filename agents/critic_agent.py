@@ -47,9 +47,18 @@ class CriticAgent(BaseAgent):
             input_data = context.input_data or {}
             content_type = input_data.get("content_type", "plan")
             content = input_data.get("content", [])
-            content_str = str(content)[:1200]
             tp_parent: List[str] = input_data.get("touched_paths_parent") or []
             tp_recovery: List[str] = input_data.get("touched_paths_recovery") or []
+
+            # For model path: format dict artifact to readable string; leave others as-is
+            if content_type == "run_artifact" and isinstance(content, dict):
+                try:
+                    from agent.services.run_history_service import format_run_artifact_content
+                    content_str = format_run_artifact_content(content)[:1400]
+                except Exception:
+                    content_str = str(content)[:1400]
+            else:
+                content_str = str(content)[:1200]
 
             # Model path
             model_text = self._try_model(
@@ -151,41 +160,64 @@ class CriticAgent(BaseAgent):
         parent_paths: Optional[List[str]] = None,
         recovery_paths: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """Deterministic review of a pre-formatted run artifact content string.
+        """Deterministic review of a run artifact.
+
+        Accepts either:
+        - dict: the full _run_artifact struct (preferred — no parsing needed)
+        - str: the formatted string from _format_run_artifact_content (legacy)
 
         Checks for: failed steps, wasted/skipped steps, poor recovery, empty outcome.
         When recovery is present and touched_paths are supplied, also checks for
         structural path issues (overlap, gap, weak coverage, broad spread).
-        Content is the formatted string produced by _format_run_artifact_content.
         """
         issues: List[str] = []
         suggestions: List[str] = []
-        content_str = content if isinstance(content, str) else str(content)
-        lines = content_str.splitlines()
 
-        # Parse key fields from formatted content
-        outcome = ""
-        n_steps = 0
-        n_failed = 0
-        n_skipped = 0
-        has_recovery = False
-        recovery_outcome = ""
+        if isinstance(content, dict):
+            # Structured dict path — direct field access, no fragile parsing
+            outcome = content.get("outcome", "")
+            steps = content.get("steps", [])
+            failed = content.get("failed", [])
+            recovery = content.get("recovery")
 
-        for line in lines:
-            if line.startswith("Outcome:"):
-                outcome = line.split(":", 1)[1].strip()
-            elif line.startswith("Steps:"):
-                # e.g. "Steps: 3 total (2 done, 1 failed, 0 skipped)"
-                import re
-                m = re.search(r"(\d+) total.*?(\d+) done.*?(\d+) failed.*?(\d+) skipped", line)
-                if m:
-                    n_steps, _, n_failed, n_skipped = (int(x) for x in m.groups())
-            elif line.startswith("Failed:"):
-                if "timeout" in line.lower():
+            n_steps = len(steps)
+            n_failed_steps = sum(1 for s in steps if s.get("status") == "failed")
+            n_skipped = sum(1 for s in steps if s.get("status") == "skipped")
+            has_recovery = bool(recovery)
+            recovery_outcome = (recovery or {}).get("outcome", "") if has_recovery else ""
+
+            for fs in failed:
+                err_lower = (fs.get("error") or "").lower()
+                if "timeout" in err_lower or "timed out" in err_lower:
                     issues.append("Step timed out — consider smaller step scope or retry logic")
-            elif line.startswith("Recovery:"):
-                has_recovery = True
-                recovery_outcome = line.split(":", 1)[1].strip()
+                    break
+        else:
+            # Legacy: parse from formatted content string
+            content_str = content if isinstance(content, str) else str(content)
+            lines = content_str.splitlines()
+            outcome = ""
+            n_steps = n_failed_steps = n_skipped = 0
+            has_recovery = False
+            recovery_outcome = ""
+
+            for line in lines:
+                if line.startswith("Outcome:"):
+                    outcome = line.split(":", 1)[1].strip()
+                elif line.startswith("Steps:"):
+                    import re
+                    m = re.search(
+                        r"(\d+) total.*?(\d+) done.*?(\d+) failed.*?(\d+) skipped", line
+                    )
+                    if m:
+                        n_steps, _, n_failed_steps, n_skipped = (int(x) for x in m.groups())
+                elif line.startswith("Failed:"):
+                    if "timeout" in line.lower():
+                        issues.append("Step timed out — consider smaller step scope or retry logic")
+                elif line.startswith("Recovery:"):
+                    has_recovery = True
+                    rec_val = line.split(":", 1)[1].strip()
+                    # Strip trailing "(N step(s))" appended by format_run_artifact_content
+                    recovery_outcome = rec_val.split("(")[0].strip()
 
         # Outcome checks
         if outcome in ("failed", "empty"):
@@ -196,10 +228,12 @@ class CriticAgent(BaseAgent):
             issues.append("No output produced despite steps executing")
 
         # Step quality
-        if n_failed > 0 and not has_recovery:
-            issues.append(f"{n_failed} step(s) failed with no recovery attempt")
+        if n_failed_steps > 0 and not has_recovery:
+            issues.append(f"{n_failed_steps} step(s) failed with no recovery attempt")
         if n_skipped > 1:
-            suggestions.append(f"{n_skipped} steps were skipped — plan may be over-specified for this input")
+            suggestions.append(
+                f"{n_skipped} steps were skipped — plan may be over-specified for this input"
+            )
         if n_steps > 7:
             suggestions.append(f"Plan has {n_steps} steps — consider whether all are necessary")
 
@@ -207,7 +241,9 @@ class CriticAgent(BaseAgent):
         if has_recovery and recovery_outcome == "stopped":
             issues.append("Replanner returned no recovery steps — plan may need better fallback actions")
         if has_recovery and recovery_outcome not in ("recovered", "stopped", ""):
-            suggestions.append(f"Recovery outcome was '{recovery_outcome}' — verify recovery plan quality")
+            suggestions.append(
+                f"Recovery outcome was '{recovery_outcome}' — verify recovery plan quality"
+            )
 
         # Path-aware critique (only when recovery present and paths supplied)
         path_findings: List[Dict[str, str]] = []
@@ -278,6 +314,40 @@ class CriticAgent(BaseAgent):
             })
 
         return findings
+
+    @staticmethod
+    def _critique_tool_failure(tool_name: str, error: str) -> Optional[str]:
+        """Deterministic single-line critique for a failed tool execution.
+
+        Returns a compact bullet string or None when there is nothing actionable to say.
+        Never calls a model — zero latency.
+        """
+        if not error or not error.strip():
+            return None
+        err_lower = error.lower()
+
+        if "permission denied" in err_lower or "access denied" in err_lower:
+            hint = "check permissions or run with elevated access"
+        elif "no such file" in err_lower or "not found" in err_lower or "does not exist" in err_lower:
+            hint = "verify the target path exists before retrying"
+        elif "timed out" in err_lower or "timeout" in err_lower:
+            hint = "consider smaller scope or increase timeout"
+        elif "connection refused" in err_lower or "network unreachable" in err_lower:
+            hint = "check network connectivity or service availability"
+        elif "already exists" in err_lower:
+            hint = "target already present — check idempotency before overwriting"
+        elif "syntax error" in err_lower or "parse error" in err_lower or "invalid syntax" in err_lower:
+            hint = "fix syntax before retrying"
+        elif "out of memory" in err_lower or " oom" in err_lower or "memory error" in err_lower:
+            hint = "reduce input size or add memory limit"
+        elif "not implemented" in err_lower or "unsupported" in err_lower:
+            hint = "check tool capabilities or use an alternative"
+        else:
+            hint = "inspect error and verify preconditions"
+
+        err_short = error.strip()[:80]
+        label = tool_name if tool_name else "tool"
+        return f"- {label} failed: {err_short} — {hint}"
 
     def _review_general(self, content: Any) -> Dict[str, Any]:
         """General review."""

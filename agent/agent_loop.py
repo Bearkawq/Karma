@@ -271,6 +271,14 @@ class AgentLoop:
         # Current routing lane (for diagnostics)
         self._current_lane = RoutingLane.CHAT
 
+        # Extracted services — delegate run-history, status-query, plan-execution
+        from agent.services.run_history_service import RunHistoryService
+        from agent.services.status_query_service import StatusQueryService
+        from agent.services.plan_execution_service import PlanExecutionService
+        self._run_history_svc = RunHistoryService(self.memory)
+        self._status_query_svc = StatusQueryService(self.current_state, self.memory, self.health)
+        self._plan_exec_svc = PlanExecutionService(self.memory, self.logger)
+
         # Register action handlers
         _register_action_handlers(self)
 
@@ -1954,10 +1962,10 @@ class AgentLoop:
         recovery_paths: List[str] = []
 
         if _run_artifact:
-            # Multi-step path: use structured artifact
+            # Multi-step path: pass full structured artifact to critic
             if not _run_artifact.get("steps"):
                 return None
-            content = self._format_run_artifact_content(_run_artifact)
+            content = _run_artifact  # full dict — critic formats for model, reads directly for deterministic
             content_type = "run_artifact"
             parent_paths = AgentLoop._extract_touched_paths(_run_artifact)
             _recovery = _run_artifact.get("recovery") or {}
@@ -1997,7 +2005,7 @@ class AgentLoop:
                 task="review result",
                 context={
                     "content_type": content_type,
-                    "content": content[:1500],
+                    "content": content,  # dict for run_artifact, string for legacy result
                     "memory": self.memory,
                     "touched_paths_parent": parent_paths,
                     "touched_paths_recovery": recovery_paths,
@@ -2034,6 +2042,40 @@ class AgentLoop:
         except Exception:
             pass
         return None
+
+    def _critique_single_tool_failure(
+        self,
+        execution_result: Dict[str, Any],
+        selected_action: Optional[Dict[str, Any]],
+        intent: Optional[Dict[str, Any]],
+    ) -> Optional[str]:
+        """Deterministic critique for failed single-tool runs.
+
+        Fires only when:
+        - execution failed (success=False)
+        - no _run_artifact (single-tool path, not a plan)
+        - action is not in skip list and not seat-generated
+        - an error string is present
+
+        Returns a compact bullet critique string or None.
+        """
+        if execution_result.get("success"):
+            return None
+        if execution_result.get("_run_artifact"):
+            return None
+        if not selected_action:
+            return None
+        name = selected_action.get("name") or ""
+        if name in self._DIGEST_SKIP_NAMES:
+            return None
+        if selected_action.get("_seat_generated"):
+            return None
+        error = (execution_result.get("error") or "")
+        if not error or not error.strip():
+            return None
+        from agents.critic_agent import CriticAgent as _CA
+        tool = selected_action.get("tool") or name
+        return _CA._critique_tool_failure(tool, error)
 
     def _try_seat_response(self, user_input: str) -> Optional[str]:
         """Try seat pipeline for free-form queries not handled by responder.
@@ -2113,226 +2155,29 @@ class AgentLoop:
 
     @staticmethod
     def _format_run_artifact_content(run_artifact: Dict[str, Any]) -> str:
-        """Format _run_artifact into a compact content string for summarization."""
-        task = run_artifact.get("task", "unknown")
-        outcome = run_artifact.get("outcome", "unknown")
-        steps = run_artifact.get("steps", [])
-        outputs = run_artifact.get("outputs", [])
-        failed = run_artifact.get("failed", [])
-        recovery = run_artifact.get("recovery")
-
-        n_done = sum(1 for s in steps if s.get("status") == "done")
-        n_failed = sum(1 for s in steps if s.get("status") == "failed")
-        n_skipped = sum(1 for s in steps if s.get("status") == "skipped")
-
-        lines = [
-            f"Task: {task}",
-            f"Outcome: {outcome}",
-            f"Steps: {len(steps)} total ({n_done} done, {n_failed} failed, {n_skipped} skipped)",
-        ]
-
-        done_steps = [s for s in steps if s.get("status") == "done"]
-        if done_steps:
-            descs = [f"{s.get('action', '?')} {s.get('target', '')}".strip() for s in done_steps[:6]]
-            lines.append(f"Completed: {', '.join(descs)}")
-
-        for fs in failed[:3]:
-            err = (fs.get("error") or "")[:100]
-            lines.append(
-                f"Failed: step {fs.get('step')} ({fs.get('action', '?')} {fs.get('target', '').strip()})"
-                + (f" — {err}" if err else "")
-            )
-
-        if outputs and n_done > 0:
-            lines.append("Output:")
-            for o in outputs[:3]:
-                lines.append(f"  {str(o)[:120]}")
-
-        if recovery:
-            rec_outcome = recovery.get("outcome", "unknown")
-            rec_exec = recovery.get("recovery_execution") or {}
-            rec_n = len(rec_exec.get("steps", [])) or len(recovery.get("recovery_plan") or [])
-            lines.append(f"Recovery: {rec_outcome} ({rec_n} step(s))")
-            rec_failed = rec_exec.get("failed") or []
-            if rec_failed:
-                rf = rec_failed[0]
-                lines.append(f"  Recovery failed at: {rf.get('action', '?')} — {(rf.get('error') or '')[:80]}")
-
-        return "\n".join(lines)
+        from agent.services.run_history_service import format_run_artifact_content
+        return format_run_artifact_content(run_artifact)
 
     @staticmethod
     def _build_compact_digest_summary(run_artifact: Dict[str, Any]) -> str:
-        """Build a short ≤5-line deterministic digest summary, operator-readable."""
-        task = run_artifact.get("task", "unknown")
-        outcome = run_artifact.get("outcome", "unknown")
-        steps = run_artifact.get("steps", [])
-        failed = run_artifact.get("failed", [])
-        recovery = run_artifact.get("recovery")
-
-        done = [s for s in steps if s.get("status") == "done"]
-        n_skip = sum(1 for s in steps if s.get("status") == "skipped")
-
-        # Single-tool path: no steps, use tool + target
-        if run_artifact.get("run_kind") == "tool" and not steps:
-            tool = run_artifact.get("tool", "")
-            target = run_artifact.get("target", "")
-            desc = f"{tool} {target}".strip() if target else tool
-            parts = [f"{task}: {outcome}"]
-            if desc:
-                parts.append(f"tool={desc}")
-            if failed:
-                err = (failed[0].get("error") or "")[:70]
-                parts.append(f"error={err}" if err else "error=unknown")
-            elif run_artifact.get("key_output"):
-                parts.append(f"out={run_artifact['key_output'][:60]}")
-            return " | ".join(parts)
-
-        parts = [f"{task}: {outcome}"]
-        if done:
-            descs = [f"{s.get('action', '?')} {s.get('target', '')}".strip() for s in done[:4]]
-            parts.append(f"done={', '.join(descs)}")
-        if failed:
-            fs = failed[0]
-            err = (fs.get("error") or "")[:70]
-            parts.append(f"failed={fs.get('action', '?')}" + (f"({err})" if err else ""))
-        if n_skip:
-            parts.append(f"skipped={n_skip}")
-        if recovery:
-            rec_out = recovery.get("outcome", "unknown")
-            parts.append(f"recovery={rec_out}")
-        return " | ".join(parts)
+        from agent.services.run_history_service import build_compact_digest_summary
+        return build_compact_digest_summary(run_artifact)
 
     @staticmethod
     def _extract_touched_paths(run_artifact: Dict[str, Any]) -> List[str]:
-        """Extract file/path targets from a run artifact's step records.
-
-        Only keeps targets that look like filesystem paths (absolute, relative,
-        or bare names with a file extension). Returns a deduplicated ordered list
-        capped at 20 entries. Returns [] when no path-like targets are found.
-        """
-        import re
-
-        # Match paths: /abs, ./rel, ~/home, or bare-name.ext (no spaces, has dot+ext)
-        _PATH_RE = re.compile(
-            r"^(?:/|\.{1,2}/|~/)[\w./\-]+"  # /abs, ./rel, ~/home
-            r"|^[\w./\-]+\.\w{1,8}$"  # bare relative: src/foo.py, README.md
-        )
-
-        seen: set = set()
-        paths: List[str] = []
-        for collection in ("steps", "plan"):
-            for step in run_artifact.get(collection, []):
-                target = (step.get("target") or "").strip()
-                if target and _PATH_RE.match(target) and target not in seen:
-                    seen.add(target)
-                    paths.append(target)
-        return paths[:20]
+        from agent.services.run_history_service import extract_touched_paths
+        return extract_touched_paths(run_artifact)
 
     @staticmethod
     def _resolve_touched_paths(
         paths: List[str],
         base_dir: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Resolve touched paths against filesystem state.
-
-        Returns a list of resolved path info dicts with keys:
-          - path: original path string
-          - status: "file" | "directory" | "missing" | "unresolvable"
-          - resolved: absolute path if resolved, else original
-
-        Uses optional base_dir to resolve relative paths; defaults to cwd.
-        Skips paths outside base_dir or that can't be safely resolved.
-        """
-        import os
-
-        if not paths:
-            return []
-
-        base = base_dir or os.getcwd()
-        results: List[Dict[str, Any]] = []
-
-        for p in paths:
-            if not isinstance(p, str) or not p.strip():
-                continue
-
-            try:
-                # Resolve relative to base, expand user home
-                expanded = os.path.expanduser(p)
-                if not os.path.isabs(expanded):
-                    expanded = os.path.join(base, expanded)
-                resolved = os.path.normpath(os.path.abspath(expanded))
-
-                # Security: ensure resolved path is under base
-                common = os.path.commonpath([resolved, os.path.abspath(base)])
-                if common != os.path.abspath(base):
-                    results.append(
-                        {
-                            "path": p,
-                            "status": "unresolvable",
-                            "resolved": resolved,
-                        }
-                    )
-                    continue
-
-                # Check filesystem state
-                if os.path.isfile(resolved):
-                    status = "file"
-                elif os.path.isdir(resolved):
-                    status = "directory"
-                elif os.path.exists(resolved):
-                    status = "unknown"
-                else:
-                    status = "missing"
-
-                results.append(
-                    {
-                        "path": p,
-                        "status": status,
-                        "resolved": resolved,
-                    }
-                )
-            except Exception:
-                results.append(
-                    {
-                        "path": p,
-                        "status": "unresolvable",
-                        "resolved": p,
-                    }
-                )
-
-        return results
+        from agent.services.run_history_service import resolve_touched_paths
+        return resolve_touched_paths(paths, base_dir)
 
     def _seat_summarize_run(self, run_artifact: Dict[str, Any]) -> str:
-        """Generate a compact summary of a completed run via summarizer seat.
-
-        Returns a short digest string. Falls back to deterministic format on failure.
-        """
-        content = self._format_run_artifact_content(run_artifact)
-        try:
-            from core.agent_model_manager import get_agent_model_manager
-
-            mgr = get_agent_model_manager()
-            if not mgr._no_model_mode:
-                result = mgr.execute(
-                    task="summarize run",
-                    context={
-                        "content_type": "run_artifact",
-                        "content": content,
-                        "memory": self.memory,
-                    },
-                    explicit_role="summarizer",
-                )
-                if result.success and result.output:
-                    out = result.output
-                    summary = (
-                        out.get("summary", "") if isinstance(out, dict) else str(out)
-                    )
-                    if isinstance(summary, str) and len(summary.strip()) > 10:
-                        return summary.strip()
-        except Exception:
-            pass
-        # Deterministic fallback: compact one-liner
-        return AgentLoop._build_compact_digest_summary(run_artifact)
+        return self._run_history_svc.seat_summarize_run(run_artifact)
 
     # Actions that generate no operator-useful digest (housekeeping / meta / conversation)
     _DIGEST_SKIP_NAMES = frozenset({
@@ -2342,47 +2187,13 @@ class AgentLoop:
 
     @staticmethod
     def _should_digest_single_tool(selected_action: Dict[str, Any]) -> bool:
-        """Return True if this single-tool execution is worth persisting as a digest."""
-        name = selected_action.get("name") or ""
-        if name in AgentLoop._DIGEST_SKIP_NAMES:
-            return False
-        # Skip _seat_generated — those produce _run_artifact via _execute_plan_steps
-        if selected_action.get("_seat_generated"):
-            return False
-        return True
+        from agent.services.run_history_service import should_digest_single_tool
+        return should_digest_single_tool(selected_action)
 
     @staticmethod
     def _extract_tool_output(raw_output, max_len: int = 200) -> str:
-        """Extract a clean string from a tool execution output value."""
-        if raw_output is None:
-            return ""
-        if isinstance(raw_output, str):
-            return raw_output[:max_len].strip()
-        if isinstance(raw_output, (list, tuple)):
-            items = [str(x) for x in raw_output[:12]]
-            return ", ".join(items)[:max_len]
-        if isinstance(raw_output, dict):
-            # Priority: human-readable string fields
-            for key in ("output", "stdout", "content", "text", "result", "summary", "message"):
-                v = raw_output.get(key)
-                if v and isinstance(v, str) and v.strip():
-                    return v[:max_len].strip()
-            # List-valued fields — join items
-            for key in ("files", "items", "results", "lines", "entries"):
-                v = raw_output.get(key)
-                if v and isinstance(v, (list, tuple)):
-                    items = [str(x) for x in v[:12]]
-                    return ", ".join(items)[:max_len]
-            # Last resort: strip well-known meta keys and stringify remainder
-            skip = {"success", "error", "exit_code", "stderr", "returncode"}
-            meaningful = {k: v for k, v in raw_output.items() if k not in skip and v not in (None, "", False)}
-            if meaningful:
-                # Single non-empty value → use it directly
-                vals = list(meaningful.values())
-                if len(vals) == 1:
-                    return str(vals[0])[:max_len]
-                return str(meaningful)[:max_len]
-        return str(raw_output)[:max_len]
+        from agent.services.run_history_service import extract_tool_output
+        return extract_tool_output(raw_output, max_len)
 
     @staticmethod
     def _build_single_tool_artifact(
@@ -2391,180 +2202,11 @@ class AgentLoop:
         execution_result: Dict[str, Any],
         user_input: str = "",
     ) -> Dict[str, Any]:
-        """Build a minimal _run_artifact-compatible dict for a single-tool execution."""
-        name = selected_action.get("name") or ""
-        tool = selected_action.get("tool") or name
-        params = selected_action.get("parameters") or {}
-        target = (
-            params.get("target") or params.get("path") or
-            params.get("command") or params.get("name") or ""
-        )
-        task = (user_input or intent.get("intent", name) or name)[:120]
-        success = bool(execution_result.get("success", False))
-        outcome = "success" if success else "failed"
-
-        raw_output = execution_result.get("output")
-        key_output = AgentLoop._extract_tool_output(raw_output)
-
-        error = (execution_result.get("error") or "")[:120]
-
-        return {
-            "task": task,
-            "outcome": outcome,
-            "run_kind": "tool",
-            "tool": tool,
-            "target": str(target)[:80],
-            "steps": [],
-            "outputs": [key_output] if key_output else [],
-            "failed": [
-                {"step": 1, "action": tool, "target": str(target)[:80], "error": error}
-            ] if not success and error else [],
-            "recovery": None,
-            "key_output": key_output,
-            "key_error": error,
-        }
+        from agent.services.run_history_service import build_single_tool_artifact
+        return build_single_tool_artifact(intent, selected_action, execution_result, user_input)
 
     def _persist_run_digest(self, run_artifact: Dict[str, Any], summary: str) -> None:
-        """Persist a compact run digest to Karma memory, plus a linked child entry
-        if the run contains a completed recovery execution.
-
-        Parent writes:
-        - run:last          — always the most recent parent run (overwritten)
-        - run:<hash8>       — stable per-run key; stored as digest["run_id"]
-
-        Recovery child writes (when recovery_execution is present):
-        - run:recovery:<hash8>  — linked child entry; stored as digest["run_id"]
-        Child digest references parent via parent_run_id; parent digest references
-        child via recovery_run_id.
-
-        Recursion safety: recovery artifacts produced by allow_replan=False cannot
-        contain recovery_execution themselves, so this method never recurses.
-        """
-        import hashlib
-
-        try:
-            task = run_artifact.get("task", "unknown")
-            outcome = run_artifact.get("outcome", "unknown")
-            failed = run_artifact.get("failed", [])
-            recovery = run_artifact.get("recovery")
-            ts = __import__("datetime").datetime.now().isoformat(timespec="seconds")
-
-            # Stable parent key
-            run_key = "run:" + hashlib.md5(f"{task}{ts}".encode()).hexdigest()[:8]
-
-            # Persist recovery child first so we can reference its run_id in parent
-            recovery_run_id: Optional[str] = None
-            recovery_exec = recovery.get("recovery_execution") if recovery else None
-            if recovery_exec and recovery_exec.get("steps"):
-                rec_task = recovery_exec.get("task", task)
-                rec_outcome = recovery_exec.get("outcome", "unknown")
-                rec_ts = (
-                    __import__("datetime").datetime.now().isoformat(timespec="seconds")
-                )
-                rec_key = (
-                    "run:recovery:"
-                    + hashlib.md5(f"{rec_task}{rec_ts}".encode()).hexdigest()[:8]
-                )
-                recovery_run_id = rec_key
-
-                rec_n_steps = len(recovery_exec.get("steps", []))
-                rec_paths = AgentLoop._extract_touched_paths(recovery_exec)
-                rec_steps = recovery_exec.get("steps", [])
-                rec_done = [s for s in rec_steps if s.get("status") == "done"]
-                rec_fail = recovery_exec.get("failed", [])
-                rec_compact = AgentLoop._build_compact_digest_summary(recovery_exec)
-                rec_digest = {
-                    "run_id": rec_key,
-                    "run_kind": "recovery",
-                    "parent_run_id": run_key,
-                    "parent_task": task,
-                    "task": rec_task,
-                    "outcome": rec_outcome,
-                    "n_steps": rec_n_steps,
-                    "n_failed": len(rec_fail),
-                    "n_skipped": sum(1 for s in rec_steps if s.get("status") == "skipped"),
-                    "completed_steps": [
-                        {"step": s.get("step"), "action": s.get("action"), "target": s.get("target", "")}
-                        for s in rec_done[:8]
-                    ],
-                    "failed_steps": [
-                        {"step": s.get("step"), "action": s.get("action"),
-                         "target": s.get("target", ""), "error": (s.get("error") or "")[:120]}
-                        for s in rec_fail[:3]
-                    ],
-                    "key_errors": list(dict.fromkeys(
-                        (s.get("error") or "")[:80] for s in rec_fail if s.get("error")
-                    ))[:3],
-                    "summary": rec_compact,
-                    "ts": rec_ts,
-                    "touched_paths": rec_paths,
-                    "path_findings": run_artifact.get("path_findings") or [],
-                }
-                self.memory.save_fact(
-                    rec_key,
-                    rec_digest,
-                    source="run_artifact",
-                    confidence=0.9,
-                    topic="run_history",
-                )
-
-            steps = run_artifact.get("steps", [])
-            done_steps = [s for s in steps if s.get("status") == "done"]
-            fail_steps = [s for s in steps if s.get("status") == "failed"]
-            n_skipped = sum(1 for s in steps if s.get("status") == "skipped")
-            compact_summary = AgentLoop._build_compact_digest_summary(run_artifact)
-            parent_paths = AgentLoop._extract_touched_paths(run_artifact)
-            run_kind = run_artifact.get("run_kind", "primary")
-            digest = {
-                "run_id": run_key,
-                "run_kind": run_kind,
-                "task": task,
-                "outcome": outcome,
-                "n_steps": len(steps),
-                "n_failed": len(failed),
-                "n_skipped": n_skipped,
-                "completed_steps": [
-                    {"step": s.get("step"), "action": s.get("action"), "target": s.get("target", "")}
-                    for s in done_steps[:8]
-                ],
-                "failed_steps": [
-                    {"step": s.get("step"), "action": s.get("action"),
-                     "target": s.get("target", ""), "error": (s.get("error") or "")[:120]}
-                    for s in fail_steps[:3]
-                ],
-                "key_errors": list(dict.fromkeys(
-                    (s.get("error") or "")[:80] for s in fail_steps if s.get("error")
-                ))[:3],
-                "recovery_outcome": recovery.get("outcome") if recovery else None,
-                "recovery_run_id": recovery_run_id,
-                "summary": compact_summary,
-                "ts": ts,
-                "touched_paths": parent_paths,
-                "path_findings": run_artifact.get("path_findings") or [],
-            }
-            # Tool-run extras: include key output/error directly in digest
-            if run_kind == "tool":
-                digest["tool"] = run_artifact.get("tool", "")
-                digest["target"] = run_artifact.get("target", "")
-                digest["key_output"] = run_artifact.get("key_output", "")
-                digest["key_error"] = run_artifact.get("key_error", "")
-
-            self.memory.save_fact(
-                "run:last",
-                digest,
-                source="run_artifact",
-                confidence=0.9,
-                topic="run_history",
-            )
-            self.memory.save_fact(
-                run_key,
-                digest,
-                source="run_artifact",
-                confidence=0.9,
-                topic="run_history",
-            )
-        except Exception:
-            pass
+        self._run_history_svc.persist_run_digest(run_artifact, summary)
 
     def _execute_plan_steps(
         self,
@@ -2573,249 +2215,7 @@ class AgentLoop:
         allow_replan: bool = True,
         seed_prior: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """Execute planner-seat-generated steps in sequence.
-
-        Per-step states: pending → running → done | failed | skipped.
-        Policy: stop on first failure; preserve partial output from completed steps.
-        Returns a standard execution-result dict with '_step_states' attached.
-        """
-        from concurrent.futures import (
-            ThreadPoolExecutor,
-            TimeoutError as FuturesTimeout,
-        )
-        from core.agent_model_manager import get_agent_model_manager
-
-        steps = steps[: self._MAX_PLAN_STEPS]
-
-        step_states: List[Dict[str, Any]] = [
-            {
-                "step": s.get("step", i + 1),
-                "action": s.get("action", ""),
-                "target": s.get("target", ""),
-                "status": "pending",
-                "output": None,
-                "error": None,
-            }
-            for i, s in enumerate(steps)
-        ]
-
-        mgr = get_agent_model_manager()
-
-        if mgr._no_model_mode:
-            # Deterministic path: render each step description
-            outputs = []
-            prior_results = []
-            for state, step in zip(step_states, steps):
-                state["status"] = "done"
-                state["output"] = (
-                    f"{step.get('action', '')} {step.get('target', '')}".strip()
-                )
-                outputs.append(f"Step {state['step']}: {state['output']}")
-                prior_results.append(
-                    {
-                        "step": state["step"],
-                        "action": state["action"],
-                        "target": state["target"],
-                        "output": state["output"],
-                    }
-                )
-            _run_artifact = {
-                "task": task_desc,
-                "plan": [
-                    {
-                        "step": s.get("step"),
-                        "action": s.get("action"),
-                        "target": s.get("target"),
-                    }
-                    for s in steps
-                ],
-                "steps": step_states,
-                "outputs": outputs,
-                "prior_results": prior_results,
-                "failed": [],
-                "recovery": None,
-                "outcome": "success",
-            }
-            return {
-                "success": True,
-                "output": "\n".join(outputs),
-                "error": None,
-                "_step_states": step_states,
-                "_run_artifact": _run_artifact,
-            }
-
-        # Snapshot of all step descriptors passed as context to every executor call
-        all_step_descriptors = [
-            {
-                "step": s.get("step"),
-                "action": s.get("action"),
-                "target": s.get("target"),
-            }
-            for s in steps
-        ]
-        outputs: List[str] = []
-        # Seed from caller (e.g. recovery run inherits original run's completed outputs)
-        prior_results: List[Dict[str, Any]] = list(seed_prior) if seed_prior else []
-
-        for step, state in zip(steps, step_states):
-            state["status"] = "running"
-            step_task = (
-                f"{step.get('action', '')} {step.get('target', '')}".strip()
-                or task_desc
-            )
-            # Snapshot prior_results at closure-definition time (before this step runs)
-            prior_snapshot = list(prior_results)
-
-            def _run(task=step_task, prior=prior_snapshot):
-                return mgr.execute(
-                    task=task,
-                    context={
-                        "plan_steps": all_step_descriptors,
-                        "prior_results": prior,
-                        "memory": self.memory,
-                        "intent": "execute",
-                    },
-                    explicit_role="executor",
-                )
-
-            try:
-                with ThreadPoolExecutor(max_workers=1) as pool:
-                    result = pool.submit(_run).result(timeout=self._PLAN_STEP_TIMEOUT)
-
-                if result.success and result.output:
-                    out = result.output
-                    text = (
-                        out.get("execution", str(out))
-                        if isinstance(out, dict)
-                        else str(out)
-                    )
-                    state["status"] = "done"
-                    state["output"] = text
-                    outputs.append(f"Step {state['step']}: {text}")
-                    prior_results.append(
-                        {
-                            "step": state["step"],
-                            "action": state["action"],
-                            "target": state["target"],
-                            "output": text,
-                        }
-                    )
-                else:
-                    state["status"] = "failed"
-                    state["error"] = (
-                        getattr(result, "error", None) or "step returned failure"
-                    )
-                    self.logger.debug(
-                        f"Plan step {state['step']} failed: {state['error']}"
-                    )
-                    break
-
-            except FuturesTimeout:
-                state["status"] = "failed"
-                state["error"] = "timeout"
-                self.logger.warning(f"Plan step {state['step']} timed out")
-                break
-            except Exception as exc:
-                state["status"] = "failed"
-                state["error"] = str(exc)
-                self.logger.debug(f"Plan step {state['step']} error: {exc}")
-                break
-
-        # Mark any still-pending steps as skipped
-        for state in step_states:
-            if state["status"] == "pending":
-                state["status"] = "skipped"
-
-        failed = [s for s in step_states if s["status"] == "failed"]
-        combined = "\n".join(outputs) if outputs else None
-
-        # Build structured run artifact (always present)
-        _run_artifact: Dict[str, Any] = {
-            "task": task_desc,
-            "plan": all_step_descriptors,
-            "steps": step_states,
-            "outputs": outputs,
-            "prior_results": prior_results,
-            "failed": failed,
-            "recovery": None,
-            "outcome": "failed" if failed else ("success" if outputs else "empty"),
-        }
-
-        # Adaptive replan: one cycle only, when allowed and a failure occurred
-        replan_artifact: Optional[Dict[str, Any]] = None
-        if failed and allow_replan and not mgr._no_model_mode:
-            failed_state = failed[0]
-            completed_states = [s for s in step_states if s["status"] == "done"]
-            skipped_specs = [
-                {"step": s["step"], "action": s["action"], "target": s["target"]}
-                for s in step_states
-                if s["status"] == "skipped"
-            ]
-            replan_artifact = {
-                "original_plan": [
-                    {"step": s["step"], "action": s["action"], "target": s["target"]}
-                    for s in step_states
-                ],
-                "failed_step": failed_state,
-                "recovery_plan": None,
-                "outcome": "stopped",
-            }
-            recovery_steps = self._replan_after_failure(
-                failed_state,
-                completed_states,
-                skipped_specs,
-                task_desc,
-                mgr,
-                _run_artifact,
-            )
-            replan_artifact["recovery_plan"] = recovery_steps or None
-            _run_artifact["recovery"] = replan_artifact
-            if recovery_steps:
-                recovery_result = self._execute_plan_steps(
-                    recovery_steps,
-                    task_desc,
-                    allow_replan=False,
-                    seed_prior=prior_results,
-                )
-                for rs in recovery_result.get("_step_states", []):
-                    rs["recovery"] = True
-                    step_states.append(rs)
-                if recovery_result.get("output"):
-                    outputs.append("[Recovery] " + recovery_result["output"])
-                combined = "\n".join(outputs) if outputs else None
-                replan_artifact["outcome"] = (
-                    "recovered" if recovery_result.get("success") else "recovery_failed"
-                )
-                _run_artifact["outcome"] = replan_artifact["outcome"]
-                # Thread recovery execution artifact into replan_artifact for linked persistence.
-                # allow_replan=False guarantees no nested recovery inside recovery_exec_artifact.
-                recovery_exec_artifact = recovery_result.get("_run_artifact")
-                if recovery_exec_artifact:
-                    replan_artifact["recovery_execution"] = recovery_exec_artifact
-                rec_failed = [
-                    s
-                    for s in step_states
-                    if s["status"] == "failed" and not s.get("recovery")
-                ]
-                return {
-                    "success": len(rec_failed) == 0 and bool(outputs),
-                    "output": combined,
-                    "error": None
-                    if recovery_result.get("success")
-                    else recovery_result.get("error"),
-                    "_step_states": step_states,
-                    "_replan_artifact": replan_artifact,
-                    "_run_artifact": _run_artifact,
-                }
-
-        return {
-            "success": len(failed) == 0 and bool(outputs),
-            "output": combined,
-            "error": failed[0]["error"] if failed else None,
-            "_step_states": step_states,
-            "_replan_artifact": replan_artifact,
-            "_run_artifact": _run_artifact,
-        }
+        return self._plan_exec_svc.execute_plan_steps(steps, task_desc, allow_replan, seed_prior)
 
     def _replan_after_failure(
         self,
@@ -2826,66 +2226,9 @@ class AgentLoop:
         mgr,
         run_artifact: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """Ask planner seat for a recovery plan after a step failure.
-
-        Passes structured run history to planner seat so it can make informed
-        recovery decisions. Returns parsed plan_steps (or [] on any failure).
-        """
-        from concurrent.futures import ThreadPoolExecutor
-
-        try:
-            completed_summary = (
-                ", ".join(
-                    f"step {s['step']} ({s['action']}): {str(s.get('output', ''))[:80]}"
-                    for s in completed_states
-                )
-                or "none"
-            )
-            remaining_summary = (
-                ", ".join(
-                    f"step {s['step']} ({s['action']} {s.get('target', '')})"
-                    for s in remaining_steps
-                )
-                or "none"
-            )
-            replan_task = (
-                f"Recovery replan for: {task_desc}\n"
-                f"Failed step {failed_state['step']} ({failed_state['action']} "
-                f"{failed_state.get('target', '')}):\n"
-                f"  error: {failed_state.get('error', 'unknown error')}\n"
-                f"  output: {str(failed_state.get('output', ''))[:120]}\n"
-                f"Completed: {completed_summary}\n"
-                f"Remaining: {remaining_summary}\n"
-                "Provide a revised plan to recover and complete the goal."
-            )
-
-            def _call():
-                return mgr.execute(
-                    task=replan_task,
-                    context={
-                        "intent": "replan",
-                        "failed_step": failed_state,
-                        "completed": completed_states,
-                        "remaining": remaining_steps,
-                        "run_artifact": run_artifact,
-                        "memory": self.memory,
-                    },
-                    explicit_role="planner",
-                )
-
-            with ThreadPoolExecutor(max_workers=1) as pool:
-                result = pool.submit(_call).result(timeout=self._REPLAN_TIMEOUT)
-
-            if not result.success or not result.output:
-                return []
-            out = result.output
-            if isinstance(out, dict) and "plan_steps" in out:
-                steps = out["plan_steps"]
-                if isinstance(steps, list):
-                    return steps
-            return []
-        except Exception:
-            return []
+        return self._plan_exec_svc.replan_after_failure(
+            failed_state, completed_states, remaining_steps, task_desc, mgr, run_artifact
+        )
 
     # ---------- output helpers ----------
     # Keys to strip from output (telemetry / internal)
@@ -2909,665 +2252,81 @@ class AgentLoop:
     )
 
     @staticmethod
+    @staticmethod
     def _format_review_targets(
         touched_paths: List[str],
         path_findings: List[Dict[str, Any]],
         label_prefix: str = "",
     ) -> str:
-        """Format a prioritized review-target list from touched_paths + path_findings.
-
-        Risk-implicated paths appear first (overlap_risk / gap_risk / broad_spread),
-        then remaining touched paths grouped as existing vs missing.
-        Returns empty string when no paths are available.
-        """
-        if not touched_paths and not path_findings:
-            return ""
-
-        # Collect risk-specific paths per finding kind
-        _RISK_KINDS_WITH_PATHS = ("overlap_risk", "gap_risk", "broad_spread")
-        _RISK_LABELS = {
-            "overlap_risk": "overlap with failed run",
-            "gap_risk": "missed by recovery",
-            "broad_spread": "new in recovery",
-            "weak_coverage": "recovery skipped failed-run files",
-        }
-        risk_lines: List[str] = []
-        risk_seen: set = set()
-
-        for f in path_findings or []:
-            kind = f.get("kind", "")
-            if kind not in _RISK_LABELS:
-                continue
-            f_paths = f.get("paths") or []
-            label = _RISK_LABELS.get(kind, kind)
-            if kind in _RISK_KINDS_WITH_PATHS and f_paths:
-                for p in f_paths:
-                    risk_seen.add(p)
-                risk_lines.append(f"  [{label}] {', '.join(f_paths[:5])}")
-            else:
-                # No specific paths (weak_coverage, or finding lacks paths field)
-                risk_lines.append(f"  Risks: {label}")
-
-        # Remaining paths not already called out
-        other_paths = [p for p in touched_paths if p not in risk_seen]
-        resolved_other = AgentLoop._resolve_touched_paths(other_paths) if other_paths else []
-        existing_other = [r["path"] for r in resolved_other if r["status"] in ("file", "directory")]
-        missing_other = [r["path"] for r in resolved_other if r["status"] == "missing"]
-
-        lines: List[str] = []
-        if risk_lines:
-            header = f"{label_prefix}Review targets (risk-first):" if label_prefix else "Review targets (risk-first):"
-            lines.append(header)
-            lines.extend(risk_lines)
-        if existing_other:
-            lines.append(f"  Other paths (exist): {', '.join(existing_other[:10])}")
-        if missing_other:
-            lines.append(f"  Other paths (missing): {', '.join(missing_other[:10])}")
-        if not lines and touched_paths:
-            # No risk findings — just show resolved paths normally
-            resolved_all = AgentLoop._resolve_touched_paths(touched_paths)
-            existing = [r["path"] for r in resolved_all if r["status"] in ("file", "directory")]
-            missing = [r["path"] for r in resolved_all if r["status"] == "missing"]
-            prefix = f"{label_prefix}Paths:" if label_prefix else "Paths:"
-            if existing:
-                lines.append(f"{prefix} {', '.join(existing[:10])}")
-            if missing:
-                lines.append(f"Missing paths: {', '.join(missing[:10])}")
-        return "\n".join(lines)
+        from agent.services.run_history_service import format_review_targets
+        return format_review_targets(touched_paths, path_findings, label_prefix)
 
     @staticmethod
     def _format_linked_run_result(linked: Dict[str, Any]) -> str:
-        """Format a linked_run_history dict into a coherent structured explanation.
-
-        Expects linked = {"kind": "linked_run_history", "parent": {...}, "recovery": {...}}.
-        Uses available summaries and outcome fields; never dumps raw nested structures.
-        """
-        parent = linked.get("parent") or {}
-        recovery = linked.get("recovery") or {}
-
-        lines: list = []
-
-        # Parent run
-        p_task = parent.get("task") or "unknown task"
-        p_outcome = parent.get("outcome") or "unknown"
-        p_summary = parent.get("summary") or ""
-        p_paths = parent.get("touched_paths") or []
-        resolved_p = AgentLoop._resolve_touched_paths(p_paths)
-        lines.append(f"Failed run: {p_task}")
-        lines.append(f"Outcome: {p_outcome}")
-        if p_summary and p_summary.strip() != p_task:
-            lines.append(f"Details: {p_summary.strip()[:200]}")
-        p_findings = parent.get("path_findings") or []
-        rt = AgentLoop._format_review_targets(p_paths, p_findings, label_prefix="Failed-run ")
-        if rt:
-            lines.append(rt)
-
-        lines.append("")
-
-        # Recovery attempt
-        r_task = recovery.get("task") or "recovery"
-        r_outcome = recovery.get("outcome") or "unknown"
-        r_summary = recovery.get("summary") or ""
-        r_n_steps = recovery.get("n_steps") or 0
-        r_n_failed = recovery.get("n_failed") or 0
-        r_paths = recovery.get("touched_paths") or []
-        lines.append(f"Recovery attempt: {r_task}")
-        lines.append(f"Recovery outcome: {r_outcome}")
-        if r_n_steps:
-            lines.append(f"Steps attempted: {r_n_steps}")
-        if r_summary and r_summary.strip() != r_task:
-            lines.append(f"Summary: {r_summary.strip()[:200]}")
-        rrt = AgentLoop._format_review_targets(r_paths, [], label_prefix="Recovery ")
-        if rrt:
-            lines.append(rrt)
-
-        # Remaining issues or success note
-        if r_n_failed > 0:
-            lines.append(f"Remaining failures: {r_n_failed} step(s) did not complete.")
-        elif r_outcome in ("success", "recovered"):
-            lines.append("Recovery succeeded.")
-
-        return "\n".join(lines)
+        from agent.services.run_history_service import format_linked_run_result
+        return format_linked_run_result(linked)
 
     @staticmethod
     def _format_retrieval_results(output: Any) -> Optional[str]:
-        """Format a retriever output dict into human-readable text.
-
-        Returns None if `output` is not a retriever result dict (no "results"/"method" keys).
-        Handles linked_run_history results with a structured path; falls back to plain
-        run_history summary lines for non-linked entries.
-        """
-        if not isinstance(output, dict):
-            return None
-        if "results" not in output or "method" not in output:
-            return None
-
-        results = output.get("results") or []
-        if not results:
-            return None
-
-        sections: list = []
-        for r in results:
-            if not isinstance(r, dict):
-                continue
-            linked = r.get("linked")
-            if isinstance(linked, dict) and linked.get("kind") == "linked_run_history":
-                sections.append(AgentLoop._format_linked_run_result(linked))
-            else:
-                # Plain run_history or other source
-                val = r.get("value")
-                if isinstance(val, dict):
-                    task = val.get("task") or r.get("key") or ""
-                    outcome = val.get("outcome") or ""
-                    summary = val.get("summary") or ""
-                    run_kind = val.get("run_kind", "primary")
-                    paths = val.get("touched_paths") or []
-                    resolved = AgentLoop._resolve_touched_paths(paths)
-                    if task:
-                        # Tool runs: compact single-line
-                        if run_kind == "tool":
-                            entry = [f"[tool] {summary.strip()}" if summary else f"[tool] {task}: {outcome}"]
-                            key_err = val.get("key_error", "")
-                            if key_err and outcome == "failed":
-                                entry.append(f"  error: {key_err[:120]}")
-                            sections.append("\n".join(entry))
-                            continue
-                        # Recovery child: show [recovery] prefix + parent context
-                        if run_kind == "recovery":
-                            parent_task = val.get("parent_task", "")
-                            label = f"[recovery for: {parent_task}]" if parent_task else "[recovery]"
-                            s = summary.strip()
-                            prefix_cut = f"{task}: {outcome} | "
-                            if s.startswith(prefix_cut):
-                                s = s[len(prefix_cut):]
-                            entry = [f"{label} {task}: {outcome}"]
-                            if s and s != task:
-                                entry.append(f"  {s[:200]}")
-                            sections.append("\n".join(entry))
-                            continue
-                        header = f"Run: {task}"
-                        if outcome:
-                            header += f" — {outcome}"
-                        entry = [header]
-                        if summary:
-                            # Strip redundant "task: outcome | " prefix — header already has it
-                            s = summary.strip()
-                            prefix_cut = f"{task}: {outcome} | "
-                            if s.startswith(prefix_cut):
-                                s = s[len(prefix_cut):]
-                            if s and s != task:
-                                entry.append(f"  {s[:200]}")
-                        pf = val.get("path_findings") or []
-                        rt = AgentLoop._format_review_targets(paths, pf)
-                        if rt:
-                            for rt_line in rt.splitlines():
-                                entry.append(f"  {rt_line}" if not rt_line.startswith("  ") else rt_line)
-                        else:
-                            if resolved:
-                                existing = [
-                                    rp["path"]
-                                    for rp in resolved
-                                    if rp["status"] in ("file", "directory")
-                                ]
-                                missing = [
-                                    rp["path"]
-                                    for rp in resolved
-                                    if rp["status"] == "missing"
-                                ]
-                                if existing:
-                                    entry.append(
-                                        f"  Paths (exist): {', '.join(existing[:10])}"
-                                    )
-                                if missing:
-                                    entry.append(
-                                        f"  Paths (missing): {', '.join(missing[:10])}"
-                                    )
-                        sections.append("\n".join(entry))
-                elif val is not None:
-                    sections.append(str(val)[:200])
-
-        text = "\n\n".join(s for s in sections if s)
-        return text if text else None
+        from agent.services.run_history_service import format_retrieval_results
+        return format_retrieval_results(output)
 
     def _try_run_history_response(self, user_input: str) -> Optional[str]:
-        """Pre-pass for free-form run-history and recovery-oriented queries.
+        return self._status_query_svc.try_run_history_response(user_input)
 
-        Detects whether the query is about recent execution history or a recovery
-        attempt, invokes the retriever directly, and formats the result.
-        Returns formatted text or None (caller falls through to other paths).
-        """
-        try:
-            from agents.retriever_agent import RetrieverAgent
-            from agents.base_agent import AgentContext
+    # -- live status ----------------------------------------------------------
 
-            query = (user_input or "").strip()
-            if not (
-                RetrieverAgent._is_recovery_linked_query(query)
-                or RetrieverAgent._is_recent_task_query(query)
-                or RetrieverAgent._is_path_query(query)
-            ):
-                return None
-
-            agent = RetrieverAgent()
-            ctx = AgentContext(
-                task=query,
-                input_data={"query": query},
-                memory=self.memory,
-            )
-            result = agent.run(ctx)
-            if not result.success or not result.output:
-                return None
-            return self._format_retrieval_results(result.output)
-        except Exception:
-            return None
-
-    # Live-status query triggers — words that signal a "current state" question
-    _LIVE_STATUS_TRIGGERS = (
-        "what are you doing",
-        "what are you working on",
-        "what is blocked",
-        "what's blocked",
-        "whats blocked",
-        "what failed",
-        "what just failed",
-        "what failed most recently",
-        "what happens next",
-        "what's next",
-        "whats next",
-        "what are you waiting",
-        "what should i inspect",
-        "what should i look at next",
-        "are you blocked",
-        "are you stuck",
-        "what is karma doing",
-        "what is karma working on",
-        "current status",
-        "what is your status",
-        "what's your status",
-        "show status",
-        "show me status",
-        "agent status",
-        "what task",
-        "current task",
-        "how confident",
-        "what is your confidence",
-        "what's your confidence",
-        "success rate",
-        "how healthy",
-        "are you healthy",
-        "system health",
-        "karma health",
-        "health check",
-    )
-    _LIVE_STATUS_ANTITOKENS = (
-        "architecture",
-        "how does",
-        "explain the",
-        "history of",
-        "what is karma",
+    # Class-level constants kept for test compatibility (delegate to service module)
+    from agent.services.status_query_service import (
+        LIVE_STATUS_TRIGGERS as _LIVE_STATUS_TRIGGERS,
+        LIVE_STATUS_ANTITOKENS as _LIVE_STATUS_ANTITOKENS,
+        SESSION_SUMMARY_TRIGGERS as _SESSION_SUMMARY_TRIGGERS,
+        SESSION_SUMMARY_ANTITOKENS as _SESSION_SUMMARY_ANTITOKENS,
+        SELF_CHECK_TRIGGERS as _SELF_CHECK_TRIGGERS,
     )
 
     @classmethod
     def _is_live_status_query(cls, query: str) -> bool:
-        """Return True when query is asking about current agent state."""
-        q = query.lower().strip()
-        for anti in cls._LIVE_STATUS_ANTITOKENS:
-            if anti in q:
-                return False
-        for trigger in cls._LIVE_STATUS_TRIGGERS:
-            if trigger in q:
-                return True
-        return False
+        from agent.services.status_query_service import is_live_status_query
+        return is_live_status_query(query)
 
     def _get_live_status_snapshot(self) -> Dict[str, Any]:
-        """Build a compact status snapshot from current_state + memory run:last."""
-        snap: Dict[str, Any] = {
-            "current_task": self.current_state.get("current_task"),
-            "last_run": self.current_state.get("last_run"),
-            "confidence": self.current_state.get("confidence", 0.0),
-            "last_failure": self.current_state.get("last_failure"),
-            "blocked_reason": self.current_state.get("blocked_reason"),
-            "decision_summary": self.current_state.get("decision_summary") or {},
-            "run_last": None,
-        }
-        try:
-            run_last = self.memory.get_fact_value("run:last")
-            if not isinstance(run_last, dict):
-                # Fallback: find most recent run:<hash> when run:last is absent/stale
-                run_last = self._find_most_recent_run_digest()
-            if isinstance(run_last, dict):
-                snap["run_last"] = run_last
-        except Exception:
-            pass
-        return snap
+        return self._status_query_svc.get_live_status_snapshot()
 
     def _find_most_recent_run_digest(self) -> Optional[Dict[str, Any]]:
-        """Return the most recent run:<hash> digest from memory, or None."""
-        try:
-            best_ts = ""
-            best_val = None
-            for key, outer in self.memory.facts.items():
-                if not isinstance(outer, dict) or outer.get("topic") != "run_history":
-                    continue
-                if key == "run:last":
-                    continue
-                ts = outer.get("last_updated", "")
-                if ts > best_ts:
-                    best_ts = ts
-                    best_val = outer.get("value", outer)
-            return best_val if isinstance(best_val, dict) else None
-        except Exception:
-            return None
+        return self._status_query_svc.find_most_recent_run_digest()
 
     def _format_live_status(self, snap: Dict[str, Any], query: str) -> Optional[str]:
-        """Format a concise answer to a live-status query from a snapshot.
-
-        Routes to sub-format based on query keywords. Returns None when the
-        snapshot has no useful state (avoids fake 'currently running' claims).
-        """
-        q = query.lower()
-        current_task = snap.get("current_task")
-        blocked = snap.get("blocked_reason")
-        last_failure = snap.get("last_failure")
-        run_last = snap.get("run_last") or {}
-        confidence = snap.get("confidence", 0.0)
-        decision_summary = snap.get("decision_summary") or {}
-
-        # --- blocked / stuck ---
-        if any(k in q for k in ("blocked", "stuck", "waiting")):
-            if blocked:
-                return f"Blocked: {blocked}"
-            last_fail_intent = (last_failure or {}).get("intent", "")
-            if last_fail_intent:
-                err = (last_failure or {}).get("error", "")
-                return f"Not currently blocked, but last failure was '{last_fail_intent}'" + (
-                    f": {err}" if err else ""
-                )
-            return "Nothing is blocked."
-
-        # --- latest failure ---
-        if any(k in q for k in ("failed", "failure", "error")):
-            if last_failure and last_failure.get("intent"):
-                intent = last_failure["intent"]
-                err = last_failure.get("error", "")
-                ts = last_failure.get("ts", "")
-                line = f"Last failure: '{intent}'"
-                if err:
-                    line += f" — {err}"
-                if ts:
-                    line += f" (at {ts[:19]})"
-                return line
-            # Fall back to run:last
-            rl_outcome = run_last.get("outcome", "")
-            rl_task = run_last.get("task", "")
-            if rl_outcome in ("failed", "recovery_failed") and rl_task:
-                return f"Last failure: '{rl_task}' — outcome: {rl_outcome}"
-            return "No recent failures recorded."
-
-        # --- inspect next (before 'next' check to avoid swallowing "inspect next") ---
-        if "inspect" in q or ("look at" in q and "next" in q):
-            pf = run_last.get("path_findings") or []
-            tp = run_last.get("touched_paths") or []
-            rt = AgentLoop._format_review_targets(tp, pf)
-            if rt:
-                return rt
-            if tp:
-                return f"Files from last run: {', '.join(tp[:5])}"
-            return "No file targets available."
-
-        # --- next action ---
-        if any(k in q for k in ("next", "happens next", "what's next", "whats next")):
-            if blocked:
-                return f"Blocked ({blocked}) — resolve the failure before proceeding."
-            if last_failure and last_failure.get("intent"):
-                return f"Suggested: retry or diagnose '{last_failure['intent']}'"
-            if current_task:
-                return f"Last task was '{current_task}'. Ready for next input."
-            return "Ready — no active task."
-
-        # --- health / confidence ---
-        if any(k in q for k in ("confident", "confidence", "success rate", "health", "healthy")):
-            lines: List[str] = []
-            if confidence > 0:
-                lines.append(f"Confidence: {confidence:.0%}")
-            sr = decision_summary.get("success_rate")
-            if sr is not None:
-                lines.append(f"Success rate: {sr:.0%}")
-            total = decision_summary.get("total_decisions")
-            if total:
-                lines.append(f"Decisions tracked: {total}")
-            if blocked:
-                lines.append(f"Blocked: {blocked}")
-            if not lines:
-                return "No health data recorded yet."
-            return "\n".join(lines)
-
-        # --- doing / working on ---
-        if not current_task and not run_last:
-            return None  # nothing to say — avoid fake claims
-
-        lines: List[str] = []
-        if current_task:
-            conf_str = f" (confidence {confidence:.0%})" if confidence > 0 else ""
-            lines.append(f"Last task: {current_task}{conf_str}")
-        elif run_last.get("task"):
-            lines.append(f"Last task: {run_last['task']} — {run_last.get('outcome', 'unknown')}")
-
-        if blocked:
-            lines.append(f"Blocked: {blocked}")
-        elif last_failure and last_failure.get("intent"):
-            lines.append(f"Last failure: {last_failure['intent']}")
-
-        last_run_ts = snap.get("last_run") or run_last.get("ts", "")
-        if last_run_ts:
-            lines.append(f"Last run: {last_run_ts[:19]}")
-
-        return "\n".join(lines) if lines else None
+        return self._status_query_svc.format_live_status(snap, query)
 
     def _try_live_status_response(self, user_input: str) -> Optional[str]:
-        """Pre-pass for live-status / current-state queries."""
-        try:
-            query = (user_input or "").strip()
-            if not AgentLoop._is_live_status_query(query):
-                return None
-            snap = self._get_live_status_snapshot()
-            return self._format_live_status(snap, query)
-        except Exception:
-            return None
+        return self._status_query_svc.try_live_status_response(user_input)
 
-    # ── session/boot summary ──────────────────────────────────────────────────
-
-    _SESSION_SUMMARY_TRIGGERS = (
-        "last session",
-        "this session",
-        "since startup",
-        "since boot",
-        "since start",
-        "what happened this",
-        "what did you do",
-        "what did karma do",
-        "summarize recent work",
-        "summarize what",
-        "session summary",
-        "boot summary",
-        "what changed since",
-        "what have you done",
-        "what tasks",
-        "recent work",
-    )
-    _SESSION_SUMMARY_ANTITOKENS = (
-        "last session of",
-        "architecture",
-        "how does",
-        "explain",
-        "history of",
-    )
+    # -- session summary ------------------------------------------------------
 
     @classmethod
     def _is_session_summary_query(cls, query: str) -> bool:
-        q = query.lower().strip()
-        for anti in cls._SESSION_SUMMARY_ANTITOKENS:
-            if anti in q:
-                return False
-        for trigger in cls._SESSION_SUMMARY_TRIGGERS:
-            if trigger in q:
-                return True
-        return False
+        from agent.services.status_query_service import is_session_summary_query
+        return is_session_summary_query(query)
 
     def _build_session_summary(self) -> Dict[str, Any]:
-        """Build a compact summary of the current session from execution_log."""
-        session_start = self.current_state.get("session_start_ts", "")
-        logs = self.current_state.get("execution_log", [])
-
-        # Filter to current session by timestamp
-        if session_start:
-            session_logs = [l for l in logs if l.get("timestamp", "") >= session_start]
-        else:
-            session_logs = logs[-20:]
-
-        if not session_logs:
-            # No session activity yet — fall back to run:last from memory
-            run_last = None
-            try:
-                run_last = self.memory.get_fact_value("run:last")
-            except Exception:
-                pass
-            return {
-                "empty": True,
-                "session_start": session_start,
-                "run_last": run_last if isinstance(run_last, dict) else None,
-            }
-
-        succeeded = [l for l in session_logs if l.get("success")]
-        failed = [l for l in session_logs if not l.get("success")]
-        intents = [
-            l.get("intent", {}).get("intent", "")
-            for l in session_logs
-            if isinstance(l.get("intent"), dict)
-        ]
-        success_intents = list(dict.fromkeys(
-            l.get("intent", {}).get("intent", "") for l in succeeded
-            if isinstance(l.get("intent"), dict)
-        ))
-        # Deduplicate by intent, keeping last occurrence per intent
-        _seen_fail: Dict[str, Dict[str, str]] = {}
-        for l in failed:
-            _intent = l.get("intent", {}).get("intent", "") if isinstance(l.get("intent"), dict) else ""
-            _seen_fail[_intent] = {
-                "intent": _intent,
-                "error": (l.get("execution_result") or {}).get("error") or "",
-            }
-        fail_entries = list(_seen_fail.values())[-3:]
-
-        return {
-            "empty": False,
-            "session_start": session_start,
-            "total": len(session_logs),
-            "n_succeeded": len(succeeded),
-            "n_failed": len(failed),
-            "success_intents": success_intents[:6],
-            "fail_entries": fail_entries,
-            "last_intent": intents[-1] if intents else None,
-            "blocked_reason": self.current_state.get("blocked_reason"),
-            "run_last": None,
-        }
+        return self._status_query_svc.build_session_summary()
 
     def _format_session_summary(self, summary: Dict[str, Any]) -> Optional[str]:
-        """Format session summary dict into compact human-readable text."""
-        if summary.get("empty"):
-            run_last = summary.get("run_last") or {}
-            if run_last.get("task"):
-                return (
-                    f"No tasks this session yet. "
-                    f"Last known run: '{run_last['task']}' — {run_last.get('outcome', 'unknown')}"
-                )
-            return "No tasks this session yet."
-
-        total = summary["total"]
-        n_ok = summary["n_succeeded"]
-        n_fail = summary["n_failed"]
-        session_start = (summary.get("session_start") or "")[:19]
-
-        header = f"Session ({session_start}): {total} task(s) — {n_ok} ok, {n_fail} failed"
-        lines = [header]
-
-        if summary["success_intents"]:
-            lines.append(f"Done: {', '.join(summary['success_intents'])}")
-        if summary["fail_entries"]:
-            for fe in summary["fail_entries"]:
-                intent = fe.get("intent", "?")
-                err = fe.get("error", "")
-                lines.append(f"Failed: {intent}" + (f" — {err}" if err else ""))
-        if summary.get("blocked_reason"):
-            lines.append(f"Blocked: {summary['blocked_reason']}")
-        last = summary.get("last_intent")
-        success_intents = summary.get("success_intents") or []
-        if last and last != (success_intents[-1] if success_intents else None):
-            lines.append(f"Last: {last}")
-
-        return "\n".join(lines)
+        return self._status_query_svc.format_session_summary(summary)
 
     def _try_session_summary_response(self, user_input: str) -> Optional[str]:
-        """Pre-pass for session/boot-summary queries."""
-        try:
-            query = (user_input or "").strip()
-            if not AgentLoop._is_session_summary_query(query):
-                return None
-            summary = self._build_session_summary()
-            return self._format_session_summary(summary)
-        except Exception:
-            return None
+        return self._status_query_svc.try_session_summary_response(user_input)
 
-    # ── self-check / diagnose ─────────────────────────────────────────────────
-
-    _SELF_CHECK_TRIGGERS = (
-        "run a quick self-check",
-        "run self check",
-        "self-check",
-        "self check",
-        "diagnose yourself",
-        "diagnose karma",
-        "run diagnostics",
-        "quick diagnostics",
-        "check yourself",
-        "run a check",
-    )
+    # -- self-check -----------------------------------------------------------
 
     @classmethod
     def _is_self_check_query(cls, query: str) -> bool:
-        q = query.lower().strip()
-        for trigger in cls._SELF_CHECK_TRIGGERS:
-            if trigger in q:
-                return True
-        return False
+        from agent.services.status_query_service import is_self_check_query
+        return is_self_check_query(query)
 
     def _try_self_check_response(self, user_input: str) -> Optional[str]:
-        """Run health.run_check() and format results compactly."""
-        try:
-            query = (user_input or "").strip()
-            if not AgentLoop._is_self_check_query(query):
-                return None
-            report = self.health.run_check()
-            status = report.get("status", "unknown")
-            n_issues = report.get("issues_found", 0)
-            issues = report.get("issues") or []
-
-            if n_issues == 0:
-                return f"Self-check: {status} (no issues found)"
-
-            lines = [f"Self-check: {status} ({n_issues} issue(s))"]
-            for issue in issues[:5]:
-                sev = issue.get("severity", "info")
-                subsystem = issue.get("subsystem", "")
-                text = issue.get("issue", "")[:80]
-                prefix = f"  [{sev}]" + (f" {subsystem}:" if subsystem else "")
-                lines.append(f"{prefix} {text}")
-                suggestion = issue.get("suggestion", "")
-                if suggestion:
-                    lines.append(f"    → {suggestion[:80]}")
-            return "\n".join(lines)
-        except Exception:
-            return None
+        return self._status_query_svc.try_self_check_response(user_input, health=self.health)
 
     @staticmethod
     def _result_to_text(execution_result: Dict[str, Any]) -> str:
@@ -3960,6 +2719,11 @@ class AgentLoop:
             # Critic pass — automatic review for heavy intents on success
             _intent_name_for_critic = intent.get("intent", "") if intent else ""
             _critique = self._seat_critique(execution_result, _intent_name_for_critic)
+            # Deterministic critique for failed single-tool runs (no model, zero latency)
+            if not _critique:
+                _critique = self._critique_single_tool_failure(
+                    execution_result, selected_action, intent
+                )
             if _critique:
                 self.logger.info(f"Critic: {_critique[:120]}")
                 self.bus.emit(
@@ -3974,6 +2738,8 @@ class AgentLoop:
             # Run artifact persistence: multi-step planned runs + single-tool runs
             _run_artifact = execution_result.get("_run_artifact")
             if _run_artifact and len(_run_artifact.get("steps", [])) > 0:
+                if _critique:
+                    _run_artifact["critic"] = _critique
                 run_summary = self._seat_summarize_run(_run_artifact)
                 self._persist_run_digest(_run_artifact, run_summary)
             elif (
@@ -3985,6 +2751,8 @@ class AgentLoop:
                 _st_artifact = AgentLoop._build_single_tool_artifact(
                     intent, selected_action, execution_result, user_input or ""
                 )
+                if _critique:
+                    _st_artifact["critic"] = _critique
                 self._persist_run_digest(_st_artifact, "")
             if user_input and intent:
                 route = "act_and_report" if selected_action else "retrieve_and_respond"

@@ -301,7 +301,10 @@ def test_critic_receives_run_artifact_when_present():
     assert captured.get("ctx", {}).get("content_type") == "run_artifact", (
         "Critic must receive content_type='run_artifact' when _run_artifact is present"
     )
-    assert "test multi-step task" in captured.get("ctx", {}).get("content", "")
+    ctx_content = captured.get("ctx", {}).get("content")
+    # content is now the full dict artifact
+    assert isinstance(ctx_content, dict), f"content should be artifact dict, got {type(ctx_content)}"
+    assert ctx_content.get("task") == "test multi-step task"
     assert result is not None
     assert "redundant" in result
 
@@ -512,12 +515,196 @@ def test_critic_run_artifact_multi_step_failure_structure_visible():
         result = agent._seat_critique(execution_result, "any_intent")
 
     assert received_content.get("content_type") == "run_artifact"
-    content = received_content.get("content", "")
-    # Artifact content must expose structure for critic reasoning
-    assert "failed" in content.lower()
-    assert "skipped" in content.lower()
-    assert "Recovery" in content
+    content = received_content.get("content")
+    # content is now the full artifact dict — structure is directly accessible
+    assert isinstance(content, dict), f"content should be artifact dict, got {type(content)}"
+    assert any(s.get("status") == "failed" for s in content.get("steps", [])), (
+        "Artifact dict must expose failed steps"
+    )
+    assert any(s.get("status") == "skipped" for s in content.get("steps", [])), (
+        "Artifact dict must expose skipped steps"
+    )
+    assert content.get("recovery") is not None, "Artifact dict must expose recovery"
     assert result == "- Step 2 failed with no recovery path"
+
+
+# ── critic _review_run_artifact: dict path ───────────────────────────────────
+
+
+def test_critic_review_run_artifact_dict_failure_no_recovery():
+    """_review_run_artifact accepts artifact dict and flags failed steps + no recovery."""
+    from agents.critic_agent import CriticAgent
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "deploy pipeline",
+        "outcome": "failed",
+        "steps": [
+            {"step": 1, "status": "done", "action": "fetch", "target": "x"},
+            {"step": 2, "status": "failed", "action": "deploy", "target": "prod"},
+        ],
+        "failed": [{"step": 2, "action": "deploy", "target": "prod", "error": "connection refused"}],
+        "outputs": [],
+        "recovery": None,
+    }
+    review = agent_c._review_run_artifact(artifact)
+    issues = review.get("issues", [])
+    assert any("failed" in i.lower() for i in issues), f"Should flag failed outcome: {issues}"
+    assert any("no recovery" in i.lower() or "recovery" in i.lower() for i in issues), (
+        f"Should flag no recovery: {issues}"
+    )
+
+
+def test_critic_review_run_artifact_dict_recovery_failed():
+    """_review_run_artifact dict path flags recovery_failed outcome."""
+    from agents.critic_agent import CriticAgent
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "complex op",
+        "outcome": "recovery_failed",
+        "steps": [
+            {"step": 1, "status": "done", "action": "step1", "target": "x"},
+            {"step": 2, "status": "failed", "action": "step2", "target": "y"},
+        ],
+        "failed": [{"step": 2, "action": "step2", "target": "y", "error": "parse error"}],
+        "outputs": [],
+        "recovery": {"outcome": "recovery_failed", "recovery_plan": []},
+    }
+    review = agent_c._review_run_artifact(artifact)
+    issues = review.get("issues", [])
+    assert any("recovery" in i.lower() for i in issues), f"Should flag recovery failure: {issues}"
+
+
+def test_critic_review_run_artifact_dict_clean_run_no_issues():
+    """_review_run_artifact dict path finds no issues for a clean run."""
+    from agents.critic_agent import CriticAgent
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "simple task",
+        "outcome": "success",
+        "steps": [
+            {"step": 1, "status": "done", "action": "A1", "target": "x"},
+            {"step": 2, "status": "done", "action": "A2", "target": "y"},
+        ],
+        "failed": [],
+        "outputs": ["done"],
+        "recovery": None,
+    }
+    review = agent_c._review_run_artifact(artifact)
+    assert review.get("score", 0) >= 75, f"Clean run should score >= 75: {review}"
+    assert review.get("issues", []) == [], f"Clean run should have no issues: {review}"
+
+
+def test_critic_review_run_artifact_dict_timeout_flagged():
+    """_review_run_artifact dict path flags timeout in failed step error."""
+    from agents.critic_agent import CriticAgent
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "slow task",
+        "outcome": "failed",
+        "steps": [{"step": 1, "status": "failed", "action": "run", "target": "x"}],
+        "failed": [{"step": 1, "action": "run", "target": "x", "error": "step timed out after 30s"}],
+        "outputs": [],
+        "recovery": None,
+    }
+    review = agent_c._review_run_artifact(artifact)
+    issues = review.get("issues", [])
+    assert any("timed out" in i.lower() or "timeout" in i.lower() for i in issues), (
+        f"Should flag timeout: {issues}"
+    )
+
+
+def test_critic_review_run_artifact_dict_recovery_stopped():
+    """_review_run_artifact dict path flags recovery outcome 'stopped'."""
+    from agents.critic_agent import CriticAgent
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "task",
+        "outcome": "failed",
+        "steps": [{"step": 1, "status": "failed", "action": "A", "target": "x"}],
+        "failed": [{"step": 1, "action": "A", "target": "x", "error": "err"}],
+        "outputs": [],
+        "recovery": {"outcome": "stopped", "recovery_plan": []},
+    }
+    review = agent_c._review_run_artifact(artifact)
+    issues = review.get("issues", [])
+    assert any("replanner" in i.lower() or "no recovery steps" in i.lower() for i in issues), (
+        f"Should flag stopped recovery: {issues}"
+    )
+
+
+def test_critic_seat_passes_artifact_dict_not_formatted_string():
+    """_seat_critique passes the raw artifact dict as content (not a formatted string)."""
+    agent = _make_agent()
+
+    from core.agent_model_manager import PipelineResult
+
+    received = {}
+
+    def _execute(task, context=None, explicit_role=None):
+        if explicit_role == "critic":
+            received["content"] = (context or {}).get("content")
+            return PipelineResult(
+                success=True, output={"critique": "- issue found"}, pipeline_type="agent_only",
+            )
+        return PipelineResult(success=False, output=None, pipeline_type="agent_only")
+
+    artifact = _make_run_artifact(outcome="success", n_steps=2)
+    execution_result = {"success": True, "output": "ok", "_run_artifact": artifact}
+
+    with patch("core.agent_model_manager.get_agent_model_manager") as mock_get:
+        mock_mgr = _mock_mgr()
+        mock_mgr._no_model_mode = False
+        mock_mgr.execute.side_effect = _execute
+        mock_get.return_value = mock_mgr
+        agent._seat_critique(execution_result, "respond")
+
+    assert isinstance(received.get("content"), dict), (
+        f"Critic should receive artifact dict, not {type(received.get('content'))}"
+    )
+    assert received["content"].get("task") == "test multi-step task"
+
+
+def test_critic_model_path_formats_dict_to_readable_string():
+    """CriticAgent.run formats artifact dict to a readable string for the model prompt."""
+    from agents.critic_agent import CriticAgent
+    from agents.base_agent import AgentContext
+
+    agent_c = CriticAgent()
+    artifact = {
+        "task": "build service",
+        "outcome": "failed",
+        "steps": [
+            {"step": 1, "status": "done", "action": "compile", "target": "src/"},
+            {"step": 2, "status": "failed", "action": "test", "target": "tests/"},
+        ],
+        "failed": [{"step": 2, "action": "test", "target": "tests/", "error": "assertion failed"}],
+        "outputs": [],
+        "recovery": None,
+    }
+
+    prompt_captured = {}
+    original_try_model = agent_c._try_model
+
+    def _capture_model(prompt=None, system=None, max_tokens=None):
+        prompt_captured["prompt"] = prompt
+        return None  # force deterministic fallback
+
+    agent_c._try_model = _capture_model
+    ctx = AgentContext(task="review", input_data={"content_type": "run_artifact", "content": artifact})
+    agent_c.run(ctx)
+
+    captured_prompt = prompt_captured.get("prompt", "")
+    # Prompt must be a string (formatted), not raw dict repr
+    assert "build service" in captured_prompt, f"Task must appear in prompt: {captured_prompt[:200]}"
+    assert "failed" in captured_prompt.lower(), f"Outcome must appear in prompt: {captured_prompt[:200]}"
+    assert "{" not in captured_prompt[:50], (
+        f"Prompt should not start with raw dict repr: {captured_prompt[:50]}"
+    )
 
 
 # ── critic touched_paths analysis ────────────────────────────────────────────
@@ -709,6 +896,426 @@ def test_seat_critique_attaches_path_findings_to_run_artifact():
     assert any(k in kinds for k in ("overlap_risk", "weak_coverage", "gap_risk", "broad_spread")), (
         f"Expected at least one typed finding: {kinds}"
     )
+
+
+# ── critic persistence in run digests ────────────────────────────────────────
+
+
+def test_persist_run_digest_stores_critic_fields():
+    """_persist_run_digest stores critic_issues and critic_lesson when artifact has critic."""
+    agent = _make_agent_with_clean_memory()
+
+    artifact = _make_run_artifact(outcome="success", n_steps=2)
+    artifact["critic"] = "- Step A2 is redundant\n- Output too vague"
+
+    saved: dict = {}
+
+    def _save_fact(key, value, source=None, confidence=None, topic=None):
+        saved[key] = value
+
+    agent.memory.save_fact = _save_fact
+    agent._persist_run_digest(artifact, "test summary")
+
+    parent_digest = saved.get("run:last") or next(
+        (v for k, v in saved.items() if k.startswith("run:") and "recovery" not in k and k != "run:last"),
+        None,
+    )
+    assert parent_digest is not None
+    assert "critic_issues" in parent_digest, f"critic_issues missing: {list(parent_digest.keys())}"
+    assert "critic_lesson" in parent_digest, f"critic_lesson missing: {list(parent_digest.keys())}"
+    assert parent_digest["critic_issues"] == ["Step A2 is redundant", "Output too vague"]
+    assert parent_digest["critic_lesson"] == "Step A2 is redundant"
+
+
+def test_persist_run_digest_no_critic_fields_when_no_critique():
+    """When artifact has no critic, digest omits critic_issues and critic_lesson."""
+    agent = _make_agent_with_clean_memory()
+
+    artifact = _make_run_artifact(outcome="success", n_steps=2)
+    # no "critic" key
+
+    saved: dict = {}
+
+    def _save_fact(key, value, source=None, confidence=None, topic=None):
+        saved[key] = value
+
+    agent.memory.save_fact = _save_fact
+    agent._persist_run_digest(artifact, "test summary")
+
+    parent_digest = saved.get("run:last") or {}
+    assert "critic_issues" not in parent_digest, f"Unexpected critic_issues: {parent_digest}"
+    assert "critic_lesson" not in parent_digest, f"Unexpected critic_lesson: {parent_digest}"
+
+
+def test_persist_run_digest_critic_truncates_to_3_issues():
+    """_persist_run_digest stores at most 3 critic issues."""
+    agent = _make_agent_with_clean_memory()
+
+    artifact = _make_run_artifact(outcome="success", n_steps=3)
+    artifact["critic"] = "- Issue one\n- Issue two\n- Issue three\n- Issue four\n- Issue five"
+
+    saved: dict = {}
+    agent.memory.save_fact = lambda key, value, **kw: saved.update({key: value})
+    agent._persist_run_digest(artifact, "")
+
+    digest = saved.get("run:last") or {}
+    assert len(digest.get("critic_issues", [])) <= 3
+
+
+def test_format_retrieval_results_shows_critic_issues():
+    """format_retrieval_results surfaces critic_issues for primary runs."""
+    from agent.services.run_history_service import format_retrieval_results
+
+    output = {
+        "method": "run_history",
+        "results": [
+            {
+                "key": "run:abc123",
+                "value": {
+                    "task": "build service",
+                    "outcome": "success",
+                    "run_kind": "primary",
+                    "summary": "build service: success | done=compile, test",
+                    "touched_paths": [],
+                    "path_findings": [],
+                    "critic_issues": ["Step 3 redundant — target already exists", "Output too vague"],
+                    "critic_lesson": "Step 3 redundant — target already exists",
+                },
+            }
+        ],
+    }
+    result = format_retrieval_results(output)
+    assert result is not None
+    assert "Critic:" in result
+    assert "Step 3 redundant" in result
+
+
+def test_format_retrieval_results_no_critic_section_when_absent():
+    """format_retrieval_results omits Critic: line when critic fields absent."""
+    from agent.services.run_history_service import format_retrieval_results
+
+    output = {
+        "method": "run_history",
+        "results": [
+            {
+                "key": "run:abc123",
+                "value": {
+                    "task": "build service",
+                    "outcome": "success",
+                    "run_kind": "primary",
+                    "summary": "build service: success",
+                    "touched_paths": [],
+                    "path_findings": [],
+                },
+            }
+        ],
+    }
+    result = format_retrieval_results(output)
+    assert result is not None
+    assert "Critic:" not in result
+
+
+def test_format_retrieval_results_critic_lesson_fallback():
+    """format_retrieval_results uses critic_lesson when critic_issues absent."""
+    from agent.services.run_history_service import format_retrieval_results
+
+    output = {
+        "method": "run_history",
+        "results": [
+            {
+                "key": "run:abc123",
+                "value": {
+                    "task": "build service",
+                    "outcome": "failed",
+                    "run_kind": "primary",
+                    "summary": "",
+                    "touched_paths": [],
+                    "path_findings": [],
+                    "critic_lesson": "No recovery was attempted after step failure",
+                },
+            }
+        ],
+    }
+    result = format_retrieval_results(output)
+    assert result is not None
+    assert "Critic:" in result
+    assert "No recovery" in result
+
+
+def test_format_retrieval_results_tool_run_shows_critic_when_present():
+    """format_retrieval_results shows Critic: for tool-kind runs when critic_issues is present."""
+    from agent.services.run_history_service import format_retrieval_results
+
+    output = {
+        "method": "run_history",
+        "results": [
+            {
+                "key": "run:abc123",
+                "value": {
+                    "task": "search files *.py",
+                    "outcome": "failed",
+                    "run_kind": "tool",
+                    "summary": "search files *.py: failed | tool=search_files *.py",
+                    "touched_paths": [],
+                    "path_findings": [],
+                    "critic_issues": ["search_files failed: no such file — verify the target path exists"],
+                    "critic_lesson": "search_files failed: no such file — verify the target path exists",
+                },
+            }
+        ],
+    }
+    result = format_retrieval_results(output)
+    assert result is not None
+    assert "Critic:" in result, f"Tool run with critic_issues should show Critic: line: {result!r}"
+    assert "verify the target path" in result
+
+
+def test_format_retrieval_results_tool_run_no_critic_when_absent():
+    """format_retrieval_results omits Critic: for tool-kind runs when no critic fields."""
+    from agent.services.run_history_service import format_retrieval_results
+
+    output = {
+        "method": "run_history",
+        "results": [
+            {
+                "key": "run:abc123",
+                "value": {
+                    "task": "search files *.py",
+                    "outcome": "success",
+                    "run_kind": "tool",
+                    "summary": "search files *.py: success | tool=search_files *.py",
+                    "touched_paths": [],
+                    "path_findings": [],
+                    # no critic fields
+                },
+            }
+        ],
+    }
+    result = format_retrieval_results(output)
+    assert result is not None
+    assert "Critic:" not in result, f"Tool run without critic should not show Critic:: {result!r}"
+
+
+# ── single-tool critic: _critique_tool_failure ───────────────────────────────
+
+
+def test_critique_tool_failure_permission_denied():
+    """_critique_tool_failure produces permission hint for permission-denied errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("run_shell", "Permission denied: /etc/secret")
+    assert result is not None
+    assert "permission" in result.lower() or "elevated" in result.lower()
+    assert "run_shell" in result
+
+
+def test_critique_tool_failure_not_found():
+    """_critique_tool_failure produces path hint for not-found errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("read_file", "No such file or directory: /missing")
+    assert result is not None
+    assert "path" in result.lower() or "exists" in result.lower()
+
+
+def test_critique_tool_failure_timeout():
+    """_critique_tool_failure produces scope hint for timeout errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("run_shell", "Process timed out after 30s")
+    assert result is not None
+    assert "timeout" in result.lower() or "scope" in result.lower()
+
+
+def test_critique_tool_failure_connection_refused():
+    """_critique_tool_failure produces connectivity hint for network errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("http_fetch", "Connection refused: localhost:8080")
+    assert result is not None
+    assert "network" in result.lower() or "connectivity" in result.lower() or "service" in result.lower()
+
+
+def test_critique_tool_failure_syntax_error():
+    """_critique_tool_failure produces fix-syntax hint for syntax errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("code_run", "SyntaxError: invalid syntax at line 3")
+    assert result is not None
+    assert "syntax" in result.lower() or "fix" in result.lower()
+
+
+def test_critique_tool_failure_unknown_error():
+    """_critique_tool_failure falls back to generic hint for unclassified errors."""
+    from agents.critic_agent import CriticAgent
+
+    result = CriticAgent._critique_tool_failure("run_shell", "unexpected internal error code 42")
+    assert result is not None
+    assert "inspect" in result.lower() or "precondition" in result.lower() or "verify" in result.lower()
+
+
+def test_critique_tool_failure_empty_error_returns_none():
+    """_critique_tool_failure returns None when error is empty."""
+    from agents.critic_agent import CriticAgent
+
+    assert CriticAgent._critique_tool_failure("run_shell", "") is None
+    assert CriticAgent._critique_tool_failure("run_shell", "   ") is None
+
+
+# ── single-tool critic: _critique_single_tool_failure ────────────────────────
+
+
+def test_critique_single_tool_failure_returns_none_on_success():
+    """_critique_single_tool_failure returns None when execution succeeded."""
+    agent = _make_agent()
+    result = agent._critique_single_tool_failure(
+        {"success": True, "output": "ok"},
+        {"name": "run_shell", "tool": "run_shell"},
+        {"intent": "run_shell"},
+    )
+    assert result is None
+
+
+def test_critique_single_tool_failure_returns_none_for_skip_names():
+    """_critique_single_tool_failure returns None for skip-list actions."""
+    agent = _make_agent()
+    for skip_name in ["help", "status_query", "list_capabilities"]:
+        result = agent._critique_single_tool_failure(
+            {"success": False, "error": "something broke"},
+            {"name": skip_name},
+            {"intent": skip_name},
+        )
+        assert result is None, f"Should skip {skip_name}"
+
+
+def test_critique_single_tool_failure_returns_none_when_no_error():
+    """_critique_single_tool_failure returns None when no error string present."""
+    agent = _make_agent()
+    result = agent._critique_single_tool_failure(
+        {"success": False, "error": ""},
+        {"name": "run_shell"},
+        {"intent": "run_shell"},
+    )
+    assert result is None
+
+
+def test_critique_single_tool_failure_returns_none_for_seat_generated():
+    """_critique_single_tool_failure returns None for seat-generated actions."""
+    agent = _make_agent()
+    result = agent._critique_single_tool_failure(
+        {"success": False, "error": "oops"},
+        {"name": "run_shell", "_seat_generated": True},
+        {"intent": "run_shell"},
+    )
+    assert result is None
+
+
+def test_critique_single_tool_failure_returns_none_when_plan_artifact_present():
+    """_critique_single_tool_failure returns None when _run_artifact is present (plan path)."""
+    agent = _make_agent()
+    result = agent._critique_single_tool_failure(
+        {"success": False, "error": "oops", "_run_artifact": {"steps": []}},
+        {"name": "run_shell"},
+        {"intent": "run_shell"},
+    )
+    assert result is None
+
+
+def test_critique_single_tool_failure_fires_for_failed_non_skip():
+    """_critique_single_tool_failure returns a compact critique for valid failed tool runs."""
+    agent = _make_agent()
+    result = agent._critique_single_tool_failure(
+        {"success": False, "error": "Permission denied: /var/log/secure"},
+        {"name": "run_shell", "tool": "run_shell"},
+        {"intent": "run_shell"},
+    )
+    assert result is not None
+    assert "run_shell" in result or "permission" in result.lower()
+
+
+def test_single_tool_critique_wired_into_main_loop():
+    """Failed single-tool run: _critique is set and attached to st_artifact before persist."""
+    agent = _make_agent_with_clean_memory()
+
+    # Simulate a failed single-tool action
+    selected_action = {"name": "run_shell", "tool": "run_shell", "parameters": {"command": "ls /nope"}}
+    execution_result = {"success": False, "error": "No such file or directory: /nope", "output": None}
+    intent = {"intent": "run_shell", "entities": {}}
+
+    # Build the single-tool artifact and attach critique as the main loop does
+    from agent.services.run_history_service import build_single_tool_artifact
+    st_artifact = build_single_tool_artifact(intent, selected_action, execution_result, "ls /nope")
+
+    critique = agent._critique_single_tool_failure(execution_result, selected_action, intent)
+    assert critique is not None, "Expected a critique for failed run_shell"
+    st_artifact["critic"] = critique
+
+    saved: dict = {}
+    agent.memory.save_fact = lambda key, value, **kw: saved.update({key: value})
+    agent._persist_run_digest(st_artifact, "")
+
+    digest = saved.get("run:last") or {}
+    assert "critic_issues" in digest, f"critic_issues missing from tool digest: {digest}"
+    assert any("no such file" in i.lower() or "path" in i.lower() for i in digest["critic_issues"]), (
+        f"Expected path hint in critic_issues: {digest['critic_issues']}"
+    )
+
+
+def test_extract_critic_fields_parses_bullets():
+    """extract_critic_fields parses dash-prefixed bullet lines."""
+    from agent.services.run_history_service import extract_critic_fields
+
+    fields = extract_critic_fields("- Step A redundant\n- Output vague\n- No recovery")
+    assert fields["critic_issues"] == ["Step A redundant", "Output vague", "No recovery"]
+    assert fields["critic_lesson"] == "Step A redundant"
+
+
+def test_extract_critic_fields_non_bullet_fallback():
+    """extract_critic_fields uses first non-empty line when no bullets present."""
+    from agent.services.run_history_service import extract_critic_fields
+
+    fields = extract_critic_fields("Recovery was too broad; consider narrower scope.")
+    assert len(fields["critic_issues"]) == 1
+    assert "Recovery was too broad" in fields["critic_lesson"]
+
+
+def test_extract_critic_fields_empty_returns_empty():
+    """extract_critic_fields returns {} for empty/whitespace input."""
+    from agent.services.run_history_service import extract_critic_fields
+
+    assert extract_critic_fields("") == {}
+    assert extract_critic_fields("   ") == {}
+    assert extract_critic_fields("OK") == {}
+
+
+def test_seat_critique_attaches_to_run_artifact_on_persist():
+    """When _critique is non-None, it is attached to _run_artifact before _persist_run_digest."""
+    agent = _make_agent_with_clean_memory()
+
+    from core.agent_model_manager import PipelineResult
+
+    critique_text = "- Step A2 is redundant"
+
+    def _execute(task, context=None, explicit_role=None):
+        if explicit_role == "critic":
+            return PipelineResult(
+                success=True,
+                output={"critique": critique_text},
+                pipeline_type="agent_only",
+            )
+        return PipelineResult(success=False, output=None, pipeline_type="agent_only")
+
+    artifact = _make_run_artifact(outcome="success", n_steps=2)
+    # Directly set the critic on the artifact as the agent loop would
+    artifact["critic"] = critique_text
+
+    saved: dict = {}
+    agent.memory.save_fact = lambda key, value, **kw: saved.update({key: value})
+    agent._persist_run_digest(artifact, "summary")
+
+    digest = saved.get("run:last") or {}
+    assert "critic_issues" in digest, f"critic_issues should be in digest after attach: {digest}"
+    assert "Step A2 is redundant" in digest.get("critic_issues", [])
 
 
 def test_persist_run_digest_stores_path_findings():
