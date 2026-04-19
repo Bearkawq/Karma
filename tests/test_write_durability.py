@@ -678,7 +678,8 @@ class TestEpisodicFsync:
         es = EpisodicStore(tmp_path / "ep.jsonl")
         with patch("os.fsync") as mock_fsync:
             es.save("ev", {})
-        mock_fsync.assert_called_once()
+        # First create: file fsync + dir fsync = 2 calls
+        assert mock_fsync.call_count == 2
 
     def test_append_still_works_normally(self, tmp_path):
         from storage.episodic import EpisodicStore
@@ -729,3 +730,123 @@ class TestEpisodicFsync:
         assert es._last_save_failed
         es.save("ok")
         assert not es._last_save_failed
+
+
+# ---------------------------------------------------------------------------
+# EpisodicStore — first-create directory fsync
+# ---------------------------------------------------------------------------
+
+
+class TestEpisodicDirFsync:
+
+    def test_dir_fsync_called_on_first_create(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        assert not ep_file.exists()
+        dir_fsyncs = []
+        real_os_open = os.open
+        real_os_fsync = os.fsync
+
+        def tracking_fsync(fd):
+            # Distinguish dir fd from file fd by checking if it's a directory
+            try:
+                import stat as stat_mod
+                mode = os.fstat(fd).st_mode
+                if stat_mod.S_ISDIR(mode):
+                    dir_fsyncs.append(fd)
+            except Exception:
+                pass
+            return real_os_fsync(fd)
+
+        with patch("os.fsync", side_effect=tracking_fsync):
+            es = EpisodicStore(ep_file)
+            es.save("first")
+        assert len(dir_fsyncs) == 1
+
+    def test_dir_fsync_not_called_on_subsequent_append(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        es = EpisodicStore(ep_file)
+        es.save("seed")  # creates file
+        dir_fsyncs = []
+        real_os_fsync = os.fsync
+
+        def tracking_fsync(fd):
+            try:
+                import stat as stat_mod
+                mode = os.fstat(fd).st_mode
+                if stat_mod.S_ISDIR(mode):
+                    dir_fsyncs.append(fd)
+            except Exception:
+                pass
+            return real_os_fsync(fd)
+
+        with patch("os.fsync", side_effect=tracking_fsync):
+            es.save("second")
+            es.save("third")
+        assert dir_fsyncs == []
+
+    def test_dir_fsync_failure_sets_save_failed_flag(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        assert not ep_file.exists()
+        real_os_open = os.open
+        real_os_fsync = os.fsync
+
+        def selective_fsync(fd):
+            try:
+                import stat as stat_mod
+                mode = os.fstat(fd).st_mode
+                if stat_mod.S_ISDIR(mode):
+                    raise OSError("dir fsync failed")
+            except OSError:
+                raise
+            except Exception:
+                pass
+            return real_os_fsync(fd)
+
+        es = EpisodicStore(ep_file)
+        with patch("os.fsync", side_effect=selective_fsync):
+            es.save("first")
+        assert es._last_save_failed
+
+    def test_dir_fsync_failure_entry_still_in_memory(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        real_os_fsync = os.fsync
+
+        def selective_fsync(fd):
+            try:
+                import stat as stat_mod
+                mode = os.fstat(fd).st_mode
+                if stat_mod.S_ISDIR(mode):
+                    raise OSError("dir fsync failed")
+            except OSError:
+                raise
+            except Exception:
+                pass
+            return real_os_fsync(fd)
+
+        es = EpisodicStore(ep_file)
+        with patch("os.fsync", side_effect=selective_fsync):
+            es.save("first_event")
+        assert any(e["event"] == "first_event" for e in es.log)
+
+    def test_existing_fsync_tests_unaffected(self, tmp_path):
+        """Regression: normal append + file fsync still works after dir-fsync logic."""
+        from storage.episodic import EpisodicStore
+        es = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("os.fsync") as mock_fsync:
+            es.save("ev1")
+            es.save("ev2")
+        # fsync called twice (once per append) plus once for dir on first create = 3
+        assert mock_fsync.call_count == 3
+
+    def test_first_create_then_reload_intact(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        es = EpisodicStore(ep_file)
+        es.save("created")
+        es.save("appended")
+        es2 = EpisodicStore(ep_file)
+        assert [e["event"] for e in es2.log] == ["created", "appended"]

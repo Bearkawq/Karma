@@ -56,14 +56,22 @@ class EpisodicStore:
         #   clean line. load() already skips the partial line; without this guard
         #   the new entry would merge with it and be lost on reload.
         # - flush() moves data from Python buffers to the OS page cache.
-        # - fsync() requests that the OS flush the page cache to durable storage.
-        #   A process crash after fsync() will not lose the entry; an OS/power
-        #   crash before fsync() completes may still lose it. This is stronger
-        #   than flush()-only but is not equivalent to a full transactional rewrite.
+        # - fsync() on the file requests that the OS flush the page cache to
+        #   durable storage. A process crash after fsync() will not lose the entry.
+        # - First-create durability: when appending to a brand-new file, the
+        #   directory entry itself may not be durable until the parent directory is
+        #   fsynced. A power/OS crash between file-fsync and dir-fsync can leave the
+        #   file missing even though its data was flushed. We close this gap by
+        #   fsyncing the parent directory only on first create.
+        # - Subsequent appends to an existing file do not re-fsync the directory;
+        #   the inode is already linked and durable.
         # - A crash mid-write (before flush/fsync) leaves a partial non-JSON last
         #   line; load() skips it, leaving all prior entries intact.
+        # - Still not a transactional WAL: concurrent writes are not coordinated
+        #   and the rotation path uses atomic_write_text, not append semantics.
         # - The in-memory log always reflects the append regardless of disk outcome.
-        # - _last_save_failed is set on any exception, cleared on success.
+        # - _last_save_failed is set on any exception (including dir-fsync), cleared
+        #   on full success.
         entry = {
             'timestamp': datetime.now().isoformat(),
             'event': event,
@@ -75,8 +83,9 @@ class EpisodicStore:
             self.log.append(entry)
             try:
                 self.file_path.parent.mkdir(parents=True, exist_ok=True)
+                is_new_file = not self.file_path.exists()
                 prefix = ''
-                if self.file_path.exists() and self.file_path.stat().st_size > 0:
+                if not is_new_file and self.file_path.stat().st_size > 0:
                     with open(self.file_path, 'rb') as rf:
                         rf.seek(-1, 2)
                         if rf.read(1) != b'\n':
@@ -85,6 +94,12 @@ class EpisodicStore:
                     f.write(prefix + json.dumps(entry) + '\n')
                     f.flush()
                     os.fsync(f.fileno())
+                if is_new_file:
+                    dir_fd = os.open(str(self.file_path.parent), os.O_RDONLY)
+                    try:
+                        os.fsync(dir_fd)
+                    finally:
+                        os.close(dir_fd)
                 self._last_save_failed = False
             except Exception as e:
                 self._last_save_failed = True
