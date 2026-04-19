@@ -138,15 +138,26 @@ class EpisodicStore:
             keep = len(lines) // 2
             archive = self.file_path.with_suffix('.old.jsonl')
             atomic_write_text(archive, "\n".join(lines[:len(lines) - keep]) + ("\n" if lines else ""))
+            # fsync parent directory after archive replace to make the rename durable
+            try:
+                dir_fd = os.open(str(self.file_path.parent), os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+            except Exception as e:
+                self._last_save_failed = True
+                print(f"Error fsyncing directory after archive replace: {e}")
             atomic_write_text(self.file_path, "\n".join(lines[-keep:]) + ("\n" if keep else ""))
+            # fsync parent directory after main file replace as well
+            try:
+                dir_fd = os.open(str(self.file_path.parent), os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+            except Exception as e:
+                self._last_save_failed = True
+                print(f"Error fsyncing directory after main replace: {e}")
         except Exception:
             return
-        try:
-            dir_fd = os.open(str(self.file_path.parent), os.O_RDONLY)
-            try:
-                os.fsync(dir_fd)
-            finally:
-                os.close(dir_fd)
-        except Exception as e:
-            self._last_save_failed = True
-            print(f"Error fsyncing directory after rotation: {e}")

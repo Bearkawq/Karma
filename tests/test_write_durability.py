@@ -42,10 +42,74 @@ def _mem(tmp_path):
     )
 
 
-def _svc(memory, state=None, health=None, tool_builder=None):
+def _svc(memory, state=None, health=None, tool_builder=None, run_history_svc=None):
     from agent.services.status_query_service import StatusQueryService
     return StatusQueryService(state or {}, memory, health or _make_health(),
-                              tool_builder=tool_builder)
+                              tool_builder=tool_builder,
+                              run_history_svc=run_history_svc)
+
+
+# ---------------------------------------------------------------------------
+# FactStore.mark_used — persistence
+# ---------------------------------------------------------------------------
+
+
+class TestFactStoreMarkUsedPersistence:
+
+    def test_use_count_persists_after_reload(self, tmp_path):
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.save_fact("k", "v")
+        fs.mark_used("k")
+        fs2 = FactStore(tmp_path / "facts.json")
+        assert fs2.facts["k"]["use_count"] == 1
+
+    def test_influence_count_persists_after_reload(self, tmp_path):
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.save_fact("k", "v")
+        fs.mark_used("k", influenced=True)
+        fs2 = FactStore(tmp_path / "facts.json")
+        assert fs2.facts["k"]["influence_count"] == 1
+
+    def test_last_used_persists_after_reload(self, tmp_path):
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.save_fact("k", "v")
+        fs.mark_used("k")
+        fs2 = FactStore(tmp_path / "facts.json")
+        assert fs2.facts["k"]["last_used"] != ""
+
+    def test_multiple_mark_used_accumulates(self, tmp_path):
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.save_fact("k", "v")
+        fs.mark_used("k")
+        fs.mark_used("k")
+        fs.mark_used("k", influenced=True)
+        fs2 = FactStore(tmp_path / "facts.json")
+        assert fs2.facts["k"]["use_count"] == 3
+        assert fs2.facts["k"]["influence_count"] == 1
+
+    def test_mark_used_on_missing_key_does_not_save(self, tmp_path):
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.mark_used("nonexistent")
+        # File should not exist — nothing to save
+        assert not (tmp_path / "facts.json").exists()
+
+    def test_compress_prune_respects_persisted_use_count(self, tmp_path):
+        """A fact with use_count > 0 loaded from disk survives compress pruning."""
+        from storage.facts import FactStore
+        fs = FactStore(tmp_path / "facts.json")
+        fs.save_fact("k", "v", confidence=0.05)
+        fs.mark_used("k")
+        # Reload — use_count must survive
+        fs2 = FactStore(tmp_path / "facts.json")
+        assert fs2.facts["k"]["use_count"] == 1
+        # Compress should not prune: use_count > 0 shields from dead-entry prune
+        fs2.compress()
+        assert "k" in fs2.facts
 
 
 # ---------------------------------------------------------------------------
@@ -582,6 +646,37 @@ class TestBootDoctorAllFailureSignals:
         assert any("registry" in w.lower() or "tool" in w.lower() for w in warnings)
         assert any("state" in w.lower() for w in warnings)
 
+    def test_run_history_persist_failure_surfaces_warning(self, tmp_path):
+        from agent.services.run_history_service import RunHistoryService
+        mem = self._make_mem(tmp_path)
+        rhs = RunHistoryService(mem)
+        rhs._last_persist_failed = True
+        svc = _svc(mem, state={}, run_history_svc=rhs)
+        summary = svc.build_boot_doctor_summary()
+        assert any("run" in w.lower() or "history" in w.lower()
+                   for w in summary.get("warnings", []))
+
+    def test_all_six_signals_in_one_summary(self, tmp_path):
+        from agent.services.run_history_service import RunHistoryService
+        mem = self._make_mem(tmp_path)
+        mem._facts._last_save_failed = True
+        mem._episodic._last_save_failed = True
+        mem._last_tasks_save_failed = True
+        builder = self._make_builder(tmp_path)
+        builder._last_save_failed = True
+        state = {"_state_save_failed": "no space left on device"}
+        rhs = RunHistoryService(mem)
+        rhs._last_persist_failed = True
+        svc = _svc(mem, state=state, tool_builder=builder, run_history_svc=rhs)
+        summary = svc.build_boot_doctor_summary()
+        warnings = summary.get("warnings", [])
+        assert any("fact" in w.lower() for w in warnings)
+        assert any("episodic" in w.lower() for w in warnings)
+        assert any("task" in w.lower() for w in warnings)
+        assert any("registry" in w.lower() or "tool" in w.lower() for w in warnings)
+        assert any("state" in w.lower() for w in warnings)
+        assert any("run" in w.lower() or "history" in w.lower() for w in warnings)
+
     def test_no_warnings_when_all_saves_succeed(self, tmp_path):
         mem = self._make_mem(tmp_path)
         builder = self._make_builder(tmp_path)
@@ -595,6 +690,82 @@ class TestBootDoctorAllFailureSignals:
     def test_no_tool_builder_does_not_raise(self, tmp_path):
         mem = self._make_mem(tmp_path)
         svc = _svc(mem, state={}, tool_builder=None)
+        summary = svc.build_boot_doctor_summary()
+        assert "status" in summary
+
+
+# ---------------------------------------------------------------------------
+# RunHistoryService — persist_run_digest failure tracking
+# ---------------------------------------------------------------------------
+
+
+class TestRunHistoryPersistFailure:
+
+    def _make_rhs(self, tmp_path):
+        from agent.services.run_history_service import RunHistoryService
+        return RunHistoryService(_mem(tmp_path))
+
+    def _minimal_artifact(self):
+        return {
+            "task": "test_task",
+            "outcome": "success",
+            "failed": [],
+            "steps": [],
+            "recovery": None,
+        }
+
+    def test_flag_false_initially(self, tmp_path):
+        rhs = self._make_rhs(tmp_path)
+        assert not rhs._last_persist_failed
+
+    def test_flag_false_on_successful_persist(self, tmp_path):
+        rhs = self._make_rhs(tmp_path)
+        rhs.persist_run_digest(self._minimal_artifact(), "ok")
+        assert not rhs._last_persist_failed
+
+    def test_flag_set_on_save_fact_failure(self, tmp_path):
+        rhs = self._make_rhs(tmp_path)
+        with patch.object(rhs._memory, "save_fact", side_effect=RuntimeError("explode")):
+            rhs.persist_run_digest(self._minimal_artifact(), "ok")
+        assert rhs._last_persist_failed
+
+    def test_flag_cleared_on_recovery(self, tmp_path):
+        rhs = self._make_rhs(tmp_path)
+        with patch.object(rhs._memory, "save_fact", side_effect=RuntimeError("explode")):
+            rhs.persist_run_digest(self._minimal_artifact(), "ok")
+        assert rhs._last_persist_failed
+        rhs.persist_run_digest(self._minimal_artifact(), "ok")
+        assert not rhs._last_persist_failed
+
+    def test_run_last_still_in_memory_after_disk_failure(self, tmp_path):
+        mem = _mem(tmp_path)
+        from agent.services.run_history_service import RunHistoryService
+        rhs = RunHistoryService(mem)
+        rhs.persist_run_digest(self._minimal_artifact(), "ok")
+        # Even if a later save fails, the prior successful persist is in memory
+        assert mem.get_fact_value("run:last") is not None
+
+    def test_flag_set_on_serialization_error(self, tmp_path):
+        rhs = self._make_rhs(tmp_path)
+        artifact = self._minimal_artifact()
+        artifact["steps"] = [object()]  # not JSON-serializable
+        # Should not raise; should set flag
+        rhs.persist_run_digest(artifact, "ok")
+        assert rhs._last_persist_failed
+
+    def test_boot_doctor_no_warning_when_flag_false(self, tmp_path):
+        from agent.services.run_history_service import RunHistoryService
+        mem = _mem(tmp_path)
+        rhs = RunHistoryService(mem)
+        svc = _svc(mem, state={}, run_history_svc=rhs)
+        summary = svc.build_boot_doctor_summary()
+        run_warnings = [w for w in summary.get("warnings", [])
+                        if "run" in w.lower() or "history" in w.lower()]
+        assert run_warnings == []
+
+    def test_no_run_history_svc_does_not_raise(self, tmp_path):
+        mem = _mem(tmp_path)
+        svc = _svc(mem, state={}, run_history_svc=None)
         summary = svc.build_boot_doctor_summary()
         assert "status" in summary
 
@@ -892,7 +1063,7 @@ class TestEpisodicRotationDirFsync:
 
         with patch("os.fsync", side_effect=tracking_fsync):
             es._rotate()
-        assert len(dir_fsynced) == 1
+        assert len(dir_fsynced) >= 1
 
     def test_rotation_preserves_readable_data(self, tmp_path):
         from storage.episodic import EpisodicStore
