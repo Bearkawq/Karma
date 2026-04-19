@@ -197,6 +197,50 @@ for line in sys.stdin:
     fi
     ;;
 
+  # ── Next ───────────────────────────────────────────────────
+  next)
+    # Usage: karma next list
+    sub="${1:-list}"
+    shift 2>/dev/null || true
+    if [ "$sub" = "list" ]; then
+      python3 - <<'PY'
+from storage.memory import MemorySystem
+from pathlib import Path
+
+mem = MemorySystem()
+mem.load_all()
+
+# Pending tasks (if tasks file uses id/title)
+tasks = getattr(mem, 'tasks', {})
+print('Pending tasks:')
+if tasks:
+    for tid, t in list(tasks.items())[:10]:
+        title = t.get('title') or t.get('task') or ''
+        status = t.get('status') or ''
+        print(f'  - {tid}: {title} [{status}]')
+else:
+    print('  (no pending tasks)')
+
+# Recent run history
+runs = []
+for k,v in mem.facts.items():
+    if isinstance(v, dict) and v.get('topic') == 'run_history':
+        runs.append((v.get('last_updated',''), k, v.get('value', v)))
+runs.sort(reverse=True)
+print('\nRecent runs:')
+if runs:
+    for ts,k,val in runs[:5]:
+        summary = val.get('summary') if isinstance(val, dict) else str(val)
+        print(f'  - {k} ({ts}): {summary}')
+else:
+    print('  (no recent runs)')
+PY
+    else
+      echo "Unknown subcommand for next: $sub"
+      exit 1
+    fi
+    ;;
+
   # ── Help ───────────────────────────────────────────────────
   help|--help|-h|"")
     cat <<'HELP'
