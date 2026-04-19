@@ -1,0 +1,38 @@
+{
+  "planner_slot": {
+    "assigned_model_id": "qwen3:4b",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.754784"
+  },
+  "coder_slot": {
+    "assigned_model_id": "qwen3:4b",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.755079"
+  },
+  "summarizer_slot": {
+    "assigned_model_id": "granite3.3:2b",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.757778"
+  },
+  "embedder_slot": {
+    "assigned_model_id": "nomic-embed-text",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.761014"
+  },
+  "navigator_slot": {
+    "assigned_model_id": "granite3.3:2b",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.757969"
+  },
+  "general_language_slot": {
+    "assigned_model_id": "qwen3:4b",
+    "fallback_enabled": true,
+    "deterministic_only": false,
+    "last_updated": "2026-04-16T16:17:45.755290"
+  }
+}

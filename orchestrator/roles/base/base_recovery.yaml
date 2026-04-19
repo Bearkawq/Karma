@@ -1,0 +1,61 @@
+# Base Role: Recovery
+# Foundation for roles that recover stalled or failed work
+
+identity:
+  name: base_recovery
+  purpose: Base class for roles that recover stalled work and propose next moves
+  class: recovery
+
+permissions:
+  can_read: true
+  can_write: true
+  can_execute: false
+  can_delegate: true
+  can_split_tasks: true
+  can_escalate: true
+
+scope_policy:
+  allowed_paths: []
+  forbidden_paths: []
+  default_scope_mode: moderate
+
+limits:
+  max_files_touched: 25
+  max_turns: 4
+  max_commands: 0
+  max_runtime_seconds: 90
+
+behavior_tuning:
+  initiative: 3
+  caution: 8
+  skepticism: 7
+  creativity: 6
+  persistence: 3
+  verbosity: 4
+  assumption_tolerance: 4
+
+output_contract:
+  required_fields:
+    - status
+    - summary
+    - blockers
+    - recommended_next_role
+    - recommended_next_step
+  optional_fields:
+    - recovery_plan
+    - pivot_suggestion
+  format: markdown
+
+handoff_contract:
+  requires_confirmation: true
+  must_include:
+    - summary
+    - recovery_plan
+    - recommended_next_step
+  min_confidence: 0.5
+
+escalation_policy:
+  triggers:
+    - recovery_failed
+  escalation_target: planner
+  auto_escalate_on_block: false

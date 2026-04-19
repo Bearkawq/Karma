@@ -1,0 +1,314 @@
+[
+  {
+    "topic": "crx",
+    "summary": "cr0 | cr1 | cr2 | cr3",
+    "supporting_memory_count": 4,
+    "confidence_band": [
+      0.8,
+      0.8
+    ],
+    "contradiction_count": 2,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-09T19:30:33.330738"
+  },
+  {
+    "topic": "cc",
+    "summary": "cc0 | cc1 | cc2",
+    "supporting_memory_count": 3,
+    "confidence_band": [
+      0.9,
+      0.9
+    ],
+    "contradiction_count": 1,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-09T19:30:33.636219"
+  },
+  {
+    "topic": "Python asyncio Hands-On",
+    "summary": "Python's asyncio: A Hands-On Walkthrough \u2013 Real Python \n \n \n \n\n \n \n\n \n \n\n \n \n \n \n \n \n \n\n \n \n \n\n \n \n \n\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n \n \n \n\n \n\n \n \n\n \n \n | Here are some essential concepts to start with: \n \n Parallelism consists of executing multiple operations at the same time. | Multiprocessing is a means of achieving parallelism that entails spreading tasks over a computer\u2019s central processing unit (CPU) cores. | Concurrency is a slightly broader term than parallelism, suggesting that multiple tasks have the ability to run in an overlapping manner. | Threading is a concurrent execution model in which multiple threads take turns executing tasks.",
+    "supporting_memory_count": 8,
+    "confidence_band": [
+      0.18,
+      0.28
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-11T16:06:09.097926"
+  },
+  {
+    "topic": "function runs",
+    "summary": "Concurrency in Azure Functions Feedback Summarize this article for me In Azure Functions, a single function app instance allows for multiple events to | Note \n \n \n Access to this page requires authorization. | Access to this page requires authorization. | To provide more control over how your app runs, Functions provides a way for you to manage the number of concurrent executions. | Functions provides two main ways of managing concurrency: \n \n Fixed per-instance concurrency : You can configure host-level limits on concurrency that",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T20:38:21.869422"
+  },
+  {
+    "topic": "Tutorial min read",
+    "summary": "Complete Overview Of A Reading Mini-Lesson | The Reading Roundup \n \n \n\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n \n\n \n \n \n \n \n \n \n \n  | Reading mini-lessons are a key component in the Reading Workshop. | In this post, we\u2019ll further explain what a reading mini-lesson is and explore the key components. | You may also want to check out the following posts that are a part of the reading mini-lesson series: \n\n \n 4 Types of Reading Mini-lessons \n\n Mini-les | They should be about 10-15 minutes long \u2013 hence why they\u2019re called \u201cmini.\u201d Ultimately the goal of a mini-lesson is to help students become skilled rea",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.18,
+      0.28
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-11T16:06:09.102954"
+  },
+  {
+    "topic": "python decorators",
+    "summary": "When you use a Python decorator, you wrap a function with another function, which takes the original function as an argument and returns its modified  | Prerequisites for learning decorators Before we learn about decorators, we need to understand a few important concepts related to Python functions. Al | Decorators provide a flexible alternative to subclassing for extending functionality.\u201d Core Idea: Wrapping Objects At its heart, the Decorator Pattern",
+    "supporting_memory_count": 3,
+    "confidence_band": [
+      0.06,
+      0.06
+    ],
+    "contradiction_count": 1,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T16:39:25.098020"
+  },
+  {
+    "topic": "another function",
+    "summary": "Use return value in another function - python - GeeksforGeeks In Python, one function\u2019s return value can be used in another, making code cleaner and m | Use return value in another function - python - GeeksforGeeks In Python, one function\u2019s return value can be used in another, making code cleaner and m | In no way different from \u00d3scar L\u00f3pez's answer, the solution using lambda is still in a sense 'more functional'. | This is actually a very interesting case to highlight the idea of 'variable scoping' and function currying (which basically relies on varibale scoping | The reason why it doesn't work (in my example) is because the return will try to evaluate the result before returning, and because it's a bunch of var",
+    "supporting_memory_count": 10,
+    "confidence_band": [
+      0.5,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T01:40:03.885484"
+  },
+  {
+    "topic": "Python Async",
+    "summary": "It is commonly used for handling tasks like network requests, database operations or file I/O, where waiting for one task to finish would normally slo | asyncio \u2014 Asynchronous I/O \u2014 Python 3.14.3 documentation \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n \n \n \n \n \n \n \n \n \n \n\n \n \n \n \n \n \n \n \n \n | Python's asyncio: A Hands-On Walkthrough \u2013 Real Python \n \n \n \n\n \n \n\n \n \n\n \n \n \n \n \n \n \n\n \n \n \n\n \n \n \n\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n \n \n \n\n \n\n \n \n\n \n \n",
+    "supporting_memory_count": 3,
+    "confidence_band": [
+      0.06,
+      0.6
+    ],
+    "contradiction_count": 1,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T01:40:03.054032"
+  },
+  {
+    "topic": "kali linux",
+    "summary": "Kali Linux | Penetration Testing and Ethical Hacking Linux Distribution The Industry Standard Kali Linux is not about its tools, nor the operating sys | Best Text Editor for Kali Linux - GeeksforGeeks Kali Linux is one of the most popular Linux distros, With a special focus on penetration testing and e | Kali Linux | Penetration Testing and Ethical Hacking Linux Distribution \n The Industry Standard Kali Linux is not about its tools, nor the operating s | Kali Linux is a platform . | Kali is optimized to reduce the amount of work, so a professional can just sit down and go.",
+    "supporting_memory_count": 18,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 7,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T20:38:21.871209"
+  },
+  {
+    "topic": "Install Python",
+    "summary": "9\ufffd\ufffd@\ufffd\u0000\ufffd~}\ufffd\ufffd\ufffd\ufffdz!\ufffd\ufffd\ufffdh\ufffd\ufffd\ufffd|{Cg\ufffd!\ufffd\u00172\u0005\ufffd\ufffd*OL2U\"\ufffd\u0000\ufffdj\ufffd\ufffd\\4\u0002\ufffd\ufffd(0\u0001\ufffd\u0002\u001b\ufffd\ufffd\ufffd`\ufffd\ufffdx\ufffdb#\f\u001d\ufffd\ufffd\u007f\ufffd\u0004\ufffd\ufffd\ufffdr\ufffdl\u0509\ufffd\ufffdY\u0001\ufffd\ufffd\ufffd\u001cM\ufffd\u0015Rh\ufffdf\ufffd}\u0003\ufffd\ufffdO\u06384n\ufffd\ufffd\ufffdni?\ufffd!\ufffd\u0014\ufffdF\ufffdo\ufffd/\ufffd\f8\ufffd&\ufffd\b{\u001cL\ufffd\ufffd\u0012J\ufffd\u001b\u0005i[\u000b\ufffd\ufffd\ufffd7\ufffd\ufffdM\u001c  | Installation & Setup Guide for Python 3 \n Python is one of the most popular programming languages in the world, with its ease of use and versatile app | It is used for various purposes, such as web development, data science, machine learning, and more. | In this article, we will provide a comprehensive guide on how to install and set up Python 3. | Python 3 is the latest version of the Python programming language and is recommended for most users.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.4,
+      0.5
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T10:33:18.722263"
+  },
+  {
+    "topic": "bash scripting",
+    "summary": "Bash Shell Scripting: A Beginner's Guide \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n \n \n \n\n \n \n \n\n \n\n \n \n \n \n \n \n \r\n \n \n \n \n \n \n \n \n\n \n Skip to content | It is widely available on various operating systems and is a default command interpreter on most GNU/Linux systems. | The name is an acronym for the \u2018 B ourne- A gain SH ell\u2019. | Shell \n Shell is a macro processor which allows for an interactive or non-interactive command execution. | In case you did not know, bash scripting is a must skill for any Linux system administration job even though it may not be implicitly requested by the",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T20:34:53.953243"
+  },
+  {
+    "topic": "edit Kali Linux",
+    "summary": "Best Text Editor for Kali Linux - GeeksforGeeks Kali Linux is one of the most popular Linux distros, With a special focus on penetration testing and e | Best Text Editor for Kali Linux - GeeksforGeeks Kali Linux is one of the most popular Linux distros, With a special focus on penetration testing and e | So, What is a Text Editor? | A Text Editor is a simple computer program, used to make quick edits to files. | It is not a fully functional word processor but can still be used to create basic text files, and do quick edits to code.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 3,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T20:38:21.873000"
+  },
+  {
+    "topic": "integrating language tutorial",
+    "summary": "Integrating Language Learning into Daily Life: Strategies for Immersion and Practice - Lingua Learn Integrating Language Learning into Daily Life: Str | To truly excel and achieve fluency, it is essential to integrate language learning into your daily life. | Travel to countries where the language is spoken to immerse yourself in the language and culture. | Integrating language learning into your daily life is a powerful strategy for enhancing your language skills and fostering a deep connection with the  | Lingua Learn is committed to providing a comprehensive language learning experience that extends beyond the classroom.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T09:16:49.767613"
+  },
+  {
+    "topic": "python decorators 2 depth",
+    "summary": "When you use a Python decorator, you wrap a function with another function, which takes the original function as an argument and returns its modified  | When you use a Python decorator, you wrap a function with another function, which takes the original function as an argument and returns its modified  | For example, if your code is in a file named greeters.py , then you run python -i greeters.py : \n \n \n \n \n \n \n \n \n \n \n Note that greet_bob(say_hello) r | This is an important distinction that\u2019s crucial for how functions work as first-class objects. | A function name without parentheses is a reference to a function, while a function name with trailing parentheses calls the function and refers to its",
+    "supporting_memory_count": 14,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 0,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-13T23:12:11.242592"
+  },
+  {
+    "topic": "integrating language learning",
+    "summary": "6 Strategies to Integrate Language Instruction in the Content Areas \u2013 Inspiring Young Learners April 26, 2024 Language Domains , Lesson Planning , Pod | By giving students just the right amount of support\u2014like sentence frames and word banks\u2014we help them reach new heights. | Equipping ELLs is a podcast for both ESL specialists and homeroom teachers who are looking for effective and engaging ways to support their English La | Your host, Beth Vaucher, is the founder of Inspiring Young Learners. | She is an ESL certified homeroom teacher with over 10 years of experience teaching in the US and internationally.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-12T20:34:53.956918"
+  },
+  {
+    "topic": "Bash Shell Scripting",
+    "summary": "Shell Scripting for Beginners \u2013 How to Write Bash Scripts in Linux \n \n \n \n\n \n \n \n \n\n \n \n \n \n \n \n \n \n \n \n\n \n \n \n \n \n\n \n \n \n \n \n \n \n \n\n \n \n \n \n\n \n \n\n \n  | In this article, you will learn: \n \n What is a bash shell? | What is a bash script and how do you identify it? | Introduction to the Bash Shell \n The Linux command line is provided by a program called the shell. | Different users can be configured to use different shells.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-13T23:12:11.246476"
+  },
+  {
+    "topic": "Decorator Pattern",
+    "summary": "The Decorator Pattern \u2022 Home Page \u2022 The Decorator Pattern Verdict The Decorator Pattern can be useful in Python code! Happily, the pattern can be easi | [ 1 ] The decorator pattern is often useful for adhering to the Single Responsibility Principle , as it enables functionality to be distributed across | The Decorator Pattern \n \n \n \n \n \n \u2022\n Home Page \n \u2022\n \n \n \n \n The Decorator Pattern\n \n Verdict \n The Decorator Pattern can be useful in Python code! | Happily, the pattern can be easier to implement\nin a dynamic language like Python\nthan in the static languages where it was first practiced. | Definition\n The decorator class\u2019s purpose\nis to add to, remove from, or adjust the behaviors\nthat the wrapped object would normally implement\nwhen its",
+    "supporting_memory_count": 18,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 8,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-13T23:12:11.244488"
+  },
+  {
+    "topic": "python decorators 2 depth tutorial",
+    "summary": "When you use a Python decorator, you wrap a function with another function, which takes the original function as an argument and returns its modified  | This technique provides a simple way to implement higher-order functions in Python, enhancing code reusability and readability. | Multiple decorators can be applied to a single function by stacking them before the function definition. | The print() function is an example of this: it returns None while having the side effect of outputting something to the console. | For example, if your code is in a file named greeters.py , then you run python -i greeters.py : \n \n \n \n \n \n \n \n \n \n \n Note that greet_bob(say_hello) r",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-03-13T23:12:11.248348"
+  },
+  {
+    "topic": "Decorator Pattern Python",
+    "summary": "The Decorator Pattern \u2022 Home Page \u2022 The Decorator Pattern Verdict The Decorator Pattern can be useful in Python code! Happily, the pattern can be easi | The Decorator Pattern \n \n \n \n \n \n \u2022\n Home Page \n \u2022\n \n \n \n \n The Decorator Pattern\n \n Verdict \n The Decorator Pattern can be useful in Python code! | Happily, the pattern can be easier to implement\nin a dynamic language like Python\nthan in the static languages where it was first practiced. | Definition\n The decorator class\u2019s purpose\nis to add to, remove from, or adjust the behaviors\nthat the wrapped object would normally implement\nwhen its | It can be wrapped around a plain old file object any time you want,\nwithout the need for you be in control\nwhen the wrapped object was created.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.14,
+      0.24
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T15:00:37.917287"
+  },
+  {
+    "topic": "function argument",
+    "summary": "[ 1 ] For example, the binary function f ( x , y ) = x 2 + y 2 {\\displaystyle f(x,y)=x^{2}+y^{2}} has two arguments, x {\\displaystyle x} and y {\\displ | It is also called an independent variable . | The hypergeometric function is an example of a four-argument function. | The number of arguments that a function takes is called the arity of the function. | A function that takes a single argument as input, such as \n \n \n \n f \n ( \n x \n ) \n = \n \n x \n \n 2 \n \n \n \n \n {\\displaystyle f(x)=x^{2}} \n \n , is called a",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.14,
+      0.24
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T15:00:37.915682"
+  },
+  {
+    "topic": "python decorators best practices",
+    "summary": "Decorators provide a flexible alternative to subclassing for extending functionality.\u201d Core Idea: Wrapping Objects At its heart, the Decorator Pattern | Understanding the Decorator Pattern \n The Decorator Pattern is one of the 23 classic design patterns described in the \u201cDesign Patterns: Elements of Re | Decorators provide a flexible alternative to subclassing for extending functionality.\u201d \n \n Core Idea: Wrapping Objects \n At its heart, the Decorator P | The wrapped object remains unaware of the decorator, and decorators can be combined to add multiple layers of functionality. | Each topping is a decorator that wraps the pizza, adding to its cost and description.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.14,
+      0.24
+    ],
+    "contradiction_count": 3,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T15:00:37.916690"
+  },
+  {
+    "topic": "python decorators tutorial",
+    "summary": "When you use a Python decorator, you wrap a function with another function, which takes the original function as an argument and returns its modified  | This technique provides a simple way to implement higher-order functions in Python, enhancing code reusability and readability. | Multiple decorators can be applied to a single function by stacking them before the function definition. | The print() function is an example of this: it returns None while having the side effect of outputting something to the console. | For example, if your code is in a file named greeters.py , then you run python -i greeters.py : \n \n \n \n \n \n \n \n \n \n \n Note that greet_bob(say_hello) r",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.6,
+      0.7
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-11T17:06:16.686611"
+  },
+  {
+    "topic": "python decorators examples",
+    "summary": "Prerequisites for learning decorators Before we learn about decorators, we need to understand a few important concepts related to Python functions. Al | The outer function is called the decorator, which takes the original function as an argument and returns a modified version of it. | Prerequisites for learning decorators \n\n Before we learn about decorators, we need to understand a few important concepts related to Python functions. | Also, remember that everything in Python is an object , even functions are objects. | This function is now assigned to the greet variable.",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.28,
+      0.38
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T09:45:32.004884"
+  },
+  {
+    "topic": "wrapper function",
+    "summary": "Wrapper functions simplify writing computer programs by abstracting the details of a subroutine's implementation. Purpose [ edit ] Wrapper functions a | Purpose [ edit ] \n Wrapper functions are a means of delegation and can be used for a number of purposes. | A wrapper can be written for each of the third party functions and used in the native application. | Adapting class/object interfaces [ edit ] \n \n Wrapper functions can be used to adapt an existing class or object to have a different interface. | Code testing [ edit ] \n Wrapper functions can be used to write error checking routines for pre-existing system functions without increasing the length",
+    "supporting_memory_count": 9,
+    "confidence_band": [
+      0.14,
+      0.24
+    ],
+    "contradiction_count": 4,
+    "linked_workflows": [],
+    "linked_failures": [],
+    "created": "2026-04-16T15:00:37.917702"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "from": "little_gemma",
+  "to": "big_gemma",
+  "task": "Analyze the nexus project architecture and suggest improvements",
+  "context": "Current state: nexus project at /home/mikoleye/karma/nexus has been having some module integration issues",
+  "priority": "high",
+  "timestamp": "2026-04-03T21:24:47.998980"
+}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f0f12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="icon" href="/static/icon-192.png">
+<title>Karma</title>
+<link rel="stylesheet" href="/static/mobile.css">
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">K</div>
+  <h1>Karma</h1>
+  <span class="clock" id="clock"></span>
+  <span class="dot" id="dot" title="offline"></span>
+</header>
+
+<!-- Tab Bar (bottom, thumb-friendly) -->
+<nav id="tabbar">
+  <button class="tab active" data-tab="chat">Chat</button>
+  <button class="tab" data-tab="memory">Memory</button>
+  <button class="tab" data-tab="system">System</button>
+  <button class="tab" data-tab="learn">Learn</button>
+</nav>
+
+<!-- Chat Tab -->
+<div class="panel active" id="panel-chat">
+  <div class="messages" id="messages"></div>
+  <form class="input-bar" id="cmdform" autocomplete="off">
+    <input type="text" id="cmdinput" placeholder="Ask Karma..." enterkeyhint="send">
+    <button type="submit" id="send-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </form>
+</div>
+
+<!-- Memory Tab -->
+<div class="panel" id="panel-memory">
+  <div class="scroll-area">
+    <div class="stat-row" id="mem-stats"></div>
+    <div class="section">
+      <h2>Facts</h2>
+      <div id="facts-list"></div>
+    </div>
+    <div class="section">
+      <h2>Tasks</h2>
+      <div id="tasks-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- System Tab -->
+<div class="panel" id="panel-system">
+  <div class="scroll-area">
+    <div class="section">
+      <h2>Agent</h2>
+      <div id="sys-state" class="kv"></div>
+    </div>
+    <div class="section">
+      <h2>Resources</h2>
+      <div id="sys-map" class="kv"></div>
+    </div>
+    <div class="section">
+      <h2>Health</h2>
+      <div id="sys-health" class="kv"></div>
+    </div>
+    <div class="section">
+      <h2>Tools</h2>
+      <div id="sys-caps" class="tag-list"></div>
+    </div>
+    <div class="section">
+      <h2>Timeline</h2>
+      <div id="sys-timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Learn Tab -->
+<div class="panel" id="panel-learn">
+  <div class="scroll-area">
+    <div class="section">
+      <h2>GoLearn</h2>
+      <p class="hint">Search, read, extract, remember.</p>
+      <input type="text" id="gl-topic" class="full-input" placeholder="What to learn?">
+      <div class="row">
+        <label>Min <input type="number" id="gl-mins" value="3" min="1" max="30" class="sm-input"></label>
+        <label>Mode
+          <select id="gl-mode" class="sm-input">
+            <option value="auto">Auto</option>
+            <option value="depth">Deep</option>
+            <option value="breadth">Wide</option>
+          </select>
+        </label>
+        <button id="gl-btn" class="btn">Start</button>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Activity</h2>
+      <div id="learn-log" class="log"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/mobile.js"></script>
+</body>
+</html>

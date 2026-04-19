@@ -1,0 +1,15 @@
+{
+  "phase": "patch",
+  "mode": "normal",
+  "current_task": "",
+  "active_role": "Builder",
+  "last_update": "2026-03-31T20:37:00Z",
+  "workers": {
+    "scout": {"status": "idle"},
+    "builder": {"status": "active"},
+    "checker": {"status": "idle"},
+    "helper": {"status": "idle"}
+  },
+  "blockers": [],
+  "friction": []
+}

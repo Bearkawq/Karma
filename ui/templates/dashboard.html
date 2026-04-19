@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karma</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="brand">K</div>
+  <button class="nav-btn active" data-view="chat" title="Chat (1)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+  <button class="nav-btn" data-view="learn" title="GoLearn (2)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  </button>
+  <button class="nav-btn" data-view="memory" title="Memory (3)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  </button>
+  <button class="nav-btn" data-view="system" title="System (4)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="nav-btn" data-view="evidence" title="Evidence (5)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+  </button>
+  <button class="nav-btn" data-view="telemetry" title="Telemetry (6)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+  </button>
+  <button class="nav-btn" data-view="models" title="Models (7)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+  </button>
+  <div class="nav-spacer"></div>
+  <div class="status-dot" id="status-dot" title="connecting"></div>
+</nav>
+
+<main>
+  <!-- Chat View -->
+  <div class="view active" id="view-chat">
+    <div class="chat-header">
+      <h1>Karma</h1>
+      <div class="conf-gauge" id="conf-gauge" title="Agent confidence">
+        <div class="conf-fill" id="conf-fill"></div>
+        <span class="conf-text" id="conf-text">50%</span>
+      </div>
+      <span class="subtitle" id="clock"></span>
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <form class="chat-input" id="cmdform" autocomplete="off">
+      <input type="text" id="cmdinput" placeholder="Ask something... (Ctrl+K for palette)" autofocus>
+      <button type="submit" id="send-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </form>
+  </div>
+
+  <!-- GoLearn View -->
+  <div class="view" id="view-learn">
+    <div class="view-header"><h2>GoLearn</h2></div>
+    <div class="view-body">
+      <div class="card">
+        <h3>Start a learning session</h3>
+        <p class="hint">Karma will search the web, read articles, extract knowledge, and remember what it learns.</p>
+        <div class="learn-form">
+          <input type="text" id="gl-topic" placeholder="What should I learn about?">
+          <div class="learn-row">
+            <label>Minutes <input type="number" id="gl-mins" value="3" min="1" max="30"></label>
+            <label>Mode
+              <select id="gl-mode">
+                <option value="auto">Auto</option>
+                <option value="depth">Deep dive</option>
+                <option value="breadth">Wide scan</option>
+              </select>
+            </label>
+            <button id="gl-btn" class="btn-primary">Start Learning</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="learn-activity">
+        <h3>Activity</h3>
+        <div id="learn-log" class="activity-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory View -->
+  <div class="view" id="view-memory">
+    <div class="view-header">
+      <h2>Memory</h2>
+      <input type="text" id="fact-search" class="header-search" placeholder="Filter facts...">
+    </div>
+    <div class="view-body">
+      <div class="stats-row" id="mem-stats"></div>
+      <div class="card">
+        <h3>Facts <span class="card-count" id="facts-count"></span></h3>
+        <div id="facts-list" class="item-list"></div>
+      </div>
+      <div class="card">
+        <h3>Tasks</h3>
+        <div id="tasks-list" class="item-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System View -->
+  <div class="view" id="view-system">
+    <div class="view-header">
+      <h2>System</h2>
+      <label class="auto-toggle">
+        <input type="checkbox" id="sys-auto" checked> Auto-refresh
+      </label>
+    </div>
+    <div class="view-body">
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Active Runtime</h3>
+          <div id="sys-runtime" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Agent State</h3>
+          <div id="sys-state" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Recent Runs</h3>
+          <div id="sys-runs" class="kv-list"></div>
+          <div id="sys-singles" class="tl-list" style="max-height:120px;overflow-y:auto;margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>System Map</h3>
+          <div id="sys-map" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Worker Status</h3>
+          <div id="sys-workers" class="kv-list"></div>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Tools</h3>
+          <div id="sys-tools" class="kv-list"></div>
+          <div class="tool-sandbox">
+            <input type="text" id="sandbox-cmd" placeholder="Quick command...">
+            <button id="sandbox-btn" class="btn-sm">Run</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Capabilities</h3>
+          <div id="sys-caps" class="cap-list"></div>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Health</h3>
+          <div id="sys-health" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Confidence Trend</h3>
+          <canvas id="conf-canvas" height="80"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Task Timeline</h3>
+        <div id="sys-timeline" class="timeline"></div>
+      </div>
+      <div class="card">
+        <h3>Log</h3>
+        <div id="sys-log" class="log-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence View -->
+  <div class="view" id="view-evidence">
+    <div class="view-header"><h2>Evidence Pipeline</h2></div>
+    <div class="view-body">
+      <div class="stats-row" id="ev-stats"></div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Retrieval Metrics</h3>
+          <div id="ev-retrieval" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Capability Map</h3>
+          <div id="ev-capmap"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Repair History</h3>
+        <div id="ev-repairs"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telemetry View -->
+  <div class="view" id="view-telemetry">
+    <div class="view-header">
+      <h2>Telemetry</h2>
+      <span class="posture-badge" id="telemetry-posture">CALM</span>
+    </div>
+    <div class="view-body">
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-label">Posture</span>
+          <span class="stat-value" id="stat-posture">CALM</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Revision</span>
+          <span class="stat-value" id="stat-revision">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Pipeline</span>
+          <span class="stat-value" id="stat-pipeline">karma_only</span>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Last Action Receipt</h3>
+          <div id="telemetry-receipt" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Last Mutation</h3>
+          <div id="telemetry-mutation" class="kv-list"></div>
+        </div>
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Route Trace</h3>
+          <div id="telemetry-route" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Recent Events</h3>
+          <div id="telemetry-events" class="event-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Models View -->
+  <div class="view" id="view-models">
+    <div class="view-header">
+      <h2>Agents & Models</h2>
+    </div>
+    <div class="view-body">
+      <div class="model-controls">
+        <button id="scan-models-btn" class="btn-primary">Scan for Models</button>
+        <input type="text" id="scan-path" placeholder="/models" value="/models">
+      </div>
+      <div class="sys-grid">
+        <div class="card">
+          <h3>Agents</h3>
+          <div id="model-agents" class="kv-list"></div>
+        </div>
+        <div class="card">
+          <h3>Models</h3>
+          <div id="model-list" class="kv-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Slot Assignments</h3>
+        <div id="model-slots" class="slot-grid"></div>
+      </div>
+      <div class="card">
+        <h3>Scan Results</h3>
+        <div id="model-scan-results" class="scan-results"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Toast container -->
+<div id="toasts"></div>
+
+<!-- Command Palette -->
+<div class="palette-overlay" id="palette-overlay">
+  <div class="palette">
+    <input type="text" id="palette-input" placeholder="Type a command... (Esc to close)" autocomplete="off">
+    <div id="palette-results" class="palette-results"></div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

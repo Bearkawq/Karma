@@ -1,0 +1,62 @@
+# Base Role: Read-Only
+# Foundation for roles that only read and analyze
+
+identity:
+  name: base_readonly
+  purpose: Base class for read-only roles that analyze and map
+  class: read-only
+
+permissions:
+  can_read: true
+  can_write: false
+  can_execute: false
+  can_delegate: false
+  can_split_tasks: false
+  can_escalate: true
+
+scope_policy:
+  allowed_paths: []
+  forbidden_paths: []
+  default_scope_mode: strict
+
+limits:
+  max_files_touched: 20
+  max_turns: 5
+  max_commands: 0
+  max_runtime_seconds: 120
+
+behavior_tuning:
+  initiative: 5
+  caution: 7
+  skepticism: 6
+  creativity: 3
+  persistence: 4
+  verbosity: 5
+  assumption_tolerance: 3
+
+output_contract:
+  required_fields:
+    - status
+    - summary
+    - files_read
+    - blockers
+    - recommended_next_role
+  optional_fields:
+    - map
+    - likely_fault_zones
+    - entry_points
+  format: markdown
+
+handoff_contract:
+  requires_confirmation: false
+  must_include:
+    - summary
+    - files_read
+  min_confidence: 0.6
+
+escalation_policy:
+  triggers:
+    - blocked
+    - ambiguous
+  escalation_target: helper
+  auto_escalate_on_block: true

@@ -1,0 +1,63 @@
+# Base Role: Executor
+# Foundation for roles that execute and modify
+
+identity:
+  name: base_executor
+  purpose: Base class for roles that execute code and make changes
+  class: executor
+
+permissions:
+  can_read: true
+  can_write: true
+  can_execute: true
+  can_delegate: true
+  can_split_tasks: true
+  can_escalate: true
+
+scope_policy:
+  allowed_paths: []
+  forbidden_paths: []
+  default_scope_mode: moderate
+
+limits:
+  max_files_touched: 10
+  max_turns: 8
+  max_commands: 15
+  max_runtime_seconds: 300
+
+behavior_tuning:
+  initiative: 8
+  caution: 4
+  skepticism: 4
+  creativity: 5
+  persistence: 7
+  verbosity: 6
+  assumption_tolerance: 5
+
+output_contract:
+  required_fields:
+    - status
+    - summary
+    - files_read
+    - files_changed
+    - blockers
+    - recommended_next_role
+  optional_fields:
+    - patch_plan
+    - validation_result
+  format: markdown
+
+handoff_contract:
+  requires_confirmation: true
+  must_include:
+    - summary
+    - files_changed
+    - validation_result
+  min_confidence: 0.7
+
+escalation_policy:
+  triggers:
+    - blocked
+    - validation_failed
+  escalation_target: checker
+  auto_escalate_on_block: true

@@ -1,0 +1,154 @@
+{
+  "tools": {
+    "file": {
+      "successes": 5173,
+      "failures": 48,
+      "tasks": [
+        "list_files",
+        "read_file",
+        "test_act",
+        "tx",
+        "search_files"
+      ],
+      "best_contexts": [
+        "list_files",
+        "test_act",
+        "tx",
+        "search_files"
+      ],
+      "common_inputs": [
+        "path",
+        "['operation', 'path']",
+        "['path']",
+        "['p']",
+        "[]",
+        "['operation', 'path', 'pattern']"
+      ],
+      "failure_contexts": [
+        "read_file",
+        "list_files",
+        "test_act",
+        "tx"
+      ],
+      "recent_results": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "shell": {
+      "successes": 4,
+      "failures": 9,
+      "tasks": [
+        "run_shell"
+      ],
+      "failure_contexts": [
+        "run_shell"
+      ],
+      "recent_results": [
+        false
+      ],
+      "common_inputs": [
+        "['command']"
+      ]
+    },
+    "self_check": {
+      "successes": 1,
+      "failures": 0,
+      "tasks": [
+        "self_check"
+      ],
+      "best_contexts": [
+        "self_check"
+      ],
+      "failure_contexts": [],
+      "common_inputs": [
+        "[]"
+      ],
+      "linked_workflows": [],
+      "recent_results": [
+        true
+      ]
+    },
+    "list_capabilities": {
+      "successes": 1,
+      "failures": 0,
+      "tasks": [
+        "list_capabilities"
+      ],
+      "best_contexts": [
+        "list_capabilities"
+      ],
+      "failure_contexts": [],
+      "common_inputs": [
+        "[]"
+      ],
+      "linked_workflows": [],
+      "recent_results": [
+        true
+      ]
+    }
+  },
+  "intent_counts": {
+    "list_files": 4130,
+    "run_shell": 13,
+    "read_file": 43,
+    "self_check": 709,
+    "repair_report": 7,
+    "crystallize": 5,
+    "list_capabilities": 1074,
+    "test_act": 2,
+    "_ti": 2,
+    "_pi": 6,
+    "_oi": 2,
+    "tx": 2,
+    "golearn": 75,
+    "run_custom_tool": 2,
+    "search_files": 1044,
+    "pulse": 11,
+    "status_query": 48,
+    "digest": 1,
+    "navigate": 3,
+    "code_test": 2
+  },
+  "failure_streaks": {
+    "list_files": 0,
+    "run_shell": 2,
+    "read_file": 42,
+    "self_check": 0,
+    "repair_report": 0,
+    "crystallize": 0,
+    "list_capabilities": 0,
+    "test_act": 1,
+    "_ti": 1,
+    "_pi": 6,
+    "_oi": 1,
+    "tx": 1,
+    "golearn": 0,
+    "run_custom_tool": 2,
+    "search_files": 0,
+    "pulse": 0,
+    "status_query": 0,
+    "digest": 0,
+    "navigate": 0,
+    "code_test": 2
+  },
+  "updated": "2026-04-18T22:56:37.970585"
+}

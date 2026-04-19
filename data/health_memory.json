@@ -1,0 +1,1402 @@
+[
+  {
+    "issue": "Episodic log is 8.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:03:56.493880"
+  },
+  {
+    "issue": "Events log is 27.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:03:56.494861"
+  },
+  {
+    "issue": "Episodic log is 8.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:03:56.757222"
+  },
+  {
+    "issue": "Events log is 27.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:03:56.758572"
+  },
+  {
+    "issue": "Episodic log is 8.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:03:58.523136"
+  },
+  {
+    "issue": "Events log is 27.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:03:58.524188"
+  },
+  {
+    "issue": "Episodic log is 8.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:04:44.422341"
+  },
+  {
+    "issue": "Events log is 27.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:04:44.424397"
+  },
+  {
+    "issue": "Episodic log is 8.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:05:26.280685"
+  },
+  {
+    "issue": "Events log is 27.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:05:26.281757"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T19:10:32.679531"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:33.826055"
+  },
+  {
+    "issue": "Events log is 27.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:33.826959"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:34.167569"
+  },
+  {
+    "issue": "Events log is 27.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:34.168472"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:34.488716"
+  },
+  {
+    "issue": "Events log is 27.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:34.489639"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:34.892374"
+  },
+  {
+    "issue": "Events log is 27.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:34.893403"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:35.144871"
+  },
+  {
+    "issue": "Events log is 27.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:35.145893"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:35.396383"
+  },
+  {
+    "issue": "Events log is 27.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:35.397304"
+  },
+  {
+    "issue": "Episodic log is 8.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:10:36.857711"
+  },
+  {
+    "issue": "Events log is 27.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:10:36.858705"
+  },
+  {
+    "issue": "Episodic log is 9.0MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T19:11:21.518254"
+  },
+  {
+    "issue": "Events log is 27.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T19:11:21.519659"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T20:21:32.511299"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:33.761339"
+  },
+  {
+    "issue": "Events log is 28.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:33.762415"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:34.199980"
+  },
+  {
+    "issue": "Events log is 28.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:34.200939"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:34.450422"
+  },
+  {
+    "issue": "Events log is 28.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:34.451472"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:34.706503"
+  },
+  {
+    "issue": "Events log is 28.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:34.707528"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:35.125353"
+  },
+  {
+    "issue": "Events log is 28.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:35.126406"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:35.393872"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:35.394797"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:35.485891"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:35.486874"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:35.791196"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:35.947393"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:36.886630"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:36.887629"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:36.976751"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:36.977665"
+  },
+  {
+    "issue": "Episodic log is 9.1MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:37.579261"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:37.580319"
+  },
+  {
+    "issue": "Episodic log is 9.2MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:21:37.970718"
+  },
+  {
+    "issue": "Events log is 28.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:21:37.971887"
+  },
+  {
+    "issue": "Episodic log is 9.2MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:22:27.137539"
+  },
+  {
+    "issue": "Events log is 28.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:27.139557"
+  },
+  {
+    "issue": "Episodic log is 9.2MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:22:27.178738"
+  },
+  {
+    "issue": "Events log is 28.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:27.180018"
+  },
+  {
+    "issue": "Events log is 28.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:39.514909"
+  },
+  {
+    "issue": "Events log is 28.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:39.605906"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:39.721450"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:39.921610"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.012274"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.135181"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.298450"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.489729"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.601531"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.722020"
+  },
+  {
+    "issue": "Events log is 28.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.840303"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:40.942816"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.033062"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.165313"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.358109"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.451942"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.735551"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:41.906406"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.083358"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.240004"
+  },
+  {
+    "issue": "Events log is 28.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.608427"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.772333"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.891136"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:42.999160"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.120271"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.237570"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.362653"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.468215"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.604522"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.747464"
+  },
+  {
+    "issue": "Events log is 28.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:43.886160"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.014328"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.162873"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.299438"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.413302"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.528012"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.658734"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:44.849371"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:45.008343"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:45.187743"
+  },
+  {
+    "issue": "Events log is 28.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:45.351870"
+  },
+  {
+    "issue": "Events log is 28.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:45.506989"
+  },
+  {
+    "issue": "Events log is 28.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:45.672436"
+  },
+  {
+    "issue": "Events log is 28.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:22:47.032370"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T20:23:06.469930"
+  },
+  {
+    "issue": "Episodic log is 9.3MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:06.850152"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:06.851206"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:07.728659"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:07.729701"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:07.821163"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:07.822256"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:07.925474"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:07.926501"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:08.792742"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:08.793833"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:08.897756"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:08.898756"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:09.246745"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:09.247683"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:09.645121"
+  },
+  {
+    "issue": "Events log is 28.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:09.646215"
+  },
+  {
+    "issue": "Episodic log is 9.4MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:23:11.178813"
+  },
+  {
+    "issue": "Events log is 28.9MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:23:11.179866"
+  },
+  {
+    "issue": "Episodic log is 9.5MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T20:24:04.092757"
+  },
+  {
+    "issue": "Events log is 28.9MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T20:24:04.093916"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:32:15.107860"
+  },
+  {
+    "issue": "Episodic log is 9.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:16.417735"
+  },
+  {
+    "issue": "Events log is 29.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:16.418808"
+  },
+  {
+    "issue": "Episodic log is 9.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:16.790213"
+  },
+  {
+    "issue": "Events log is 29.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:16.791163"
+  },
+  {
+    "issue": "Episodic log is 9.6MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:17.150323"
+  },
+  {
+    "issue": "Events log is 29.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:17.151338"
+  },
+  {
+    "issue": "Episodic log is 9.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:17.608602"
+  },
+  {
+    "issue": "Events log is 29.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:17.609634"
+  },
+  {
+    "issue": "Episodic log is 9.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:17.887981"
+  },
+  {
+    "issue": "Events log is 29.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:17.889106"
+  },
+  {
+    "issue": "Episodic log is 9.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:18.164202"
+  },
+  {
+    "issue": "Events log is 29.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:18.165210"
+  },
+  {
+    "issue": "Episodic log is 9.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:32:19.781351"
+  },
+  {
+    "issue": "Events log is 29.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:32:19.782368"
+  },
+  {
+    "issue": "Episodic log is 9.7MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:33:15.189642"
+  },
+  {
+    "issue": "Events log is 29.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:33:15.190782"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:34:20.222014"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:22.128322"
+  },
+  {
+    "issue": "Events log is 29.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:22.129283"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:22.226276"
+  },
+  {
+    "issue": "Events log is 29.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:22.227467"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:22.578646"
+  },
+  {
+    "issue": "Events log is 29.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:22.579717"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:22.679737"
+  },
+  {
+    "issue": "Events log is 29.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:22.680742"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:22.951436"
+  },
+  {
+    "issue": "Events log is 29.9MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:22.952453"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:23.138978"
+  },
+  {
+    "issue": "Events log is 29.9MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:23.140056"
+  },
+  {
+    "issue": "Episodic log is 9.9MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:34:24.765404"
+  },
+  {
+    "issue": "Events log is 29.9MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:34:24.766489"
+  },
+  {
+    "issue": "Episodic log is 10.0MB \u2014 approaching rotation threshold",
+    "severity": "warning",
+    "suggestion": "Episodic log will auto-rotate at 10MB",
+    "subsystem": "memory",
+    "timestamp": "2026-04-18T22:35:18.721844"
+  },
+  {
+    "issue": "Events log is 30.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:35:18.724334"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:36:21.169523"
+  },
+  {
+    "issue": "Events log is 30.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:22.226848"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:22.569900"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:22.843252"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:23.272415"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:23.371704"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:23.644715"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:25.283002"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:36:30.687335"
+  },
+  {
+    "issue": "Events log is 30.3MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:31.756034"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:32.150945"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:32.263997"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:33.231373"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:33.350151"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:33.759723"
+  },
+  {
+    "issue": "Events log is 30.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:36:35.247751"
+  },
+  {
+    "issue": "Events log is 30.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:37:05.586351"
+  },
+  {
+    "issue": "Events log is 30.8MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:37:19.057370"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:39:05.304629"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:06.297616"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:06.659706"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:07.076246"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:07.579086"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:07.922330"
+  },
+  {
+    "issue": "Events log is 31.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:08.019969"
+  },
+  {
+    "issue": "Events log is 31.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:09.323066"
+  },
+  {
+    "issue": "Events log is 31.7MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:39:47.443934"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:48:55.683297"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:56.666269"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:56.763783"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:57.024079"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:57.732239"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:57.833063"
+  },
+  {
+    "issue": "Events log is 32.0MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:58.092623"
+  },
+  {
+    "issue": "Events log is 32.1MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:48:59.783707"
+  },
+  {
+    "issue": "Events log is 32.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:49:39.268685"
+  },
+  {
+    "issue": "cache test issue",
+    "severity": "warning",
+    "suggestion": "none",
+    "subsystem": "tests",
+    "timestamp": "2026-04-18T22:55:40.054116"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:41.072218"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:41.499616"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:41.791717"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:42.059003"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:42.239572"
+  },
+  {
+    "issue": "Events log is 32.4MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:42.497481"
+  },
+  {
+    "issue": "Events log is 32.5MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:55:44.497000"
+  },
+  {
+    "issue": "Events log is 32.6MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
+    "timestamp": "2026-04-18T22:56:23.493110"
+  }
+]

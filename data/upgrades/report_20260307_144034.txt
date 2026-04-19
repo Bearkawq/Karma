@@ -1,0 +1,38 @@
+Karma Self-Upgrade Report — 2026-03-07T14:40:34.943828
+Files scanned: 28
+Issues found: 34
+
+  [silent_except] agent/agent_loop.py:433 — Silent exception swallowed — consider logging
+  [silent_except] agent/agent_loop.py:944 — Silent exception swallowed — consider logging
+  [todo] agent/agent_loop.py:555 — '# TODO: implement tool logic based on learned knowledge',
+  [long_function] agent/agent_loop.py:166 — _register_default_rules() is 71 lines — consider splitting
+  [long_function] agent/agent_loop.py:572 — _execute_action() is 77 lines — consider splitting
+  [long_function] agent/agent_loop.py:809 — _run_single() is 75 lines — consider splitting
+  [silent_except] core/events.py:33 — Silent exception swallowed — consider logging
+  [silent_except] core/events.py:38 — Silent exception swallowed — consider logging
+  [long_function] core/planner.py:32 — plan_actions() is 118 lines — consider splitting
+  [long_function] core/symbolic.py:153 — _fallback_heuristics() is 64 lines — consider splitting
+  [silent_except] ml/ml.py:301 — Silent exception swallowed — consider logging
+  [silent_except] ml/ml.py:315 — Silent exception swallowed — consider logging
+  [long_function] research/index.py:257 — _persist_to_memory() is 87 lines — consider splitting
+  [long_function] research/index.py:348 — generate_report() is 66 lines — consider splitting
+  [silent_except] storage/memory.py:75 — Silent exception swallowed — consider logging
+  [long_function] tools/code_tool.py:273 — _auto_fix() is 63 lines — consider splitting
+  [long_function] tools/code_tool.py:340 — _test() is 84 lines — consider splitting
+  [todo] tools/self_upgrade.py:47 — # Check for TODO/FIXME/HACK
+  [todo] tools/self_upgrade.py:47 — # Check for TODO/FIXME/HACK
+  [todo] tools/self_upgrade.py:47 — # Check for TODO/FIXME/HACK
+  [todo] tools/self_upgrade.py:49 — for tag in ("TODO", "FIXME", "HACK", "XXX"):
+  [todo] tools/self_upgrade.py:49 — for tag in ("TODO", "FIXME", "HACK", "XXX"):
+  [todo] tools/self_upgrade.py:49 — for tag in ("TODO", "FIXME", "HACK", "XXX"):
+  [todo] tools/self_upgrade.py:49 — for tag in ("TODO", "FIXME", "HACK", "XXX"):
+  [long_function] tools/self_upgrade.py:20 — analyze() is 79 lines — consider splitting
+  [silent_except] ui/cockpit.py:207 — Silent exception swallowed — consider logging
+  [silent_except] ui/cockpit.py:228 — Silent exception swallowed — consider logging
+  [silent_except] ui/cockpit.py:245 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:74 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:138 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:144 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:150 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:157 — Silent exception swallowed — consider logging
+  [silent_except] ui/web.py:251 — Silent exception swallowed — consider logging

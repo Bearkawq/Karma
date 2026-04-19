@@ -1,0 +1,324 @@
+Claude Code prompt — Update 3.8 + Code Intelligence Layer
+
+Low-token phrase:
+forge knowledge spine 3.8
+use repository locally
+do not output full files
+output unified diffs only
+no large file dumps
+
+Execution style:
+- Work from the local repo only.
+- Read only the files needed for the current step.
+- Do not paste large files or full rewrites.
+- Return unified diffs only.
+- Keep file churn minimal.
+- Prefer surgical edits over architecture theatrics.
+- After each phase, run tests and runtime proof before claiming success.
+- If blocked by environment/provider limits, report the blocker plainly and keep going on the parts that can still be completed.
+
+Mission:
+Upgrade Karma into a self-feeding local-first knowledge system that can:
+1. navigate structured sites
+2. harvest documentation
+3. ingest raw dropped files with minimal user prep
+4. support saved-page digestion including MHT/MHTML
+5. import repo explainer notes
+6. build a reusable local knowledge library
+7. learn from its own code and patches
+8. prepare for semantic retrieval
+9. add code intelligence so it can reason about codebases instead of only reading files
+
+PHASE 1 — Navigator Spine (Wikipedia-first)
+Stabilize and extend the navigator subsystem.
+
+Required capabilities:
+- open URL
+- extract page content
+- detect and score internal links
+- follow relevant links only
+- avoid loops
+- obey max depth / max pages / same-site rules
+- record stop_reason
+
+Support commands/behaviors such as:
+- navigate wikipedia <topic>
+- navigate site <url>
+- golearn wikipedia <topic>
+
+Wikipedia rules:
+- prefer article body and section text
+- ignore edit/history/meta/admin/help/login pages
+- follow useful /wiki/ article links only
+- stop when yield drops
+
+PHASE 2 — Documentation Harvester Spine
+Add a documentation harvester for structured technical docs.
+
+Target sites first:
+- docs.python.org
+- kali.org/docs
+- debian.org/doc
+- stable official project docs
+- readthedocs-style sites when practical
+
+Required capabilities:
+- harvest from a seed URL
+- recognize docs pages
+- preserve headings
+- preserve code blocks and command examples
+- follow documentation links only
+- stop when enough useful docs are collected
+- save cleaned pages locally with manifest/provenance
+
+Support commands/behaviors such as:
+- harvest docs <url>
+- harvest python docs
+- harvest kali docs
+- harvest debian docs
+
+PHASE 3 — Dropbox Digest Spine
+Make raw knowledge ingestion extremely easy.
+
+Required drop areas:
+- data/knowledge_drop/raw_pages
+- data/knowledge_drop/raw_docs
+- data/knowledge_drop/raw_code
+- data/knowledge_drop/raw_pdfs
+
+Required behavior:
+- scan dropped files
+- detect type
+- extract readable content
+- classify topic
+- dedupe
+- route to library / quarantine / rejected
+- preserve provenance
+- support one-step ingest command such as:
+  - digest
+  - ingest dropbox
+  - golearn ingest <path>
+
+Supported formats first:
+- .md
+- .txt
+- .json
+- .py
+- .rst
+- .html
+- .csv
+
+PHASE 4 — Saved Page Digest + MHT Support
+Add support for saved pages including:
+- .mht
+- .mhtml
+
+Required behavior:
+- detect saved-page format
+- extract HTML/text
+- clean boilerplate
+- preserve title/headings if possible
+- quarantine bad extractions
+- store provenance as saved_page / dropbox_import
+
+PHASE 5 — Repo Explainer Import
+Allow Karma to ingest saved outputs from repo-explainer tools.
+
+Add source types/provenance such as:
+- repo_explainer
+- architecture_note
+- code_reference
+
+These should be routable into local knowledge and self-patch learning.
+
+PHASE 6 — Knowledge Library Structure
+Store harvested/ingested knowledge in clear buckets, e.g.:
+- python
+- kali
+- debugging
+- ai_frameworks
+- coding_patterns
+- systems
+- repo_explanations
+- saved_pages
+- docs_harvest
+
+Each stored artifact should preserve:
+- title
+- source path or URL
+- topic bucket
+- provenance
+- timestamp
+- hash
+- heading list if available
+- code block count if available
+
+PHASE 7 — Knowledge Dedup + FeedMe Cleanup
+Improve duplicate detection using:
+- hash
+- source reuse
+- normalized titles/paths
+- near-duplicate heuristics when cheap
+
+Also:
+- dedupe Feed Me requests
+- stop repeated identical topic requests from cluttering the UI
+
+PHASE 8 — Semantic Retrieval Preparation
+Prepare the library for later semantic search.
+
+Do not build the full vector engine yet unless already close.
+But make the pipeline ready for:
+- chunking
+- embedding generation
+- vector indexing
+- semantic retrieval
+
+Keep metadata and file layout compatible with this future step.
+
+PHASE 9 — Self-Patch Learning
+Strengthen Karma's ability to learn from its own scars.
+
+Required sources:
+- repo snapshots
+- unified diffs
+- bug/fix case files
+- test logs
+- completion/progress reports
+- patch prompts
+
+Required behavior:
+- classify patch knowledge
+- preserve bug -> diagnosis -> patch -> proof relationships
+- make patch knowledge searchable by topic and subsystem
+
+PHASE 10 — Code Intelligence Layer
+Add a code intelligence layer so Karma can reason about codebases.
+
+Required capabilities:
+- map modules and files
+- map imports/dependencies
+- identify functions/classes
+- build a simple symbol/reference map
+- connect docs/notes to code areas where possible
+- support repo comprehension beyond plain file reading
+
+Good outputs:
+- file/module map
+- symbol index
+- dependency hints
+- likely edit targets for a requested behavior
+
+This is not a full IDE clone.
+Keep it practical and lightweight.
+
+PHASE 11 — Pulse / Needs / Feed Me Integration
+Keep all new subsystems integrated with the status layer.
+
+Pulse examples:
+- Opening Python docs page
+- Following relevant Wikipedia link
+- Digesting dropped HTML page
+- Quarantining noisy saved page
+- Saving harvested docs locally
+- Building module map for code intelligence
+
+Needs / Feed Me examples:
+- Need more Python asyncio docs
+- Need more Kali package-management references
+- Need more bug/fix cases for parser routing
+- Feed Me: drop repo explainer notes into repo_explanations
+- Feed Me: harvest docs.python.org for subprocess examples
+
+All wording must remain short, readable, and truthful.
+
+PHASE 12 — Runtime Validation
+Do real proof, not green-check theater.
+
+Run and show exact outputs for at least:
+- navigate wikipedia kali linux
+- harvest python docs
+- harvest kali docs
+- digest
+- golearn python asyncio
+- continue
+- summarize that
+- explain that
+
+If code intelligence is implemented enough, also show a repo/code mapping command or output.
+
+Show:
+- pages visited
+- docs harvested
+- duplicates skipped
+- stop_reason
+- artifacts created
+- provenance labels
+- whether code blocks survived
+- Pulse/Needs/Feed Me outputs
+
+PHASE 13 — Tests + Regression
+Add/update tests for:
+- navigation commands
+- harvest commands
+- dropbox digest
+- MHT extraction
+- repo explainer import
+- dedup behavior
+- provenance correctness
+- code intelligence outputs
+- Pulse/Needs/Feed Me integration
+
+Always run:
+- pytest -q
+- python3 tests/smoke_test.py
+
+Also confirm:
+- no regression in shell/file safety
+- no regression in code-route continuity
+
+Acceptance criteria:
+- Karma can navigate structured sites in a bounded way
+- Karma can harvest docs into local knowledge
+- Karma can digest raw dropped files with minimal prep
+- Karma can handle MHT/MHTML saved pages
+- Karma can import repo explainer notes
+- Karma stores knowledge locally with clear provenance
+- Feed Me/Needs/Pulse remain understandable
+- basic code intelligence exists and is useful
+- tests pass
+- runtime proof shows practical usefulness
+
+Output requirements:
+- unified diffs only
+- no full-file dumps
+- exact commands run
+- exact outputs
+- exact tests added/changed
+- minimal file churn
+- brief honest report:
+  - what is truly fixed
+  - what still feels weak
+  - what the next hardening target should be
+
+Important:
+- Use the repository locally.
+- Do not paste large files.
+- Output unified diffs only.
+- Do not expose chain-of-thought.
+- Do not fake success if harvesting/navigation/digest fails.
+- Make the machine more useful in the environment it actually has.
+
+
+---
+
+Claude Code operator notes (compact)
+
+Use these project-level features to keep token use down and make sessions more reliable:
+- Put project instructions in ./CLAUDE.md. Anthropic documents project memory in CLAUDE.md and recommends /init to bootstrap it.
+- Put reusable prompts in .claude/commands/ as custom slash commands.
+- Use .claude/settings.json and .claude/settings.local.json for project/shared vs local settings, including permission rules and extra directories.
+- Use focused subagents with limited tool access for narrow jobs instead of one giant do-everything agent.
+- Use hooks for deterministic actions like post-edit formatting, validation, or blocking unsafe writes.
+- Use /compact to shrink long sessions while preserving focus, instead of letting context bloat.
+- Keep prompts narrow and stage-gated. Require runtime proof, not just passing tests.

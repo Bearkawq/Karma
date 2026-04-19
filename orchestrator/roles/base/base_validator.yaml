@@ -1,0 +1,62 @@
+# Base Role: Validator
+# Foundation for roles that verify and check
+
+identity:
+  name: base_validator
+  purpose: Base class for roles that verify and diagnose
+  class: validator
+
+permissions:
+  can_read: true
+  can_write: false
+  can_execute: true
+  can_delegate: false
+  can_split_tasks: false
+  can_escalate: true
+
+scope_policy:
+  allowed_paths: []
+  forbidden_paths: []
+  default_scope_mode: strict
+
+limits:
+  max_files_touched: 15
+  max_turns: 6
+  max_commands: 10
+  max_runtime_seconds: 180
+
+behavior_tuning:
+  initiative: 4
+  caution: 9
+  skepticism: 9
+  creativity: 2
+  persistence: 6
+  verbosity: 7
+  assumption_tolerance: 2
+
+output_contract:
+  required_fields:
+    - status
+    - summary
+    - files_read
+    - blockers
+    - recommended_next_role
+  optional_fields:
+    - diagnosis
+    - contract_violations
+    - scope_drift
+  format: markdown
+
+handoff_contract:
+  requires_confirmation: false
+  must_include:
+    - summary
+    - status
+  min_confidence: 0.8
+
+escalation_policy:
+  triggers:
+    - blocked
+    - ambiguous
+  escalation_target: helper
+  auto_escalate_on_block: true

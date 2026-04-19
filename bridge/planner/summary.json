@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-03-31T19:31:45.063382+00:00",
+  "stale_threshold_seconds": 600,
+  "decision_requests": [],
+  "blocked_workers": [],
+  "pending_handoffs": [
+    {
+      "from": "scout",
+      "to": "coder",
+      "task": "Fix test_web_routes"
+    },
+    {
+      "from": "coder",
+      "to": "tester",
+      "task": "Verify fix"
+    }
+  ],
+  "fresh_updates": [],
+  "recent_changed_files": [
+    {
+      "file": "pytest tests/test_gui.py",
+      "timestamp": "2026-03-31T14:30:49.402969+00:00",
+      "worker": "tester",
+      "type": "file_execute"
+    },
+    {
+      "file": "ui/web.py",
+      "timestamp": "2026-03-31T14:30:49.392778+00:00",
+      "worker": "coder",
+      "type": "file_write"
+    },
+    {
+      "file": "tests/test_gui.py",
+      "timestamp": "2026-03-31T14:30:49.381773+00:00",
+      "worker": "scout",
+      "type": "file_read"
+    }
+  ],
+  "active_workers": [],
+  "idle_workers": [
+    {
+      "role": "scout",
+      "status": "idle",
+      "current_task": "",
+      "current_files": [],
+      "last_update": "2026-03-31T14:30:49.385702+00:00",
+      "progress_percent": 0,
+      "blockers": [],
+      "needs_decision": false,
+      "suggested_next_action": "",
+      "output_files": [],
+      "handoff_target": "coder",
+      "error": "",
+      "recent_events": [],
+      "last_error": "",
+      "changed_files": [
+        "tests/test_gui.py"
+      ]
+    },
+    {
+      "role": "coder",
+      "status": "idle",
+      "current_task": "",
+      "current_files": [],
+      "last_update": "2026-03-31T14:30:49.397137+00:00",
+      "progress_percent": 0,
+      "blockers": [],
+      "needs_decision": false,
+      "suggested_next_action": "",
+      "output_files": [],
+      "handoff_target": "tester",
+      "error": "",
+      "recent_events": [],
+      "last_error": "",
+      "changed_files": [
+        "ui/web.py"
+      ]
+    }
+  ],
+  "completed_workers": [
+    {
+      "role": "tester",
+      "status": "completed",
+      "current_task": "",
+      "current_files": [],
+      "last_update": "2026-03-31T14:30:49.408431+00:00",
+      "progress_percent": 100,
+      "blockers": [],
+      "needs_decision": false,
+      "suggested_next_action": "",
+      "output_files": [
+        "tests/test_gui.py"
+      ],
+      "handoff_target": "planner",
+      "error": "",
+      "recent_events": [],
+      "last_error": "",
+      "changed_files": [
+        "pytest tests/test_gui.py"
+      ]
+    }
+  ],
+  "failed_workers": [],
+  "stale_workers": [
+    {
+      "role": "scout",
+      "last_update": "2026-03-31T14:30:49.385702+00:00"
+    },
+    {
+      "role": "tester",
+      "last_update": "2026-03-31T14:30:49.408431+00:00"
+    },
+    {
+      "role": "coder",
+      "last_update": "2026-03-31T14:30:49.397137+00:00"
+    }
+  ],
+  "actionable_items": [
+    {
+      "type": "handoff",
+      "from": "scout",
+      "to": "coder",
+      "task": "Fix test_web_routes",
+      "priority": 3
+    },
+    {
+      "type": "handoff",
+      "from": "coder",
+      "to": "tester",
+      "task": "Verify fix",
+      "priority": 3
+    }
+  ]
+}
