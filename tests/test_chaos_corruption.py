@@ -460,6 +460,7 @@ class TestBootDoctorAfterCorruption:
             memory.get_fact_value.side_effect = lambda k, d=None: None
             memory.facts_save_failed = False
             memory.episodic_save_failed = False
+            memory.tasks_save_failed = False
         if health is None:
             health = _make_health("healthy")
         return StatusQueryService(state, memory, health)

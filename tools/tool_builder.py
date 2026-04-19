@@ -16,6 +16,7 @@ class ToolBuilder:
         self.registry_file = self.tools_dir / "registry.json"
         self.tool_manager = tool_manager
         self.registry: List[Dict[str, Any]] = []
+        self._last_save_failed: bool = False
         self.tools_dir.mkdir(parents=True, exist_ok=True)
 
     # ── persistence ────────────────────────────────────────────
@@ -36,7 +37,9 @@ class ToolBuilder:
         from storage.persistence import atomic_write_text
         try:
             atomic_write_text(self.registry_file, json.dumps(self.registry, indent=2))
+            self._last_save_failed = False
         except Exception as e:
+            self._last_save_failed = True
             print(f"ToolBuilder: registry save failed: {e}")
 
     # ── create ─────────────────────────────────────────────────

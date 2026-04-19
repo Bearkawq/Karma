@@ -139,11 +139,13 @@ def is_self_check_query(query: str) -> bool:
 
 
 class StatusQueryService:
-    def __init__(self, current_state: Dict[str, Any], memory, health) -> None:
+    def __init__(self, current_state: Dict[str, Any], memory, health,
+                 tool_builder=None) -> None:
         # current_state is a mutable dict reference — reads are always live
         self._state = current_state
         self._memory = memory
         self._health = health
+        self._tool_builder = tool_builder
 
     # -- live status ----------------------------------------------------------
 
@@ -622,16 +624,21 @@ class StatusQueryService:
             if w not in warnings:
                 warnings.append(str(w)[:120])
 
-        # Live write-failure signals from storage layer
+        # Live write-failure signals — all storage write paths, normalized
         try:
-            if getattr(self._memory, "facts_save_failed", False):
-                w = "Facts file: last save failed — recent memory changes may not be persisted"
-                if w not in warnings:
-                    warnings.append(w)
-            if getattr(self._memory, "episodic_save_failed", False):
-                w = "Episodic log: last append failed — recent events may not be persisted"
-                if w not in warnings:
-                    warnings.append(w)
+            _write_failure_checks = [
+                (getattr(self._memory, "facts_save_failed", False),
+                 "Facts file: last save failed — recent memory changes may not be persisted"),
+                (getattr(self._memory, "episodic_save_failed", False),
+                 "Episodic log: last append failed — recent events may not be persisted"),
+                (getattr(self._memory, "tasks_save_failed", False),
+                 "Tasks file: last save failed — task state may not be persisted"),
+                (getattr(self._tool_builder, "_last_save_failed", False),
+                 "Tool registry: last save failed — custom tool registry may not be persisted"),
+            ]
+            for failed, msg in _write_failure_checks:
+                if failed and msg not in warnings:
+                    warnings.append(msg)
         except Exception:
             pass
 

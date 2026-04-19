@@ -287,7 +287,10 @@ class AgentLoop:
         from agent.services.status_query_service import StatusQueryService
         from agent.services.plan_execution_service import PlanExecutionService
         self._run_history_svc = RunHistoryService(self.memory)
-        self._status_query_svc = StatusQueryService(self.current_state, self.memory, self.health)
+        self._status_query_svc = StatusQueryService(
+            self.current_state, self.memory, self.health,
+            tool_builder=self.tool_builder,
+        )
         self._plan_exec_svc = PlanExecutionService(self.memory, self.logger)
 
         # Register action handlers

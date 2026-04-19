@@ -31,6 +31,7 @@ class MemorySystem:
         self.tasks_file = Path(tasks_file)
         self._lock = threading.RLock()
         self.tasks: Dict[str, Any] = {}
+        self._last_tasks_save_failed: bool = False
         self.load_tasks()
 
     # ── backward-compatible properties ────────────────────────────
@@ -72,6 +73,11 @@ class MemorySystem:
     def episodic_save_failed(self) -> bool:
         """True if the most recent episodic append failed."""
         return self._episodic._last_save_failed
+
+    @property
+    def tasks_save_failed(self) -> bool:
+        """True if the most recent tasks file save attempt failed."""
+        return self._last_tasks_save_failed
 
     # ── load ──────────────────────────────────────────────────────
     def load_all(self):
@@ -159,7 +165,9 @@ class MemorySystem:
     def _save_tasks_file(self):
         try:
             save_json_file(self.tasks_file, self.tasks)
+            self._last_tasks_save_failed = False
         except Exception as e:
+            self._last_tasks_save_failed = True
             print(f"Error saving tasks: {e}")
 
     # ── aggregate ─────────────────────────────────────────────────

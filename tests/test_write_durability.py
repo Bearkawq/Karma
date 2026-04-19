@@ -42,9 +42,10 @@ def _mem(tmp_path):
     )
 
 
-def _svc(memory, state=None, health=None):
+def _svc(memory, state=None, health=None, tool_builder=None):
     from agent.services.status_query_service import StatusQueryService
-    return StatusQueryService(state or {}, memory, health or _make_health())
+    return StatusQueryService(state or {}, memory, health or _make_health(),
+                              tool_builder=tool_builder)
 
 
 # ---------------------------------------------------------------------------
@@ -452,3 +453,214 @@ class TestAtomicWriteEdgeCases:
                 pass
         # Original still intact
         assert json.loads(p.read_text()) == {"old": True}
+
+
+# ---------------------------------------------------------------------------
+# MemorySystem.tasks_save_failed
+# ---------------------------------------------------------------------------
+
+
+class TestTasksSaveFailure:
+
+    def test_flag_false_initially(self, tmp_path):
+        mem = _mem(tmp_path)
+        assert not mem.tasks_save_failed
+
+    def test_flag_set_on_write_failure(self, tmp_path):
+        mem = _mem(tmp_path)
+        with patch("storage.memory.save_json_file", side_effect=OSError("disk full")):
+            mem.save_task({"id": "t1", "status": "pending"})
+        assert mem.tasks_save_failed
+
+    def test_flag_cleared_on_recovery(self, tmp_path):
+        mem = _mem(tmp_path)
+        with patch("storage.memory.save_json_file", side_effect=OSError("disk full")):
+            mem.save_task({"id": "t1", "status": "pending"})
+        assert mem.tasks_save_failed
+        mem.save_task({"id": "t2", "status": "pending"})
+        assert not mem.tasks_save_failed
+
+    def test_in_memory_tasks_preserved_after_write_failure(self, tmp_path):
+        mem = _mem(tmp_path)
+        with patch("storage.memory.save_json_file", side_effect=OSError("no space")):
+            mem.save_task({"id": "t1", "status": "pending"})
+        assert mem.get_task("t1") is not None
+
+    def test_tasks_save_failed_property_reflects_flag(self, tmp_path):
+        mem = _mem(tmp_path)
+        mem._last_tasks_save_failed = True
+        assert mem.tasks_save_failed
+        mem._last_tasks_save_failed = False
+        assert not mem.tasks_save_failed
+
+
+# ---------------------------------------------------------------------------
+# ToolBuilder._last_save_failed
+# ---------------------------------------------------------------------------
+
+
+class TestToolBuilderSaveFailedFlag:
+
+    def _builder(self, tmp_path):
+        from tools.tool_builder import ToolBuilder
+        from tools.tool_interface import ToolManager
+        tm = ToolManager()
+        return ToolBuilder(tmp_path, tm)
+
+    def test_flag_false_initially(self, tmp_path):
+        b = self._builder(tmp_path)
+        assert not b._last_save_failed
+
+    def test_flag_set_on_write_failure(self, tmp_path):
+        b = self._builder(tmp_path)
+        with patch("storage.persistence.atomic_write_text", side_effect=OSError("denied")):
+            b._save_registry()
+        assert b._last_save_failed
+
+    def test_flag_cleared_on_recovery(self, tmp_path):
+        b = self._builder(tmp_path)
+        with patch("storage.persistence.atomic_write_text", side_effect=OSError("denied")):
+            b._save_registry()
+        assert b._last_save_failed
+        b._save_registry()
+        assert not b._last_save_failed
+
+    def test_registry_unchanged_in_memory_after_failure(self, tmp_path):
+        b = self._builder(tmp_path)
+        b.registry = [{"name": "mytool", "lang": "bash", "path": "/tmp/x.sh"}]
+        with patch("storage.persistence.atomic_write_text", side_effect=OSError("denied")):
+            b._save_registry()
+        assert b.registry[0]["name"] == "mytool"
+
+
+# ---------------------------------------------------------------------------
+# Boot doctor — all 5 normalized failure signals
+# ---------------------------------------------------------------------------
+
+
+class TestBootDoctorAllFailureSignals:
+
+    def _make_mem(self, tmp_path):
+        return _mem(tmp_path)
+
+    def _make_builder(self, tmp_path):
+        from tools.tool_builder import ToolBuilder
+        from tools.tool_interface import ToolManager
+        return ToolBuilder(tmp_path, ToolManager())
+
+    def test_tasks_save_failure_surfaces_warning(self, tmp_path):
+        mem = self._make_mem(tmp_path)
+        mem._last_tasks_save_failed = True
+        svc = _svc(mem, state={})
+        summary = svc.build_boot_doctor_summary()
+        assert any("task" in w.lower() for w in summary.get("warnings", []))
+
+    def test_registry_save_failure_surfaces_warning(self, tmp_path):
+        mem = self._make_mem(tmp_path)
+        mem.facts_save_failed  # touch to init
+        builder = self._make_builder(tmp_path)
+        builder._last_save_failed = True
+        svc = _svc(mem, state={}, tool_builder=builder)
+        summary = svc.build_boot_doctor_summary()
+        assert any("registry" in w.lower() or "tool" in w.lower()
+                   for w in summary.get("warnings", []))
+
+    def test_all_five_signals_in_one_summary(self, tmp_path):
+        mem = self._make_mem(tmp_path)
+        mem._facts._last_save_failed = True
+        mem._episodic._last_save_failed = True
+        mem._last_tasks_save_failed = True
+        builder = self._make_builder(tmp_path)
+        builder._last_save_failed = True
+        state = {"_state_save_failed": "no space left on device"}
+        svc = _svc(mem, state=state, tool_builder=builder)
+        summary = svc.build_boot_doctor_summary()
+        warnings = summary.get("warnings", [])
+        assert any("fact" in w.lower() for w in warnings)
+        assert any("episodic" in w.lower() for w in warnings)
+        assert any("task" in w.lower() for w in warnings)
+        assert any("registry" in w.lower() or "tool" in w.lower() for w in warnings)
+        assert any("state" in w.lower() for w in warnings)
+
+    def test_no_warnings_when_all_saves_succeed(self, tmp_path):
+        mem = self._make_mem(tmp_path)
+        builder = self._make_builder(tmp_path)
+        svc = _svc(mem, state={}, tool_builder=builder)
+        # All flags are false by default
+        summary = svc.build_boot_doctor_summary()
+        write_warnings = [w for w in summary.get("warnings", [])
+                          if any(k in w.lower() for k in ("fact", "episodic", "task", "registry", "state file"))]
+        assert write_warnings == []
+
+    def test_no_tool_builder_does_not_raise(self, tmp_path):
+        mem = self._make_mem(tmp_path)
+        svc = _svc(mem, state={}, tool_builder=None)
+        summary = svc.build_boot_doctor_summary()
+        assert "status" in summary
+
+
+# ---------------------------------------------------------------------------
+# EpisodicStore — partial-line tolerance and recovery
+# ---------------------------------------------------------------------------
+
+
+class TestEpisodicPartialLineRecovery:
+
+    def test_partial_last_line_skipped_on_load(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        # Write two valid lines then a truncated third
+        ep_file.write_text(
+            '{"timestamp":"2026-01-01T00:00:00","event":"a","context":{},"outcome":null,"confidence":1.0}\n'
+            '{"timestamp":"2026-01-01T00:00:01","event":"b","context":{},"outcome":null,"confidence":1.0}\n'
+            '{"timestamp":"2026-01-01T00:00:02","event"',
+            encoding="utf-8",
+        )
+        store = EpisodicStore(ep_file)
+        assert len(store.log) == 2
+        assert store.log[0]["event"] == "a"
+        assert store.log[1]["event"] == "b"
+
+    def test_all_partial_lines_returns_empty(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        ep_file.write_text('{"timestamp":"2026-01-01T00:00:00","event"', encoding="utf-8")
+        store = EpisodicStore(ep_file)
+        assert store.log == []
+
+    def test_new_appends_work_after_partial_load(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        ep_file.write_text(
+            '{"timestamp":"2026-01-01T00:00:00","event":"ok","context":{},"outcome":null,"confidence":1.0}\n'
+            '{"truncated"',
+            encoding="utf-8",
+        )
+        store = EpisodicStore(ep_file)
+        assert len(store.log) == 1
+        store.save("new_event")
+        assert len(store.log) == 2
+        assert not store._last_save_failed
+        # Reload confirms the good line and new append survived
+        store2 = EpisodicStore(ep_file)
+        events = [e["event"] for e in store2.log]
+        assert "ok" in events
+        assert "new_event" in events
+
+    def test_in_memory_log_survives_disk_failure(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        store = EpisodicStore(tmp_path / "ep.jsonl")
+        store.save("before_failure")
+        with patch("builtins.open", side_effect=OSError("no space")):
+            store.save("during_failure")
+        assert len(store.log) == 2
+        assert store._last_save_failed
+
+    def test_flag_cleared_after_recovery_from_partial(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        store = EpisodicStore(tmp_path / "ep.jsonl")
+        with patch("builtins.open", side_effect=OSError("full")):
+            store.save("fail")
+        assert store._last_save_failed
+        store.save("recover")
+        assert not store._last_save_failed
