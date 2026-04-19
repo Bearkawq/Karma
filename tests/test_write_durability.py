@@ -850,3 +850,116 @@ class TestEpisodicDirFsync:
         es.save("appended")
         es2 = EpisodicStore(ep_file)
         assert [e["event"] for e in es2.log] == ["created", "appended"]
+
+
+# ---------------------------------------------------------------------------
+# EpisodicStore — rotation directory fsync
+# ---------------------------------------------------------------------------
+
+
+class TestEpisodicRotationDirFsync:
+
+    def _make_store_with_content(self, tmp_path, lines=10):
+        from storage.episodic import EpisodicStore
+        ep_file = tmp_path / "ep.jsonl"
+        content = "\n".join(
+            json.dumps({"timestamp": f"2026-01-01T00:00:{i:02d}",
+                        "event": f"e{i}", "context": {}, "outcome": None, "confidence": 1.0})
+            for i in range(lines)
+        ) + "\n"
+        ep_file.write_text(content, encoding="utf-8")
+        es = EpisodicStore.__new__(EpisodicStore)
+        es.file_path = ep_file
+        es._lock = __import__("threading").RLock()
+        es.log = []
+        es._last_save_failed = False
+        return es
+
+    def test_dir_fsync_called_during_rotation(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = self._make_store_with_content(tmp_path)
+        dir_fsynced = []
+        real_fsync = os.fsync
+
+        def tracking_fsync(fd):
+            try:
+                import stat as stat_mod
+                if stat_mod.S_ISDIR(os.fstat(fd).st_mode):
+                    dir_fsynced.append(fd)
+            except Exception:
+                pass
+            return real_fsync(fd)
+
+        with patch("os.fsync", side_effect=tracking_fsync):
+            es._rotate()
+        assert len(dir_fsynced) == 1
+
+    def test_rotation_preserves_readable_data(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = self._make_store_with_content(tmp_path, lines=20)
+        es._rotate()
+        assert not es._last_save_failed
+        # Main file should still have valid JSON lines
+        main_lines = [
+            l for l in es.file_path.read_text().splitlines() if l.strip()
+        ]
+        assert len(main_lines) > 0
+        for line in main_lines:
+            obj = json.loads(line)
+            assert "event" in obj
+        # Archive should also exist with valid lines
+        archive = es.file_path.with_suffix(".old.jsonl")
+        assert archive.exists()
+
+    def test_dir_fsync_failure_sets_save_failed_flag(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = self._make_store_with_content(tmp_path)
+        real_fsync = os.fsync
+
+        def selective_fsync(fd):
+            try:
+                import stat as stat_mod
+                if stat_mod.S_ISDIR(os.fstat(fd).st_mode):
+                    raise OSError("dir fsync failed")
+            except OSError:
+                raise
+            except Exception:
+                pass
+            return real_fsync(fd)
+
+        with patch("os.fsync", side_effect=selective_fsync):
+            es._rotate()
+        assert es._last_save_failed
+
+    def test_dir_fsync_failure_does_not_corrupt_data(self, tmp_path):
+        from storage.episodic import EpisodicStore
+        es = self._make_store_with_content(tmp_path, lines=20)
+        real_fsync = os.fsync
+
+        def selective_fsync(fd):
+            try:
+                import stat as stat_mod
+                if stat_mod.S_ISDIR(os.fstat(fd).st_mode):
+                    raise OSError("dir fsync failed")
+            except OSError:
+                raise
+            except Exception:
+                pass
+            return real_fsync(fd)
+
+        with patch("os.fsync", side_effect=selective_fsync):
+            es._rotate()
+        # Data should still be readable despite dir-fsync failure
+        main_lines = [l for l in es.file_path.read_text().splitlines() if l.strip()]
+        assert len(main_lines) > 0
+        for line in main_lines:
+            json.loads(line)
+
+    def test_rotation_write_failure_does_not_set_flag(self, tmp_path):
+        """If the atomic writes fail (not dir-fsync), _last_save_failed stays False."""
+        from storage.episodic import EpisodicStore
+        es = self._make_store_with_content(tmp_path)
+        with patch("storage.episodic.atomic_write_text", side_effect=OSError("write failed")):
+            es._rotate()
+        # Write failure returns early before dir-fsync; flag should be unchanged
+        assert not es._last_save_failed

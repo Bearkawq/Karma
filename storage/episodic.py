@@ -67,8 +67,12 @@ class EpisodicStore:
         #   the inode is already linked and durable.
         # - A crash mid-write (before flush/fsync) leaves a partial non-JSON last
         #   line; load() skips it, leaving all prior entries intact.
-        # - Still not a transactional WAL: concurrent writes are not coordinated
-        #   and the rotation path uses atomic_write_text, not append semantics.
+        # - Rotation durability: _rotate() rewrites both the archive and the main
+        #   file via atomic_write_text (temp write + os.replace). After both
+        #   replacements, the parent directory is fsynced once so the renamed
+        #   directory entries are durable. Rotation dir-fsync failures set
+        #   _last_save_failed without aborting the rotation itself.
+        # - Still not a transactional WAL: concurrent writes are not coordinated.
         # - The in-memory log always reflects the append regardless of disk outcome.
         # - _last_save_failed is set on any exception (including dir-fsync), cleared
         #   on full success.
@@ -124,6 +128,11 @@ class EpisodicStore:
             print(f"Error clearing episodic memory: {e}")
 
     def _rotate(self):
+        # Rotation rewrites both archive and main file via atomic replace.
+        # After both writes succeed, fsync the parent directory once so both
+        # renamed directory entries are durable. If the writes fail, silently
+        # skip (as before); if only the dir-fsync fails, set _last_save_failed
+        # but do not abort — the data is written, just not directory-durable.
         try:
             lines = self.file_path.read_text(encoding='utf-8', errors='replace').splitlines()
             keep = len(lines) // 2
@@ -131,4 +140,13 @@ class EpisodicStore:
             atomic_write_text(archive, "\n".join(lines[:len(lines) - keep]) + ("\n" if lines else ""))
             atomic_write_text(self.file_path, "\n".join(lines[-keep:]) + ("\n" if keep else ""))
         except Exception:
-            pass
+            return
+        try:
+            dir_fd = os.open(str(self.file_path.parent), os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except Exception as e:
+            self._last_save_failed = True
+            print(f"Error fsyncing directory after rotation: {e}")
