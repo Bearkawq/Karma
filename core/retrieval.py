@@ -156,10 +156,9 @@ class RetrievalBus:
         return False
 
     def _retrieve_run_history_items(self, words: set, limit: int) -> List[EvidenceItem]:
-        """Return run_history facts as EvidenceItem objects, newest-first.
+        """Return run_history facts as EvidenceItem objects, newest-first but query-relevant.
 
-        Creates EvidenceItem entries with high relevance so sorting pushes them to
-        the top of returned bundles when recent intent is detected.
+        Uses query words to filter run_history entries for better relevance.
         """
         items: List[EvidenceItem] = []
         memory = getattr(self, "_memory", None)
@@ -183,10 +182,19 @@ class RetrievalBus:
             if run_id and run_id in seen_run_ids:
                 continue
             if run_id:
-                seen_run_ids.add(run_id)
-            confidence = float(outer.get("confidence", 0.9)) if isinstance(outer.get("confidence", None), (int, float)) else 0.9
-            # Relevance boosted for recency-preferring queries
-            relevance = 0.95
+                    seen_run_ids.add(run_id)
+            # Query relevance: check if run_history entry contains query words
+            relevance = 0.5  # base relevance
+            if words:
+                run_text = str(inner.get("command", "")).lower() + str(inner.get("output", "")).lower()
+                word_matches = sum(1 for w in words if w in run_text)
+                relevance = min(0.95, 0.5 + word_matches * 0.15)
+            confidence = outer.get("confidence", 0.9)
+            if isinstance(confidence, (int, float)):
+                confidence = float(confidence)
+            else:
+                confidence = 0.9
+            # Only include if queryRelevant or recent signal matched elsewhere
             recency = 1.0
             items.append(EvidenceItem("run", inner, confidence, relevance, "run_history", "run_history", recency))
             if len(items) >= limit:
@@ -314,6 +322,7 @@ class RetrievalBus:
         if len(self._bundle_cache) > 256:
             oldest_key = next(iter(self._bundle_cache))
             self._bundle_cache.pop(oldest_key, None)
+        self._cache_generation += 1  # Track LRU generations
         return bundle
 
     def get_metrics(self, reset: bool = False) -> dict:
@@ -771,9 +780,6 @@ class RetrievalBus:
         self.invalidate_cache()
 
     # ── metrics ─────────────────────────────────────────────────
-
-    def get_metrics(self) -> Dict[str, int]:
-        return dict(self._metrics)
 
     def log_decision_metrics(self, hits: int, used: int, ignored: int):
         """Log retrieval influence for a single decision."""

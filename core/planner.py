@@ -60,8 +60,9 @@ class Planner:
             elif ev.type == "failure" and isinstance(ev.value, dict):
                 _ev_failures.add(ev.value.get("tool", ""))
             elif ev.type == "tool_memory" and isinstance(ev.value, dict):
-                # Tool memory can help fill missing entities from common_inputs
-                _ev_tools[ev.source] = ev.value
+                # Key by tool name to preserve multiple tool_memory entries
+                tool_key = ev.value.get("tool_name") or ev.value.get("tool") or str(ev.source)
+                _ev_tools[tool_key] = ev.value
 
         # Basic mappings to tool operations
         if intent_name == 'list_files':

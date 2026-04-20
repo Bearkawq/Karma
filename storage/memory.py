@@ -11,6 +11,7 @@ All existing callers use MemorySystem — this preserves the interface.
 from __future__ import annotations
 
 import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -155,10 +156,22 @@ class MemorySystem:
     # ── tasks ─────────────────────────────────────────────────────
     def save_task(self, task: Dict[str, Any]):
         with self._lock:
-            task_id = task['id']
+            if not isinstance(task, dict):
+                raise ValueError(f"Task must be a dict, got {type(task).__name__}")
+            task_id = task.get('id')
+            # Generate ID if missing or empty
+            if not task_id:
+                task_id = self._generate_task_id()
+                task['id'] = task_id
+            if not isinstance(task_id, str) or not task_id:
+                raise ValueError(f"Invalid task id: {task_id!r}")
             task['updated_at'] = datetime.now().isoformat()
             self.tasks[task_id] = task
             self._save_tasks_file()
+
+    def _generate_task_id(self) -> str:
+        """Generate a unique task ID."""
+        return f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
     def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
         return self.tasks.get(task_id)

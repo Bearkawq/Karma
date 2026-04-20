@@ -2341,7 +2341,6 @@ class AgentLoop:
     )
 
     @staticmethod
-    @staticmethod
     def _format_review_targets(
         touched_paths: List[str],
         path_findings: List[Dict[str, Any]],

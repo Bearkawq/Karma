@@ -275,22 +275,24 @@ class FileTool(Tool):
         if len(content) > self.max_size:
             raise ValueError(f'Content too large: {len(content)} bytes (>{self.max_size} bytes)')
         
-        # Write file
-        with open(path, mode) as f:
+        # Write file with explicit UTF-8 encoding to match read path
+        with open(path, mode, encoding='utf-8', errors='strict') as f:
             f.write(content)
         
         return {'path': path, 'size': len(content), 'mode': mode}
     
     def _search_files(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search for files"""
+        """Search for files using pathlib for safer path handling"""
+        from pathlib import Path
         path = self._resolve_path(params.get('path', '.'))
         pattern = params.get('pattern', '*')
         
         if not os.path.exists(path):
             raise FileNotFoundError(f'Path not found: {path}')
         
-        import glob
-        matches = sorted(glob.glob(f'{path}/{pattern}', recursive=True))
+        # Use pathlib for safer recursive glob
+        base = Path(path)
+        matches = sorted(str(p) for p in base.rglob(pattern) if p.is_file())
 
         return {'path': path, 'pattern': pattern, 'matches': matches}
     
