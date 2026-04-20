@@ -191,7 +191,7 @@ def build_model_status_text(manager, slot_mgr) -> str:
             f"- role: {row['role']} | slot: {row['slot']} | "
             f"assigned: {row['assigned_model_id'] or '<none>'} | "
             f"ollama: {row['ollama_model'] or '<missing>'} | "
-            f"present_on_disk: {row['installed_in_ollama']} | loaded(warm): {row['warm_now']} | "
+            f"installed: {row['installed_in_ollama']} | warm_now: {row['warm_now']} | "
             f"deterministic_only: {row['deterministic_only']} | "
             f"status: {status} | issues: {issue_text}"
         )
@@ -202,8 +202,8 @@ def build_model_status_text(manager, slot_mgr) -> str:
         matched = _find_model(inventory, model_id)
         loaded = _is_loaded(inventory, model_id)
         lines.append(
-            f"- {model_id} | present_on_disk: {matched is not None} | "
-            f"ollama: {matched or '<missing>'} | loaded(warm): {loaded}"
+            f"- {model_id} | installed: {matched is not None} | "
+            f"ollama: {matched or '<missing>'} | warm_now: {loaded}"
         )
 
     lines.append("")
@@ -336,8 +336,8 @@ def format_readiness_report(report: Dict[str, Any]) -> str:
     lines.append("Required small models:")
     for model in report["small_models"]:
         lines.append(
-            f"- {model['model']} | present_on_disk: {model['present']} | "
-            f"ollama: {model['ollama_model'] or '<missing>'} | loaded(warm): {model['warm_now']}"
+            f"- {model['model']} | installed: {model['present']} | "
+            f"ollama: {model['ollama_model'] or '<missing>'} | warm_now: {model['warm_now']}"
         )
     lines.append("")
 
@@ -351,8 +351,8 @@ def format_readiness_report(report: Dict[str, Any]) -> str:
         issue_text = ", ".join(issues) if issues else "none"
         lines.append(
             f"- {row['role']} -> {row['slot']} | assigned: {row['assigned_model_id'] or '<none>'} | "
-            f"ollama: {row['ollama_model'] or '<missing>'} | present_on_disk: {row['installed_in_ollama']} | "
-            f"loaded(warm): {row['warm_now']} | "
+            f"ollama: {row['ollama_model'] or '<missing>'} | installed: {row['installed_in_ollama']} | "
+            f"warm_now: {row['warm_now']} | "
             f"deterministic_only: {row['deterministic_only']} | issues: {issue_text}"
         )
     lines.append("")

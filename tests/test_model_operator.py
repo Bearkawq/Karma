@@ -55,8 +55,8 @@ def test_build_model_status_text_shows_roles_and_inventory(monkeypatch, tmp_path
     assert 'role: planner' in txt
     assert 'slot: planner_slot' in txt
     assert 'assigned: m1' in txt
-    assert 'present_on_disk: True' in txt
-    assert 'loaded(warm): True' in txt
+    assert 'installed: True' in txt
+    assert 'warm_now: True' in txt
     assert 'deterministic_only: False' in txt
     assert 'Small model pool:' in txt
 
@@ -68,8 +68,8 @@ def test_status_distinguishes_installed_from_warm(monkeypatch, tmp_path):
 
     txt = build_model_status_text(FakeManager([]), sm)
     assert 'role: planner' in txt
-    assert 'present_on_disk: True' in txt
-    assert 'loaded(warm): False' in txt
+    assert 'installed: True' in txt
+    assert 'warm_now: False' in txt
     assert 'status: INSTALLED_IDLE' in txt
     assert 'MISSING' not in [line for line in txt.splitlines() if 'role: planner' in line][0]
 
@@ -151,7 +151,7 @@ def test_readiness_ready_after_sane_bootstrap(monkeypatch, tmp_path):
     assert ready is True
     assert "Karma model readiness: READY" in text
     assert "Small model pool installed" in text
-    assert "loaded(warm):" in text
+    assert "warm_now:" in text
     assert "Ready to roll" in text
 
 
