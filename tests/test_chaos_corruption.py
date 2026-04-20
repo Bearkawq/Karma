@@ -300,6 +300,158 @@ class TestMemorySystem:
 
 
 # ---------------------------------------------------------------------------
+# MemorySystem — tasks_quarantined flag
+# ---------------------------------------------------------------------------
+
+
+class TestTasksQuarantine:
+
+    def _mem(self, tmp_path, tasks_content=None):
+        from storage.memory import MemorySystem
+        tasks_path = tmp_path / "tasks.json"
+        if tasks_content is not None:
+            tasks_path.write_text(tasks_content, encoding="utf-8")
+        return MemorySystem(
+            episodic_file=str(tmp_path / "ep.jsonl"),
+            facts_file=str(tmp_path / "facts.json"),
+            tasks_file=str(tasks_path),
+        )
+
+    def test_flag_false_when_tasks_file_missing(self, tmp_path):
+        mem = self._mem(tmp_path)
+        assert not mem.tasks_quarantined
+
+    def test_flag_false_when_tasks_file_valid(self, tmp_path):
+        import json
+        mem = self._mem(tmp_path, json.dumps({"t1": {"id": "t1", "status": "pending"}}))
+        assert not mem.tasks_quarantined
+        assert mem.tasks["t1"]["status"] == "pending"
+
+    def test_flag_true_when_tasks_file_corrupt(self, tmp_path):
+        mem = self._mem(tmp_path, "NOT JSON {{{")
+        assert mem.tasks_quarantined
+        assert mem.tasks == {}
+
+    def test_flag_true_when_tasks_file_truncated(self, tmp_path):
+        mem = self._mem(tmp_path, '{"t1": {"id": "t1"')
+        assert mem.tasks_quarantined
+        assert mem.tasks == {}
+
+    def test_corrupt_file_is_quarantined_on_disk(self, tmp_path):
+        tasks_path = tmp_path / "tasks.json"
+        tasks_path.write_text("NOT JSON", encoding="utf-8")
+        self._mem(tmp_path)
+        # Original tasks.json should be gone (renamed to .bak)
+        assert not tasks_path.exists()
+        baks = list(tmp_path.glob("tasks.json.*.bak"))
+        assert baks, "corrupt tasks file should have been quarantined to a .bak"
+
+    def test_flag_clears_on_reload_with_valid_file(self, tmp_path):
+        import json
+        from storage.memory import MemorySystem
+        tasks_path = tmp_path / "tasks.json"
+        tasks_path.write_text("BAD", encoding="utf-8")
+        mem = MemorySystem(
+            episodic_file=str(tmp_path / "ep.jsonl"),
+            facts_file=str(tmp_path / "facts.json"),
+            tasks_file=str(tasks_path),
+        )
+        assert mem.tasks_quarantined
+        # Write a valid file and reload
+        tasks_path.write_text(json.dumps({}), encoding="utf-8")
+        mem.load_tasks()
+        assert not mem.tasks_quarantined
+
+    def test_safe_fallback_no_crash(self, tmp_path):
+        """Corrupt tasks file must not raise — system still boots."""
+        mem = self._mem(tmp_path, "{GARBAGE}")
+        # System is usable after corrupt tasks load
+        mem.save_task({"id": "new_task", "status": "pending"})
+        assert mem.get_task("new_task") is not None
+
+    def test_tasks_quarantined_property_exposed(self, tmp_path):
+        mem = self._mem(tmp_path, "bad")
+        assert hasattr(mem, "tasks_quarantined")
+        assert mem.tasks_quarantined is True
+
+
+class TestTasksQuarantineBootDoctor:
+
+    def _make_mem(self, tmp_path, tasks_content=None):
+        from storage.memory import MemorySystem
+        tasks_path = tmp_path / "tasks.json"
+        if tasks_content is not None:
+            tasks_path.write_text(tasks_content, encoding="utf-8")
+        return MemorySystem(
+            episodic_file=str(tmp_path / "ep.jsonl"),
+            facts_file=str(tmp_path / "facts.json"),
+            tasks_file=str(tasks_path),
+        )
+
+    def _make_health(self):
+        from unittest.mock import MagicMock
+        h = MagicMock()
+        h.run_check.return_value = {"status": "healthy", "issues_found": 0, "issues": []}
+        return h
+
+    def _svc(self, mem, startup_warnings=None):
+        from agent.services.status_query_service import StatusQueryService
+        state = {}
+        if startup_warnings:
+            state["_startup_warnings"] = startup_warnings
+        return StatusQueryService(state, mem, self._make_health())
+
+    def test_tasks_quarantine_warning_in_boot_doctor(self, tmp_path):
+        mem = self._make_mem(tmp_path, "CORRUPT")
+        startup_warnings = []
+        if mem.tasks_quarantined:
+            startup_warnings.append(
+                "Tasks file was corrupted and quarantined at startup — all pending tasks lost."
+            )
+        svc = self._svc(mem, startup_warnings)
+        summary = svc.build_boot_doctor_summary()
+        assert summary["status"] in ("warning", "critical")
+        assert any("task" in w.lower() for w in summary.get("warnings", []))
+
+    def test_clean_tasks_no_quarantine_warning(self, tmp_path):
+        import json
+        mem = self._make_mem(tmp_path, json.dumps({}))
+        svc = self._svc(mem)
+        summary = svc.build_boot_doctor_summary()
+        task_quarantine_warnings = [
+            w for w in summary.get("warnings", [])
+            if "task" in w.lower() and "quarantine" in w.lower()
+        ]
+        assert task_quarantine_warnings == []
+
+    def test_facts_and_tasks_quarantine_both_shown(self, tmp_path):
+        from storage.memory import MemorySystem
+        facts_path = tmp_path / "facts.json"
+        tasks_path = tmp_path / "tasks.json"
+        facts_path.write_text("BAD FACTS", encoding="utf-8")
+        tasks_path.write_text("BAD TASKS", encoding="utf-8")
+        mem = MemorySystem(
+            episodic_file=str(tmp_path / "ep.jsonl"),
+            facts_file=str(facts_path),
+            tasks_file=str(tasks_path),
+        )
+        startup_warnings = []
+        if mem.facts_quarantined:
+            startup_warnings.append(
+                "Facts file was corrupted and quarantined at startup — memory is empty. All stored facts lost."
+            )
+        if mem.tasks_quarantined:
+            startup_warnings.append(
+                "Tasks file was corrupted and quarantined at startup — all pending tasks lost."
+            )
+        svc = self._svc(mem, startup_warnings)
+        summary = svc.build_boot_doctor_summary()
+        warn_text = " ".join(summary.get("warnings", [])).lower()
+        assert "facts" in warn_text or "fact" in warn_text
+        assert "task" in warn_text
+
+
+# ---------------------------------------------------------------------------
 # EpisodicStore — partial / corrupt JSONL tolerance
 # ---------------------------------------------------------------------------
 
