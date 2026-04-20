@@ -106,6 +106,11 @@ def get_agent() -> AgentLoop:
 
 @app.route("/")
 def dashboard():
+    ua = request.headers.get("User-Agent", "")
+    _mobile_ua = ("Mobile", "Android", "iPhone", "iPad", "iPod", "webOS", "BlackBerry")
+    if any(m in ua for m in _mobile_ua):
+        from flask import redirect
+        return redirect("/mobile")
     return render_template("dashboard.html")
 
 
@@ -1143,6 +1148,22 @@ def get_models():
     return jsonify(api_response(data=models, revision=revision))
 
 
+@app.route("/api/model-ops/status")
+def get_model_ops_status():
+    """Get operator-facing model readiness and assignment status."""
+    from agent.services.model_operator_service import build_readiness_report
+    from core.agent_model_manager import get_agent_model_manager
+    from core.slot_manager import get_slot_manager
+
+    agent = get_agent()
+    revision = agent.get_revision()
+    manager = get_agent_model_manager()
+    manager.initialize()
+    slot_mgr = get_slot_manager(str(_base_dir / "data" / "slot_assignments.json"))
+    report = build_readiness_report(manager, slot_mgr)
+    return jsonify(api_response(data=report, revision=revision))
+
+
 @app.route("/api/models/register", methods=["POST"])
 def register_model():
     """Register a discovered model."""
@@ -1353,13 +1374,22 @@ def get_active_runtime():
     execution_mode = "local"
     fallback_used = False
 
-    # Check if anything is active
-    is_active = current_task is not None and current_task != ""
+    # Only the in-process run lock indicates active execution. The persisted
+    # state keeps the last task and can otherwise make the UI look busy forever.
+    is_active = _run_lock.locked()
+    last_task = current_task or (
+        latest_receipt.action_name if latest_receipt else None
+    )
+    display_task = current_task if is_active and current_task else "none"
+    if not is_active:
+        active_slot = None
+        active_model = None
 
     runtime_data = {
         "is_active": is_active,
         "current_role": current_role or "none",
-        "current_task": current_task or "none",
+        "current_task": display_task,
+        "last_task": last_task or "none",
         "active_slot": active_slot or "none",
         "active_model": active_model or "none",
         "execution_mode": execution_mode,

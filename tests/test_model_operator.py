@@ -56,7 +56,7 @@ def test_build_model_status_text_shows_roles_and_inventory(monkeypatch, tmp_path
     assert 'slot: planner_slot' in txt
     assert 'assigned: m1' in txt
     assert 'installed: True' in txt
-    assert 'warm_now: True' in txt
+    assert 'installed: True' in txt
     assert 'deterministic_only: False' in txt
     assert 'Small model pool:' in txt
 

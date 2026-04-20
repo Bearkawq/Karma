@@ -1,4 +1,4 @@
-// Karma Mobile — offline-first PWA for S25 Plus
+// Karma Mobile — offline-first PWA
 (function() {
   "use strict";
 
@@ -29,14 +29,11 @@
   window.addEventListener("online", () => updateStatus(true));
   window.addEventListener("offline", () => updateStatus(false));
 
-  // Probe server
   async function probe() {
     try {
       const r = await fetch("/api/log", {method: "GET", cache: "no-store"});
       updateStatus(r.ok);
-    } catch(_) {
-      updateStatus(false);
-    }
+    } catch(_) { updateStatus(false); }
   }
   probe();
   setInterval(probe, 15000);
@@ -49,9 +46,9 @@
       btn.classList.add("active");
       const p = $("#panel-" + btn.dataset.tab);
       if (p) p.classList.add("active");
-      // Refresh data
       const t = btn.dataset.tab;
-      if (t === "memory") refreshMemory();
+      if (t === "models") refreshModels();
+      else if (t === "memory") refreshMemory();
       else if (t === "system") refreshSystem();
     });
   });
@@ -63,10 +60,7 @@
     try {
       sse = new EventSource("/api/events");
       sse.onmessage = e => {
-        try {
-          const evt = JSON.parse(e.data);
-          handleEvent(evt);
-        } catch(_) {}
+        try { handleEvent(JSON.parse(e.data)); } catch(_) {}
       };
       sse.onerror = () => {
         if (sse) { sse.close(); sse = null; }
@@ -91,7 +85,6 @@
       log.scrollTop = log.scrollHeight;
     }
   }
-
   connectSSE();
 
   // -- Chat --
@@ -99,8 +92,6 @@
   const cmdform = $("#cmdform");
   const cmdinput = $("#cmdinput");
   const sendBtn = $("#send-btn");
-
-  // Queue for offline commands
   let cmdQueue = JSON.parse(localStorage.getItem("karma_queue") || "[]");
 
   function addMsg(text, type) {
@@ -134,7 +125,6 @@
     addMsg(text, "user");
 
     if (!online) {
-      // Queue for later
       cmdQueue.push(text);
       localStorage.setItem("karma_queue", JSON.stringify(cmdQueue));
       addMsg("Queued (offline). Will send when connected.", "karma");
@@ -163,7 +153,6 @@
     cmdinput.focus();
   });
 
-  // Flush queue when coming back online
   window.addEventListener("online", async () => {
     if (!cmdQueue.length) return;
     addMsg("Sending " + cmdQueue.length + " queued command(s)...", "karma");
@@ -180,9 +169,7 @@
         const data = await resp.json();
         addMsg("[queued] " + cmd, "user");
         addMsg(data.result || "Done.", data.success ? "karma" : "karma error");
-      } catch(_) {
-        cmdQueue.push(cmd);
-      }
+      } catch(_) { cmdQueue.push(cmd); }
     }
     localStorage.setItem("karma_queue", JSON.stringify(cmdQueue));
   });
@@ -194,17 +181,11 @@
     const mins = parseInt($("#gl-mins").value) || 3;
     const mode = $("#gl-mode").value;
     const btn = $("#gl-btn");
-
-    if (!online) {
-      addMsg("Cannot learn while offline.", "karma error");
-      return;
-    }
-
+    if (!online) { addMsg("Cannot learn while offline.", "karma error"); return; }
     btn.disabled = true;
     btn.textContent = "Learning...";
     addMsg('golearn "' + topic + '" ' + mins + " " + mode, "user");
     addThinking();
-
     try {
       const resp = await fetch("/api/golearn", {
         method: "POST",
@@ -222,6 +203,107 @@
     btn.textContent = "Start";
     $("#gl-topic").value = "";
   });
+
+  // -- Models View (operator readiness) --
+  async function refreshModels() {
+    const badge = $("#ready-badge");
+    const checks = $("#ready-checks");
+    const roleList = $("#role-list");
+    const issuesSec = $("#model-issues-section");
+    const issuesEl = $("#model-issues");
+    const nextEl = $("#model-next");
+
+    badge.textContent = "loading...";
+    badge.className = "ready-badge";
+
+    try {
+      const resp = await fetch("/api/model-ops/status");
+      const j = await resp.json();
+      const r = j.data;
+
+      // Readiness badge
+      const isReady = r.ready === true;
+      badge.textContent = isReady ? "READY" : "NOT READY";
+      badge.className = "ready-badge " + (isReady ? "ready" : "not-ready");
+
+      // Checks
+      checks.innerHTML = "";
+      for (const c of (r.checks || [])) {
+        addKV(checks, c.name, (c.ok ? "✓ " : "✗ ") + c.detail);
+      }
+
+      // Role assignments
+      roleList.innerHTML = "";
+      for (const row of (r.roles || [])) {
+        const el = document.createElement("div");
+        el.className = "role-row";
+
+        const name = document.createElement("span");
+        name.className = "role-name";
+        name.textContent = row.role;
+
+        const model = document.createElement("span");
+        model.className = "role-model" + (row.assigned_model_id ? "" : " unassigned");
+        model.textContent = row.assigned_model_id || "unassigned";
+
+        const pill = document.createElement("span");
+        if (!row.assigned_model_id) {
+          pill.className = "model-pill unassigned";
+          pill.textContent = "—";
+        } else if (!row.exists_in_ollama) {
+          pill.className = "model-pill missing";
+          pill.textContent = "missing";
+        } else if (row.warm_now) {
+          pill.className = "model-pill warm";
+          pill.textContent = "warm";
+        } else {
+          pill.className = "model-pill idle";
+          pill.textContent = "idle";
+        }
+
+        el.appendChild(name);
+        el.appendChild(model);
+        el.appendChild(pill);
+        roleList.appendChild(el);
+      }
+
+      // Issues (only show section if any)
+      const roleIssues = (r.issues || {}).role_issues || [];
+      issuesSec.style.display = roleIssues.length ? "" : "none";
+      issuesEl.innerHTML = "";
+      for (const iss of roleIssues) {
+        addKV(issuesEl, iss.role, (iss.issues || []).join(", "));
+      }
+
+      // Next steps
+      nextEl.innerHTML = "";
+      const steps = r.next_steps || [];
+      if (!steps.length || (steps.length === 1 && steps[0].includes("Ready to roll"))) {
+        const el = document.createElement("div");
+        el.style.color = "var(--green)";
+        el.textContent = steps[0] || "All good.";
+        nextEl.appendChild(el);
+      } else {
+        for (const s of steps) {
+          const el = document.createElement("div");
+          el.textContent = s;
+          nextEl.appendChild(el);
+        }
+      }
+
+      localStorage.setItem("karma_models_cache", JSON.stringify({r, t: Date.now()}));
+    } catch(_) {
+      badge.textContent = "OFFLINE";
+      badge.className = "ready-badge not-ready";
+      try {
+        const c = JSON.parse(localStorage.getItem("karma_models_cache") || "null");
+        if (c) {
+          checks.innerHTML = "";
+          addKV(checks, "Cached at", new Date(c.t).toLocaleTimeString());
+        }
+      } catch(_) {}
+    }
+  }
 
   // -- Memory View --
   async function refreshMemory() {
@@ -275,10 +357,8 @@
         tl.appendChild(row);
       }
 
-      // Cache for offline
       localStorage.setItem("karma_mem_cache", JSON.stringify({mem, facts, tasks, t: Date.now()}));
     } catch(_) {
-      // Load from cache
       try {
         const c = JSON.parse(localStorage.getItem("karma_mem_cache") || "null");
         if (c) {
@@ -289,35 +369,49 @@
     }
   }
 
-  function addStat(container, value, label) {
-    const el = document.createElement("div");
-    el.className = "stat";
-    el.innerHTML = '<div class="stat-val">' + esc(String(value)) + '</div><div class="stat-lbl">' + esc(label) + '</div>';
-    container.appendChild(el);
-  }
-
   // -- System View --
   async function refreshSystem() {
     try {
-      const [stR, mapR, capsR, healthR, tlR] = await Promise.all([
-        fetch("/api/state"), fetch("/api/system-map"), fetch("/api/capabilities"),
+      const [stR, rtR, mapR, capsR, healthR, tlR] = await Promise.all([
+        fetch("/api/state"), fetch("/api/active_runtime"),
+        fetch("/api/system-map"), fetch("/api/capabilities"),
         fetch("/api/health"), fetch("/api/timeline")
       ]);
       const state = await stR.json();
+      const rt = await rtR.json();
       const sysMap = await mapR.json();
       const caps = await capsR.json();
       const health = await healthR.json();
       const timeline = await tlR.json();
 
-      // State
-      const sl = $("#sys-state");
+      // Runtime (new: posture, active role/slot/model)
+      const rtd = (rt.data || rt);
+      const sl = $("#sys-runtime");
       sl.innerHTML = "";
-      addKV(sl, "Last run", state.last_run || "never");
-      addKV(sl, "Task", state.current_task || "none");
+      const posture = rtd.posture || "CALM";
+      addKV(sl, "Posture", posture);
+      addKV(sl, "Active role", rtd.current_role !== "none" ? rtd.current_role : "—");
+      addKV(sl, "Active model", rtd.active_model !== "none" ? rtd.active_model : "—");
+      addKV(sl, "Last task", rtd.last_task || "—");
+      if (rtd.latest_receipt && rtd.latest_receipt.action) {
+        addKV(sl, "Last action", rtd.latest_receipt.action + " (" + (rtd.latest_receipt.status || "?") + ")");
+      }
+      // Update posture pill in topbar
+      const pill = $("#posture-pill");
+      if (pill) {
+        pill.textContent = posture;
+        pill.className = "posture-pill " + posture.toLowerCase();
+      }
+
+      // Agent state
+      const agentEl = $("#sys-state");
+      agentEl.innerHTML = "";
+      addKV(agentEl, "Last run", state.last_run || "never");
+      addKV(agentEl, "Task", state.current_task || "none");
       const ds = state.decision_summary || {};
-      addKV(sl, "Decisions", ds.total_decisions || 0);
-      addKV(sl, "Success", ((ds.success_rate || 0) * 100).toFixed(0) + "%");
-      addKV(sl, "Confidence", (ds.average_confidence || 0).toFixed(2));
+      addKV(agentEl, "Decisions", ds.total_decisions || 0);
+      addKV(agentEl, "Success", ((ds.success_rate || 0) * 100).toFixed(0) + "%");
+      addKV(agentEl, "Confidence", (ds.average_confidence || 0).toFixed(2));
 
       // System Map
       const sm = $("#sys-map");
@@ -362,8 +456,7 @@
         te.appendChild(row);
       }
 
-      // Cache for offline
-      localStorage.setItem("karma_sys_cache", JSON.stringify({state, sysMap, caps, health, timeline, t: Date.now()}));
+      localStorage.setItem("karma_sys_cache", JSON.stringify({state, rt: rtd, sysMap, caps, health, timeline, t: Date.now()}));
     } catch(_) {
       try {
         const c = JSON.parse(localStorage.getItem("karma_sys_cache") || "null");
@@ -375,6 +468,14 @@
         }
       } catch(_) {}
     }
+  }
+
+  // -- Helpers --
+  function addStat(container, value, label) {
+    const el = document.createElement("div");
+    el.className = "stat";
+    el.innerHTML = '<div class="stat-val">' + esc(String(value)) + '</div><div class="stat-lbl">' + esc(label) + '</div>';
+    container.appendChild(el);
   }
 
   function addKV(container, label, value) {
@@ -392,4 +493,6 @@
 
   // -- Startup --
   addMsg("Karma mobile. " + (online ? "Connected." : "Offline mode."), "karma");
+  // Pre-fetch models on startup so the badge is ready when user taps Models tab
+  if (online) refreshModels();
 })();

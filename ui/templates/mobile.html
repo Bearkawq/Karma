@@ -16,6 +16,7 @@
 <header id="topbar">
   <div class="brand">K</div>
   <h1>Karma</h1>
+  <span class="posture-pill" id="posture-pill"></span>
   <span class="clock" id="clock"></span>
   <span class="dot" id="dot" title="offline"></span>
 </header>
@@ -23,8 +24,9 @@
 <!-- Tab Bar (bottom, thumb-friendly) -->
 <nav id="tabbar">
   <button class="tab active" data-tab="chat">Chat</button>
-  <button class="tab" data-tab="memory">Memory</button>
+  <button class="tab" data-tab="models">Models</button>
   <button class="tab" data-tab="system">System</button>
+  <button class="tab" data-tab="memory">Memory</button>
   <button class="tab" data-tab="learn">Learn</button>
 </nav>
 
@@ -39,17 +41,25 @@
   </form>
 </div>
 
-<!-- Memory Tab -->
-<div class="panel" id="panel-memory">
+<!-- Models Tab — operator readiness at a glance -->
+<div class="panel" id="panel-models">
   <div class="scroll-area">
-    <div class="stat-row" id="mem-stats"></div>
     <div class="section">
-      <h2>Facts</h2>
-      <div id="facts-list"></div>
+      <h2>Readiness</h2>
+      <div id="ready-badge" class="ready-badge">—</div>
+      <div id="ready-checks" class="kv" style="margin-top:10px"></div>
     </div>
     <div class="section">
-      <h2>Tasks</h2>
-      <div id="tasks-list"></div>
+      <h2>Role Assignments</h2>
+      <div id="role-list"></div>
+    </div>
+    <div class="section" id="model-issues-section" style="display:none">
+      <h2>Issues</h2>
+      <div id="model-issues" class="kv"></div>
+    </div>
+    <div class="section">
+      <h2>Next Steps</h2>
+      <div id="model-next" class="log"></div>
     </div>
   </div>
 </div>
@@ -57,6 +67,10 @@
 <!-- System Tab -->
 <div class="panel" id="panel-system">
   <div class="scroll-area">
+    <div class="section">
+      <h2>Runtime</h2>
+      <div id="sys-runtime" class="kv"></div>
+    </div>
     <div class="section">
       <h2>Agent</h2>
       <div id="sys-state" class="kv"></div>
@@ -76,6 +90,21 @@
     <div class="section">
       <h2>Timeline</h2>
       <div id="sys-timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Memory Tab -->
+<div class="panel" id="panel-memory">
+  <div class="scroll-area">
+    <div class="stat-row" id="mem-stats"></div>
+    <div class="section">
+      <h2>Facts</h2>
+      <div id="facts-list"></div>
+    </div>
+    <div class="section">
+      <h2>Tasks</h2>
+      <div id="tasks-list"></div>
     </div>
   </div>
 </div>

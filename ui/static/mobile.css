@@ -348,6 +348,73 @@ html, body {
 .log .ev-learn { color: var(--accent); }
 .log .ev-error { color: var(--red); }
 
+/* Posture pill in topbar */
+.posture-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--s2);
+  color: var(--text2);
+  letter-spacing: .3px;
+  flex-shrink: 0;
+}
+.posture-pill.calm { background: rgba(76,223,138,.15); color: var(--green); }
+.posture-pill.alert { background: rgba(255,92,92,.15); color: var(--red); }
+.posture-pill.focused { background: rgba(108,138,255,.15); color: var(--accent); }
+
+/* Readiness badge */
+.ready-badge {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--r);
+  letter-spacing: .5px;
+  background: var(--s2);
+  color: var(--text2);
+}
+.ready-badge.ready { background: rgba(76,223,138,.15); color: var(--green); }
+.ready-badge.not-ready { background: rgba(255,92,92,.15); color: var(--red); }
+
+/* Role assignment rows */
+.role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+.role-name {
+  font-size: 13px;
+  color: var(--text2);
+  width: 80px;
+  flex-shrink: 0;
+}
+.role-model {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.role-model.unassigned { color: var(--text2); font-style: italic; }
+.model-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.model-pill.warm { background: rgba(76,223,138,.15); color: var(--green); }
+.model-pill.idle { background: var(--s2); color: var(--text2); }
+.model-pill.missing { background: rgba(255,92,92,.15); color: var(--red); }
+.model-pill.unassigned { background: var(--s2); color: var(--text2); }
+
 /* Offline banner */
 .offline-banner {
   background: var(--red);
