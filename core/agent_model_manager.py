@@ -279,7 +279,7 @@ class AgentModelManager:
         
         # Determine if we should use models
         if force_no_model is None:
-            force_no_model = self.config.default_to_deterministic
+            force_no_model = self._no_model_mode
         
         # Get available models
         available_models = self.get_loaded_models() if not force_no_model else []

@@ -142,6 +142,10 @@ class AgentLoop:
             self._startup_warnings.append(
                 "Facts file was corrupted and quarantined at startup — memory is empty. All stored facts lost."
             )
+        if self.memory.tasks_quarantined:
+            self._startup_warnings.append(
+                "Tasks file was corrupted and quarantined at startup — all pending tasks lost."
+            )
 
         # Normalizer (loads language mappings from memory)
         langmap_facts = {
@@ -290,6 +294,7 @@ class AgentLoop:
         self._status_query_svc = StatusQueryService(
             self.current_state, self.memory, self.health,
             tool_builder=self.tool_builder,
+            run_history_svc=self._run_history_svc,
         )
         self._plan_exec_svc = PlanExecutionService(self.memory, self.logger)
 

@@ -737,6 +737,7 @@ def _format_critic_line(val: Dict[str, Any]) -> str:
 class RunHistoryService:
     def __init__(self, memory) -> None:
         self._memory = memory
+        self._last_persist_failed: bool = False
 
     def seat_summarize_run(self, run_artifact: Dict[str, Any]) -> str:
         content = format_run_artifact_content(run_artifact)
@@ -917,5 +918,7 @@ class RunHistoryService:
                 confidence=0.9,
                 topic="run_history",
             )
-        except Exception:
-            pass
+            self._last_persist_failed = False
+        except Exception as e:
+            self._last_persist_failed = True
+            print(f"Error persisting run digest: {e}")
