@@ -20,6 +20,10 @@ from typing import Any
 
 BRIDGE_DIR = "bridge"
 
+# True if the most recent append_event write failed.  Queryable by callers and
+# boot-doctor checks without needing to inspect the log file itself.
+_last_append_failed: bool = False
+
 # Default paths relative to repo root
 DEFAULT_BRIDGE_PATH = Path(__file__).resolve().parent.parent / BRIDGE_DIR
 
@@ -152,6 +156,11 @@ def get_worker_state(role: str) -> dict | None:
         return json.loads(worker_path.read_text())
     return None
 
+def get_append_failed() -> bool:
+    """Return True if the most recent append_event write failed."""
+    return _last_append_failed
+
+
 def append_event(
     event_type: str,
     worker: str = "",
@@ -159,10 +168,18 @@ def append_event(
     severity: str = "info",
     changed_files: list | None = None,
 ) -> dict:
-    """Append an event to the event log."""
+    """Append an event to the event log.
+
+    Write path: open(events.jsonl, 'a') + write.  On POSIX, O_APPEND writes
+    smaller than PIPE_BUF (~4 KB) are atomic.  A process kill mid-write of a
+    line larger than that can leave a partial JSON line; get_events skips those
+    lines gracefully.  On failure the exception propagates to the caller and
+    _last_append_failed is set True so boot-doctor checks can surface it.
+    """
+    global _last_append_failed
     bp = get_bridge_path()
     event_file = bp / "events" / "events.jsonl"
-    
+
     event = {
         "id": str(uuid.uuid4())[:8],
         "timestamp": _get_timestamp(),
@@ -172,16 +189,22 @@ def append_event(
         "data": data or {},
         "changed_files": changed_files or [],
     }
-    
-    with open(event_file, "a") as f:
-        f.write(json.dumps(event) + "\n")
-    
-    # Auto-refresh summary after event
+
+    try:
+        event_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(event_file, "a") as f:
+            f.write(json.dumps(event) + "\n")
+        _last_append_failed = False
+    except Exception:
+        _last_append_failed = True
+        raise
+
+    # Auto-refresh summary after event — failure here must not mask write errors.
     try:
         generate_planner_summary()
-    except:
+    except Exception:
         pass
-    
+
     return event
 
 def get_events(limit: int = 50, worker: str = "") -> list[dict]:
@@ -195,10 +218,14 @@ def get_events(limit: int = 50, worker: str = "") -> list[dict]:
     events = []
     with open(event_file) as f:
         for line in f:
-            if line.strip():
+            if not line.strip():
+                continue
+            try:
                 e = json.loads(line)
-                if not worker or e.get("worker") == worker:
-                    events.append(e)
+            except json.JSONDecodeError:
+                continue  # skip partial/corrupt lines left by a mid-write crash
+            if not worker or e.get("worker") == worker:
+                events.append(e)
     
     return events[-limit:]
 

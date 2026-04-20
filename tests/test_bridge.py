@@ -256,5 +256,105 @@ def test_planner_summary_json_and_md(temp_bridge):
     assert "# Planner Summary" in md_path.read_text()
 
 
+class TestAppendEventHardening:
+    """Verify append_event failure tracking and get_events resilience."""
+
+    def test_append_failed_flag_false_initially(self, temp_bridge):
+        import bridge as _b
+        _b._last_append_failed = False  # reset module state
+        bridge.append_event("init_check", worker="tester")
+        assert bridge.get_append_failed() is False
+
+    def test_append_failed_flag_set_on_write_error(self, temp_bridge):
+        """Write failure must set _last_append_failed and propagate the exception."""
+        import bridge as _b
+        _b._last_append_failed = False
+        event_file = temp_bridge / "events" / "events.jsonl"
+        # Make the file a directory so open(..., 'a') raises IsADirectoryError
+        event_file.unlink(missing_ok=True)
+        event_file.mkdir(parents=True, exist_ok=True)
+
+        with pytest.raises(Exception):
+            bridge.append_event("should_fail", worker="tester")
+
+        assert bridge.get_append_failed() is True
+        # Cleanup
+        event_file.rmdir()
+
+    def test_flag_clears_after_recovery(self, temp_bridge):
+        """Successful write after a failure must clear the flag."""
+        import bridge as _b
+        _b._last_append_failed = True  # simulate prior failure
+
+        bridge.append_event("recovery_event", worker="tester")
+        assert bridge.get_append_failed() is False
+
+    def test_get_events_skips_corrupt_line(self, temp_bridge):
+        """get_events must skip non-JSON lines without raising."""
+        event_file = temp_bridge / "events" / "events.jsonl"
+        # Write one good event then a corrupt partial line then another good event
+        bridge.append_event("before_corrupt", worker="tester")
+        with open(event_file, "a") as f:
+            f.write('{"id":"bad","incomplete":true\n')  # truncated JSON
+        bridge.append_event("after_corrupt", worker="tester")
+
+        events = bridge.get_events(limit=100)
+        types = [e["type"] for e in events]
+        assert "before_corrupt" in types
+        assert "after_corrupt" in types
+        # The corrupt line must have been silently skipped
+        assert len(types) == 2
+
+    def test_events_dir_auto_created(self, tmp_path):
+        """append_event must create the events dir if it is missing."""
+        import bridge as _b
+        original = _b.DEFAULT_BRIDGE_PATH
+        _b.DEFAULT_BRIDGE_PATH = tmp_path
+        # Do NOT call init_bridge — events/ should be created on demand
+        try:
+            bridge.append_event("auto_dir_test", worker="tester")
+            assert (tmp_path / "events" / "events.jsonl").exists()
+        finally:
+            _b.DEFAULT_BRIDGE_PATH = original
+
+    def test_get_append_failed_reflects_module_state(self, temp_bridge):
+        import bridge as _b
+        _b._last_append_failed = False
+        assert bridge.get_append_failed() is False
+        _b._last_append_failed = True
+        assert bridge.get_append_failed() is True
+        _b._last_append_failed = False  # restore
+
+    def test_summary_failure_does_not_mask_write_success(self, temp_bridge):
+        """A crash in generate_planner_summary must not set _last_append_failed."""
+        import bridge as _b
+        _b._last_append_failed = False
+
+        original = bridge.generate_planner_summary
+        def boom():
+            raise RuntimeError("summary exploded")
+        bridge.generate_planner_summary = boom
+        try:
+            bridge.append_event("after_summary_boom", worker="tester")
+            assert bridge.get_append_failed() is False
+        finally:
+            bridge.generate_planner_summary = original
+
+    def test_normal_append_still_works_after_hardening(self, temp_bridge):
+        """Regression: existing callers must see the same return value."""
+        ev = bridge.append_event(
+            "regression_check",
+            worker="regression",
+            data={"x": 1},
+            severity="warning",
+        )
+        assert ev["type"] == "regression_check"
+        assert ev["worker"] == "regression"
+        assert ev["data"]["x"] == 1
+        assert ev["severity"] == "warning"
+        assert "id" in ev
+        assert "timestamp" in ev
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
