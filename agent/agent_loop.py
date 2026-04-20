@@ -2861,6 +2861,79 @@ if __name__ == "__main__":
         print(agent.format_boot_doctor_summary())
         _sys.exit(0 if summary.get("status") == "healthy" else 1)
 
+    # --model-status: report models, slots, assignments
+    if "--model-status" in _sys.argv:
+        config = _bl()
+        agent = build_agent(config)
+        from core.agent_model_manager import get_agent_model_manager
+        from core.slot_manager import get_slot_manager
+        from agent.services.model_operator_service import build_model_status_text
+
+        mgr = get_agent_model_manager()
+        slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
+        print(build_model_status_text(mgr, slot_mgr))
+        _sys.exit(0)
+
+    # --assign-role ROLE MODEL_ID
+    if "--assign-role" in _sys.argv:
+        idx = _sys.argv.index("--assign-role")
+        try:
+            role = _sys.argv[idx + 1]
+            model_id = _sys.argv[idx + 2]
+        except Exception:
+            print("Usage: --assign-role <role> <model_id>")
+            _sys.exit(2)
+        config = _bl()
+        agent = build_agent(config)
+        from core.agent_model_manager import get_agent_model_manager
+        from core.slot_manager import get_slot_manager
+        from agent.services.model_operator_service import assign_model_to_role
+
+        mgr = get_agent_model_manager()
+        slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
+        ok, msg = assign_model_to_role(mgr, slot_mgr, role, model_id)
+        print(msg)
+        _sys.exit(0 if ok else 2)
+
+    # --assign-slot SLOT MODEL_ID
+    if "--assign-slot" in _sys.argv:
+        idx = _sys.argv.index("--assign-slot")
+        try:
+            slot = _sys.argv[idx + 1]
+            model_id = _sys.argv[idx + 2]
+        except Exception:
+            print("Usage: --assign-slot <slot> <model_id>")
+            _sys.exit(2)
+        config = _bl()
+        agent = build_agent(config)
+        from core.agent_model_manager import get_agent_model_manager
+        from core.slot_manager import get_slot_manager
+        from agent.services.model_operator_service import assign_model_to_slot
+
+        mgr = get_agent_model_manager()
+        slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
+        ok, msg = assign_model_to_slot(mgr, slot_mgr, slot, model_id)
+        print(msg)
+        _sys.exit(0 if ok else 2)
+
+    # --bootstrap-layout: best-effort assign available models to roles
+    if "--bootstrap-layout" in _sys.argv:
+        config = _bl()
+        agent = build_agent(config)
+        from core.agent_model_manager import get_agent_model_manager
+        from core.slot_manager import get_slot_manager
+        from agent.services.model_operator_service import bootstrap_layout
+
+        mgr = get_agent_model_manager()
+        slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
+        report = bootstrap_layout(mgr, slot_mgr)
+        print("Bootstrap layout report:")
+        for a in report.get("assigned", []):
+            print(f"  Assigned {a['model']} -> role {a['role']} (slot {a['slot']})")
+        for s in report.get("skipped", []):
+            print(f"  Skipped role {s['role']} (no models available)")
+        _sys.exit(0)
+
     config = _bl()
     agent = build_agent(config)
 
