@@ -141,6 +141,10 @@ class AgentModelManager:
                 context_window=ctx,
             )
             self.register_model(model_id, adapter)
+            if not adapter.load():
+                # Surface the failure but don't abort — other models may still load.
+                print(f"[karma] Warning: model '{model_id}' registered but failed to load: {adapter.last_error}")
+                continue
             for role in roles:
                 slot_mgr.assign_role(role, model_id)
 
@@ -153,6 +157,9 @@ class AgentModelManager:
                 embedding_dim=embedding_dim,
             )
             self.register_model(model_id, adapter)
+            if not adapter.load():
+                print(f"[karma] Warning: embedding model '{model_id}' registered but failed to load: {adapter.last_error}")
+                continue
             for role in roles:
                 slot_mgr.assign_role(role, model_id)
     
