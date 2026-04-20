@@ -89,6 +89,7 @@ class FactStore:
             entry["last_used"] = datetime.now().isoformat()
             if influenced:
                 entry["influence_count"] = entry.get("influence_count", 0) + 1
+            self._save()
 
     def get_by_source(self, source: str) -> Dict[str, Any]:
         return {k: v for k, v in self.facts.items() if v.get('source') == source}

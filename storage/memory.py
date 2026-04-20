@@ -15,9 +15,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import json
+
 from storage.episodic import EpisodicStore
 from storage.facts import FactStore
-from storage.persistence import atomic_write_text, load_json_file, save_json_file
+from storage.persistence import atomic_write_text, load_json_file, quarantine_file, save_json_file
 
 
 class MemorySystem:
@@ -32,6 +34,7 @@ class MemorySystem:
         self._lock = threading.RLock()
         self.tasks: Dict[str, Any] = {}
         self._last_tasks_save_failed: bool = False
+        self._tasks_load_quarantined: bool = False
         self.load_tasks()
 
     # ── backward-compatible properties ────────────────────────────
@@ -65,6 +68,11 @@ class MemorySystem:
         return self._facts._load_quarantined
 
     @property
+    def tasks_quarantined(self) -> bool:
+        """True if the tasks file was corrupt/unreadable at last load."""
+        return self._tasks_load_quarantined
+
+    @property
     def facts_save_failed(self) -> bool:
         """True if the most recent facts save attempt failed."""
         return self._facts._last_save_failed
@@ -92,7 +100,17 @@ class MemorySystem:
         self._facts.load()
 
     def load_tasks(self):
-        self.tasks = load_json_file(self.tasks_file, {})
+        self._tasks_load_quarantined = False
+        if not self.tasks_file.exists():
+            self.tasks = {}
+            return
+        try:
+            with open(self.tasks_file, 'r', encoding='utf-8') as f:
+                self.tasks = json.load(f)
+        except Exception:
+            quarantine_file(self.tasks_file)
+            self._tasks_load_quarantined = True
+            self.tasks = {}
 
     # ── episodic ──────────────────────────────────────────────────
     def save_episodic(self, event: str, context: Dict[str, Any] = None,

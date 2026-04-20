@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
+from storage.persistence import atomic_write_text
+
 
 @dataclass
 class SlotAssignment:
@@ -234,10 +236,7 @@ class SlotManager:
             for slot_name, assignment in self._slots.items()
         }
         
-        p = Path(self._storage_path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        with open(p, "w") as f:
-            json.dump(data, f, indent=2)
+        atomic_write_text(Path(self._storage_path), json.dumps(data, indent=2))
     
     def _load(self) -> None:
         """Load assignments from disk."""

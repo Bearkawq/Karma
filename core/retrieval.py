@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.evidence_score import score_evidence, extract_shape, shape_similarity, _recency_score
+from storage.persistence import atomic_write_text
 
 # Per-mode bundle size limits (from IFO spec)
 _MODE_LIMITS = {
@@ -91,8 +92,7 @@ class RetrievalBus:
         return default
 
     def _save_json(self, path: Path, data):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2, default=str))
+        atomic_write_text(path, json.dumps(data, indent=2, default=str))
 
     # ── run_history prioritization helpers ─────────────────────────────────
     def _is_recent_task_query(self, text: str) -> bool:
@@ -246,7 +246,10 @@ class RetrievalBus:
             try:
                 # Use mode limit as an upper bound for run_history items to avoid oversaturation
                 rh_limit = _MODE_LIMITS.get(mode, 7)
-                items.extend(self._retrieve_run_history_items(query_words, rh_limit))
+                rh_items = self._retrieve_run_history_items(query_words, rh_limit)
+                items.extend(rh_items)
+                # Telemetry: count injected run_history items
+                self._metrics["run_history_injected"] += len(rh_items)
             except Exception:
                 # safe degrade
                 pass
@@ -312,6 +315,13 @@ class RetrievalBus:
             oldest_key = next(iter(self._bundle_cache))
             self._bundle_cache.pop(oldest_key, None)
         return bundle
+
+    def get_metrics(self, reset: bool = False) -> dict:
+        """Return a shallow copy of retrieval metrics. If reset=True, clear them."""
+        out = dict(self._metrics)
+        if reset:
+            self._metrics = defaultdict(int)
+        return out
 
     # ── strata retrievers ───────────────────────────────────────
 
