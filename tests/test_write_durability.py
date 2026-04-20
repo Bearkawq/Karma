@@ -658,6 +658,7 @@ class TestBootDoctorAllFailureSignals:
 
     def test_all_six_signals_in_one_summary(self, tmp_path):
         from agent.services.run_history_service import RunHistoryService
+        import bridge as _bridge_mod
         mem = self._make_mem(tmp_path)
         mem._facts._last_save_failed = True
         mem._episodic._last_save_failed = True
@@ -667,25 +668,63 @@ class TestBootDoctorAllFailureSignals:
         state = {"_state_save_failed": "no space left on device"}
         rhs = RunHistoryService(mem)
         rhs._last_persist_failed = True
-        svc = _svc(mem, state=state, tool_builder=builder, run_history_svc=rhs)
-        summary = svc.build_boot_doctor_summary()
-        warnings = summary.get("warnings", [])
-        assert any("fact" in w.lower() for w in warnings)
-        assert any("episodic" in w.lower() for w in warnings)
-        assert any("task" in w.lower() for w in warnings)
-        assert any("registry" in w.lower() or "tool" in w.lower() for w in warnings)
-        assert any("state" in w.lower() for w in warnings)
-        assert any("run" in w.lower() or "history" in w.lower() for w in warnings)
+        _orig = _bridge_mod._last_append_failed
+        _bridge_mod._last_append_failed = True
+        try:
+            svc = _svc(mem, state=state, tool_builder=builder, run_history_svc=rhs)
+            summary = svc.build_boot_doctor_summary()
+            warnings = summary.get("warnings", [])
+            assert any("fact" in w.lower() for w in warnings)
+            assert any("episodic" in w.lower() for w in warnings)
+            assert any("task" in w.lower() for w in warnings)
+            assert any("registry" in w.lower() or "tool" in w.lower() for w in warnings)
+            assert any("state" in w.lower() for w in warnings)
+            assert any("run" in w.lower() or "history" in w.lower() for w in warnings)
+            assert any("bridge" in w.lower() for w in warnings)
+        finally:
+            _bridge_mod._last_append_failed = _orig
+
+    def test_bridge_append_failure_surfaces_warning(self, tmp_path):
+        """Bridge append failure must appear in boot doctor warnings."""
+        import bridge as _bridge_mod
+        mem = self._make_mem(tmp_path)
+        _orig = _bridge_mod._last_append_failed
+        _bridge_mod._last_append_failed = True
+        try:
+            svc = _svc(mem, state={})
+            summary = svc.build_boot_doctor_summary()
+            assert any("bridge" in w.lower() for w in summary.get("warnings", []))
+        finally:
+            _bridge_mod._last_append_failed = _orig
+
+    def test_bridge_healthy_no_false_warning(self, tmp_path):
+        """Healthy bridge must not emit a spurious warning."""
+        import bridge as _bridge_mod
+        mem = self._make_mem(tmp_path)
+        _orig = _bridge_mod._last_append_failed
+        _bridge_mod._last_append_failed = False
+        try:
+            svc = _svc(mem, state={})
+            summary = svc.build_boot_doctor_summary()
+            assert not any("bridge" in w.lower() for w in summary.get("warnings", []))
+        finally:
+            _bridge_mod._last_append_failed = _orig
 
     def test_no_warnings_when_all_saves_succeed(self, tmp_path):
+        import bridge as _bridge_mod
         mem = self._make_mem(tmp_path)
         builder = self._make_builder(tmp_path)
-        svc = _svc(mem, state={}, tool_builder=builder)
-        # All flags are false by default
-        summary = svc.build_boot_doctor_summary()
-        write_warnings = [w for w in summary.get("warnings", [])
-                          if any(k in w.lower() for k in ("fact", "episodic", "task", "registry", "state file"))]
-        assert write_warnings == []
+        _orig = _bridge_mod._last_append_failed
+        _bridge_mod._last_append_failed = False
+        try:
+            svc = _svc(mem, state={}, tool_builder=builder)
+            summary = svc.build_boot_doctor_summary()
+            write_warnings = [w for w in summary.get("warnings", [])
+                              if any(k in w.lower() for k in
+                                     ("fact", "episodic", "task", "registry", "state file", "bridge"))]
+            assert write_warnings == []
+        finally:
+            _bridge_mod._last_append_failed = _orig
 
     def test_no_tool_builder_does_not_raise(self, tmp_path):
         mem = self._make_mem(tmp_path)

@@ -644,6 +644,12 @@ class StatusQueryService:
 
         # Live write-failure signals — all storage write paths, normalized
         try:
+            try:
+                import bridge as _bridge_mod
+                _bridge_append_failed = _bridge_mod.get_append_failed()
+            except Exception:
+                _bridge_append_failed = False
+
             _write_failure_checks = [
                 (getattr(self._memory, "facts_save_failed", False),
                  "Facts file: last save failed — recent memory changes may not be persisted"),
@@ -655,6 +661,8 @@ class StatusQueryService:
                  "Tool registry: last save failed — custom tool registry may not be persisted"),
                 (getattr(self._run_history_svc, "_last_persist_failed", False),
                  "Run history: last persist failed — run:last and status queries may return stale data"),
+                (_bridge_append_failed,
+                 "Bridge event log: last append failed — agent-coordination events may not be persisted"),
             ]
             for failed, msg in _write_failure_checks:
                 if failed and msg not in warnings:
@@ -673,8 +681,8 @@ class StatusQueryService:
         return {
             "status": overall,
             "health_status": health_status,
-            "issues": issues[:5],
-            "warnings": warnings[:5],
+            "issues": issues[:10],
+            "warnings": warnings[:10],
             "last_run": last_run_status,
             "last_incomplete_task": last_incomplete_task,
             "recommend_recovery": recommend_recovery,
