@@ -64,12 +64,13 @@ class SlotManager:
         self._slots: Dict[str, SlotAssignment] = {}
         self._slot_states: Dict[str, SlotState] = {}
         self._storage_path = storage_path
-        
+        self._load_quarantined: bool = False
+
         # Initialize default slots
         for slot_name in self.DEFAULT_SLOTS:
             self._slots[slot_name] = SlotAssignment(slot_name=slot_name)
             self._slot_states[slot_name] = SlotState(slot_name=slot_name)
-        
+
         # Load from disk if available
         if storage_path:
             self._load()
@@ -238,19 +239,25 @@ class SlotManager:
         
         atomic_write_text(Path(self._storage_path), json.dumps(data, indent=2))
     
+    @property
+    def load_quarantined(self) -> bool:
+        """True if the slots file was unreadable/corrupt at last load."""
+        return self._load_quarantined
+
     def _load(self) -> None:
         """Load assignments from disk."""
         if not self._storage_path:
             return
-        
+
         p = Path(self._storage_path)
         if not p.exists():
             return
-        
+
+        self._load_quarantined = False
         try:
             with open(p, "r") as f:
                 data = json.load(f)
-            
+
             for slot_name, slot_data in data.items():
                 if slot_name in self._slots:
                     self._slots[slot_name].assigned_model_id = slot_data.get("assigned_model_id")
@@ -258,7 +265,7 @@ class SlotManager:
                     self._slots[slot_name].deterministic_only = slot_data.get("deterministic_only", False)
                     self._slots[slot_name].last_updated = slot_data.get("last_updated", datetime.now().isoformat())
         except Exception:
-            pass
+            self._load_quarantined = True
 
 
 _global_manager: Optional[SlotManager] = None

@@ -2849,7 +2849,17 @@ def load_config(path: str = "config.json") -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+    import sys as _sys
+
     from agent.bootstrap import load_config as _bl, build_agent, get_version
+
+    # --doctor: run health check and exit (0=healthy, 1=warning/issues)
+    if "--doctor" in _sys.argv:
+        config = _bl()
+        agent = build_agent(config)
+        summary = agent.build_boot_doctor_summary()
+        print(agent.format_boot_doctor_summary())
+        _sys.exit(0 if summary.get("status") == "healthy" else 1)
 
     config = _bl()
     agent = build_agent(config)

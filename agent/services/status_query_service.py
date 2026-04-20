@@ -642,6 +642,16 @@ class StatusQueryService:
             if w not in warnings:
                 warnings.append(str(w)[:120])
 
+        # SlotManager load-path failure (lazy — only present after model manager init)
+        try:
+            from core.slot_manager import _global_manager as _slot_mgr
+            if _slot_mgr is not None and getattr(_slot_mgr, "_load_quarantined", False):
+                w = "Slot assignments: file was unreadable at load — model routing uses defaults"
+                if w not in warnings:
+                    warnings.append(w)
+        except Exception:
+            pass
+
         # Live write-failure signals — all storage write paths, normalized
         try:
             try:

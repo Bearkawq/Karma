@@ -177,8 +177,9 @@ class MemorySystem:
         try:
             if self.tasks_file.exists():
                 self.tasks_file.unlink()
-        except Exception as e:
-            print(f"Error clearing tasks: {e}")
+            self._last_tasks_save_failed = False
+        except Exception:
+            self._last_tasks_save_failed = True
 
     def _save_tasks_file(self):
         try:
