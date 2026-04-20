@@ -21,10 +21,15 @@ import logging
 import tempfile
 import re
 import threading
-from core.events import EventBus
+import sys
 import random
 from pathlib import Path
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from core.events import EventBus
 from core.observer import EnvironmentObserver
 from core.capability_map import CapabilityMap
 from core.meta import MetaObserver
@@ -2861,8 +2866,8 @@ if __name__ == "__main__":
         print(agent.format_boot_doctor_summary())
         _sys.exit(0 if summary.get("status") == "healthy" else 1)
 
-    # --model-status: report models, slots, assignments
-    if "--model-status" in _sys.argv:
+    # --models / --model-status: report models, slots, assignments
+    if "--models" in _sys.argv or "--model-status" in _sys.argv:
         config = _bl()
         agent = build_agent(config)
         from core.agent_model_manager import get_agent_model_manager
@@ -2881,7 +2886,7 @@ if __name__ == "__main__":
             role = _sys.argv[idx + 1]
             model_id = _sys.argv[idx + 2]
         except Exception:
-            print("Usage: --assign-role <role> <model_id>")
+            print("Usage: --assign-role <role> <model_id> [--deterministic]")
             _sys.exit(2)
         config = _bl()
         agent = build_agent(config)
@@ -2891,7 +2896,13 @@ if __name__ == "__main__":
 
         mgr = get_agent_model_manager()
         slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
-        ok, msg = assign_model_to_role(mgr, slot_mgr, role, model_id)
+        ok, msg = assign_model_to_role(
+            mgr,
+            slot_mgr,
+            role,
+            model_id,
+            deterministic="--deterministic" in _sys.argv,
+        )
         print(msg)
         _sys.exit(0 if ok else 2)
 
@@ -2902,7 +2913,7 @@ if __name__ == "__main__":
             slot = _sys.argv[idx + 1]
             model_id = _sys.argv[idx + 2]
         except Exception:
-            print("Usage: --assign-slot <slot> <model_id>")
+            print("Usage: --assign-slot <slot> <model_id> [--deterministic]")
             _sys.exit(2)
         config = _bl()
         agent = build_agent(config)
@@ -2912,12 +2923,18 @@ if __name__ == "__main__":
 
         mgr = get_agent_model_manager()
         slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
-        ok, msg = assign_model_to_slot(mgr, slot_mgr, slot, model_id)
+        ok, msg = assign_model_to_slot(
+            mgr,
+            slot_mgr,
+            slot,
+            model_id,
+            deterministic="--deterministic" in _sys.argv,
+        )
         print(msg)
         _sys.exit(0 if ok else 2)
 
-    # --bootstrap-layout: best-effort assign available models to roles
-    if "--bootstrap-layout" in _sys.argv:
+    # --bootstrap-layout / --bootstrap-models: assign recommended small-model layout
+    if "--bootstrap-layout" in _sys.argv or "--bootstrap-models" in _sys.argv:
         config = _bl()
         agent = build_agent(config)
         from core.agent_model_manager import get_agent_model_manager
@@ -2929,9 +2946,12 @@ if __name__ == "__main__":
         report = bootstrap_layout(mgr, slot_mgr)
         print("Bootstrap layout report:")
         for a in report.get("assigned", []):
-            print(f"  Assigned {a['model']} -> role {a['role']} (slot {a['slot']})")
+            print(
+                f"  Assigned {a['model']} -> role {a['role']} "
+                f"(slot {a['slot']}, ollama {a['ollama_model']})"
+            )
         for s in report.get("skipped", []):
-            print(f"  Skipped role {s['role']} (no models available)")
+            print(f"  Skipped role {s['role']} ({s['reason']})")
         _sys.exit(0)
 
     config = _bl()

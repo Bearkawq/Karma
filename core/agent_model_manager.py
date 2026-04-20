@@ -47,6 +47,15 @@ class ManagerConfig:
     agent_timeout_seconds: int = 60
 
 
+def get_slot_manager(storage_path: Optional[str] = None):
+    """Compatibility shim: expose get_slot_manager at module level for tests.
+
+    Delegates to core.slot_manager.get_slot_manager.
+    """
+    from core.slot_manager import get_slot_manager as _gsm
+    return _gsm(storage_path)
+
+
 class AgentModelManager:
     """Manages agents and models for Karma.
     

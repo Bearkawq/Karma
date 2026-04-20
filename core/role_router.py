@@ -183,12 +183,18 @@ class RoleRouter:
         Returns:
             RouteDecision with selected role and model
         """
-        # Explicit role selection
+        # Explicit role selection — check for available models if not forcing no model
         if explicit_role:
+            model_id = None
+            model_used = False
+            if not force_no_model and available_models:
+                model_id = available_models[0]
+                model_used = True
             return RouteDecision(
                 role=explicit_role,
                 mode=InvocationMode.EXPLICIT,
-                model_used=False,
+                model_id=model_id,
+                model_used=model_used,
             )
         
         # Find matching mapping — prefer longer patterns; use word boundary for
