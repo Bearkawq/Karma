@@ -9,7 +9,7 @@ v2: Shape-aware retrieval — uses intent, entity types, domain, and
 
 from __future__ import annotations
 import json
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -77,7 +77,7 @@ class RetrievalBus:
         # Retrieval metrics
         self._metrics: Dict[str, int] = defaultdict(int)
         # In-memory bundle cache to avoid recomputing identical retrievals every turn
-        self._bundle_cache: Dict[Tuple[Any, ...], List[EvidenceItem]] = {}
+        self._bundle_cache: OrderedDict[Tuple[Any, ...], List[EvidenceItem]] = OrderedDict()
         self._cache_generation = 0
         self.tool_manager = None
         self.conversation_state = None
@@ -224,17 +224,17 @@ class RetrievalBus:
         intent = intent or ""
         tool = tool or ""
         cache_key = (
-            self._cache_generation,
             mode,
             query.strip().lower(),
             intent.strip().lower(),
             tool.strip().lower(),
             tuple(sorted((str(k), str(v)) for k, v in entities.items())),
         )
-        cached = self._bundle_cache.get(cache_key)
-        if cached is not None:
+        # LRU cache: move to end on access (most recently used)
+        if cache_key in self._bundle_cache:
+            self._bundle_cache.move_to_end(cache_key)
             self._metrics["cache_hits"] += 1
-            return list(cached)
+            return list(self._bundle_cache[cache_key])
 
         items: List[EvidenceItem] = []
         query_words = set(query.lower().replace("_", " ").replace(":", " ").split())
@@ -318,11 +318,10 @@ class RetrievalBus:
         limit = _MODE_LIMITS.get(mode, 7)
         bundle = items[:limit]
         self._bundle_cache[cache_key] = list(bundle)
-        # keep cache bounded
-        if len(self._bundle_cache) > 256:
-            oldest_key = next(iter(self._bundle_cache))
-            self._bundle_cache.pop(oldest_key, None)
-        self._cache_generation += 1  # Track LRU generations
+        # LRU eviction: remove oldest entries when over limit
+        while len(self._bundle_cache) > 256:
+            self._bundle_cache.popitem(last=False)
+        self._cache_generation += 1
         return bundle
 
     def get_metrics(self, reset: bool = False) -> dict:
