@@ -174,3 +174,90 @@ def test_web_main_has_port_guard():
     source = (ROOT / "ui" / "web.py").read_text()
     assert "connect_ex" in source or "already in use" in source, \
         "No port-in-use guard found in web.py main()"
+
+
+# ---------------------------------------------------------------------------
+# Weak spot 1: health dot uses status field + model-ops, not just critical issues
+# ---------------------------------------------------------------------------
+
+def test_appjs_polls_model_ops_status():
+    """pollHealth() must also check /api/model-ops/status for model readiness."""
+    js = (ROOT / "ui" / "static" / "app.js").read_text()
+    assert "/api/model-ops/status" in js, \
+        "/api/model-ops/status not polled in pollHealth()"
+
+
+def test_appjs_uses_toplevel_health_status_field():
+    """pollHealth() must use the top-level status field, not only filter critical issues."""
+    js = (ROOT / "ui" / "static" / "app.js").read_text()
+    assert "health.status" in js or "status === \"critical\"" in js or "status ===" in js, \
+        "pollHealth() does not use top-level status field from /api/health"
+
+
+def test_css_has_warn_class():
+    """CSS must define 'warn' (amber) state for warning-level health."""
+    css = (ROOT / "ui" / "static" / "style.css").read_text()
+    assert ".status-dot.warn" in css, "No '.status-dot.warn' CSS class defined"
+
+
+# ---------------------------------------------------------------------------
+# Weak spot 2: additional base patterns + seat conversational guard
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("query", [
+    "are you a bot",
+    "are you an AI",
+    "are you a robot",
+    "is you a program",
+    "do you have feelings",
+    "do you have emotions",
+    "do you have consciousness",
+    "can you help me",
+    "can you help us",
+    "what are you good at",
+    "what are you capable of",
+    "what are you built for",
+])
+def test_identity_adjacent_queries_use_base_templates(query):
+    """Queries about the agent's nature / capability must use base templates."""
+    r = _make_responder(with_retrieval=True)
+    response = r.respond(query)
+    assert "@app.route" not in response, f"Decorator garbage leaked for '{query}'"
+    assert "I don't understand" not in response, \
+        f"No base template matched '{query}' — fell through to unknown: {response!r}"
+
+
+def test_seat_skips_conversational_are_you_queries():
+    """_try_seat_response must return None for 'are you X' phrasing."""
+    import types as _types
+    from agent.agent_loop import AgentLoop
+
+    # Build a minimal stub that exposes _SEAT_CONV_SKIP
+    assert hasattr(AgentLoop, "_SEAT_CONV_SKIP"), \
+        "_SEAT_CONV_SKIP pattern not defined on AgentLoop"
+
+    pat = AgentLoop._SEAT_CONV_SKIP
+    hits = [
+        "are you a bot", "are you functioning", "do you have feelings",
+        "can you help me", "is you a robot", "tell me more", "go on",
+        "interesting", "what are you", "who are you", "what is karma",
+    ]
+    for query in hits:
+        assert pat.match(query), \
+            f"_SEAT_CONV_SKIP did not match '{query}' — seat would be called"
+
+
+def test_seat_does_not_skip_knowledge_queries():
+    """Knowledge queries must NOT be blocked by the conversational guard."""
+    from agent.agent_loop import AgentLoop
+    pat = AgentLoop._SEAT_CONV_SKIP
+    knowledge_queries = [
+        "explain the fibonacci sequence",
+        "how does photosynthesis work",
+        "what is the capital of France",
+        "why do black holes exist",
+        "search for recent papers on transformers",
+    ]
+    for query in knowledge_queries:
+        assert not pat.match(query), \
+            f"_SEAT_CONV_SKIP wrongly blocked knowledge query '{query}'"

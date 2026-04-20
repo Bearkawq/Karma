@@ -253,6 +253,12 @@ class Responder:
         # Functioning / operational checks — explicit "are you X" phrasing
         (r"^(are\s+you|is\s+karma)\s+(functioning|working|operational|online|active|running|alive|ok|okay|fine|healthy)\b", "_status"),
         (r"^(functioning|operational)\b", "_status"),
+        # Identity — agent type queries that otherwise fall through to the model
+        (r"^(are|is)\s+you\s+(?:an?\s+)?(bot|ai|robot|program|computer|machine|assistant|virtual|language\s+model)\b", "_identity"),
+        (r"^do\s+you\s+have\s+(feelings|emotions|consciousness|sentience|a\s+soul|desires)\b", "_purpose"),
+        # Capability entry-points with "can you" phrasing
+        (r"^can\s+you\s+help\s+(me|us)\b", "_help"),
+        (r"^what\s+are\s+you\s+(good\s+at|capable\s+of|able\s+to|built\s+for)\b", "_help"),
         # Capabilities
         (r"^(help|what\s+can\s+you\s+do|commands|options)\b", "_help"),
         (r"^(what\s+do\s+you\s+do|how\s+do\s+you\s+work)\b", "_help"),

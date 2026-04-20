@@ -140,24 +140,56 @@
 
   // -- Health polling — updates status dot with real backend readiness --
   // SSE connection only confirms Flask is serving; this checks actual agent health.
-  let _healthDegraded = false;
+  let _healthState = "live"; // live | warn | degraded
   async function pollHealth() {
     try {
-      const r = await fetch("/api/health");
-      if (!r.ok) throw new Error("http " + r.status);
-      const j = await r.json();
+      const [healthResp, opsResp] = await Promise.all([
+        fetch("/api/health"),
+        fetch("/api/model-ops/status"),
+      ]);
       const dot = $("#status-dot");
-      const issues = (j.data || {}).issues || [];
-      const critical = issues.filter(i => i.severity === "critical" || i.level === "critical");
-      if (critical.length > 0) {
-        dot.className = "status-dot degraded";
-        dot.title = "degraded: " + critical.map(i => i.message || i.type || "?").join(", ");
-        _healthDegraded = true;
-      } else if (_healthDegraded) {
-        // SSE still connected, health recovered
-        dot.className = "status-dot live";
-        dot.title = "connected";
-        _healthDegraded = false;
+
+      const health = healthResp.ok ? (await healthResp.json()).data || {} : null;
+      const ops = opsResp.ok ? (await opsResp.json()).data || {} : null;
+
+      let newState = "live";
+      const reasons = [];
+
+      if (health) {
+        const status = health.status || "healthy";
+        if (status === "critical") {
+          newState = "degraded";
+          const crit = (health.issues || []).filter(i => i.severity === "critical");
+          reasons.push(...crit.map(i => i.issue || i.message || "critical issue"));
+        } else if (status === "warning") {
+          // warnings don't block the chat path but are worth surfacing
+          if (newState === "live") newState = "warn";
+          reasons.push((health.issues_found || 0) + " warning(s)");
+        }
+      }
+
+      // Model-ops: if Ollama is reachable but ALL small models are missing,
+      // seat fallback will silently return nothing — show degraded, not green.
+      if (ops && ops.inventory && ops.inventory.reachable) {
+        const models = ops.small_models || [];
+        if (models.length > 0 && models.every(m => !m.installed)) {
+          newState = "degraded";
+          reasons.push("no models installed");
+        }
+      }
+
+      if (newState !== _healthState) {
+        _healthState = newState;
+        if (newState === "degraded") {
+          dot.className = "status-dot degraded";
+          dot.title = "degraded: " + (reasons.join(", ") || "health check failed");
+        } else if (newState === "warn") {
+          dot.className = "status-dot warn";
+          dot.title = "warning: " + (reasons.join(", ") || "minor issues");
+        } else {
+          dot.className = "status-dot live";
+          dot.title = "connected";
+        }
       }
     } catch (_) {
       // Health endpoint unreachable — SSE error handler will flip the dot

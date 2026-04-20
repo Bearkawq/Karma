@@ -118,7 +118,8 @@ body {
 }
 .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .status-dot.error { background: var(--red); }
-.status-dot.degraded { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+.status-dot.warn { background: #f59e0b; }
+.status-dot.degraded { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
 /* Main area */
 main {

@@ -2109,13 +2109,41 @@ class AgentLoop:
         tool = selected_action.get("tool") or name
         return _CA._critique_tool_failure(tool, error)
 
+    # Patterns for queries that must NOT be routed to the seat model.
+    # These are conversational / identity queries; the responder base templates
+    # should handle them, and if they somehow slipped through, a model will only
+    # return context-contaminated or hallucinated output.
+    _SEAT_CONV_SKIP = re.compile(
+        r"^(are|is|do|does|can|could|would|will|have|has)\s+you\b"
+        r"|^(tell\s+me\s+more|go\s+on|continue|proceed|elaborate|expand)\b"
+        r"|^(interesting|cool|nice|makes\s+sense|understood|i\s+see|got\s+it)\b"
+        r"|^(what\s+are\s+you|who\s+are\s+you|what\s+is\s+karma)\b",
+        re.IGNORECASE,
+    )
+
     def _try_seat_response(self, user_input: str) -> Optional[str]:
         """Try seat pipeline for free-form queries not handled by responder.
 
         Returns model-generated answer string or None (caller falls back).
         Bounded timeout prevents chat path from hanging on a slow seat model.
+
+        Conversational / identity queries are blocked from the seat — the model
+        has no reliable identity context and would return garbage or hallucinations.
         """
         _SEAT_RESPONSE_TIMEOUT = 15  # seconds — chat fallback must be fast
+
+        # Block conversational queries — seat model won't answer these better
+        # than the responder's base templates, and risks returning retrieved garbage.
+        if user_input and self._SEAT_CONV_SKIP.match(user_input.strip()):
+            self.logger.debug("Seat skipped: conversational query — %s", user_input[:60])
+            return None
+
+        # Very short inputs (≤ 2 words) with no knowledge-question word also skip the seat.
+        _KW = {"what", "why", "how", "when", "where", "who", "which"}
+        words = set((user_input or "").strip().lower().split())
+        if len(words) <= 2 and not (words & _KW):
+            self.logger.debug("Seat skipped: too short — %s", user_input[:60])
+            return None
 
         def _run():
             from core.agent_model_manager import get_agent_model_manager
