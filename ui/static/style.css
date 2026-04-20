@@ -118,6 +118,7 @@ body {
 }
 .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .status-dot.error { background: var(--red); }
+.status-dot.degraded { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
 
 /* Main area */
 main {
@@ -848,6 +849,11 @@ main {
 .model-controls input {
   flex: 1;
   max-width: 300px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 8px 10px;
 }
 
 .slot-grid {
@@ -866,9 +872,19 @@ main {
   font-size: 13px;
   margin-bottom: 8px;
 }
+.slot-meta {
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 400;
+}
 .slot-model {
   font-size: 12px;
   color: var(--text2);
+}
+.slot-issues {
+  color: var(--text2);
+  font-size: 11px;
+  margin-top: 6px;
 }
 .slot-status {
   display: inline-block;
@@ -878,6 +894,9 @@ main {
   margin-right: 6px;
 }
 .slot-status.loaded { background: #10b981; }
+.slot-status.warm { background: #10b981; }
+.slot-status.idle { background: var(--yellow); }
+.slot-status.missing { background: #ef4444; }
 .slot-status.unloaded { background: var(--text2); }
 .slot-status.error { background: #ef4444; }
 

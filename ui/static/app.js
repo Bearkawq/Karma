@@ -138,6 +138,34 @@
 
   connectSSE();
 
+  // -- Health polling — updates status dot with real backend readiness --
+  // SSE connection only confirms Flask is serving; this checks actual agent health.
+  let _healthDegraded = false;
+  async function pollHealth() {
+    try {
+      const r = await fetch("/api/health");
+      if (!r.ok) throw new Error("http " + r.status);
+      const j = await r.json();
+      const dot = $("#status-dot");
+      const issues = (j.data || {}).issues || [];
+      const critical = issues.filter(i => i.severity === "critical" || i.level === "critical");
+      if (critical.length > 0) {
+        dot.className = "status-dot degraded";
+        dot.title = "degraded: " + critical.map(i => i.message || i.type || "?").join(", ");
+        _healthDegraded = true;
+      } else if (_healthDegraded) {
+        // SSE still connected, health recovered
+        dot.className = "status-dot live";
+        dot.title = "connected";
+        _healthDegraded = false;
+      }
+    } catch (_) {
+      // Health endpoint unreachable — SSE error handler will flip the dot
+    }
+  }
+  pollHealth();
+  setInterval(pollHealth, 30000);
+
   // -- Toast --
   function showToast(text, cls) {
     const container = $("#toasts");
@@ -1032,7 +1060,9 @@
       document.getElementById("telemetry-posture").className = "posture-badge " + posture.toLowerCase();
       document.getElementById("stat-posture").textContent = posture;
       document.getElementById("stat-revision").textContent = d.revision || 0;
-      document.getElementById("stat-pipeline").textContent = d.pipeline?.manager?.agents?.enabled || 0 + " agents";
+      const agentCount = d.pipeline?.agents?.enabled ?? 0;
+      const modelCount = d.pipeline?.models?.enabled ?? 0;
+      document.getElementById("stat-pipeline").textContent = agentCount + " agents / " + modelCount + " models";
       
       // Last receipt
       const receipt = d.latest_receipt;
@@ -1091,9 +1121,26 @@
   // -- Models View --
   async function refreshModels() {
     try {
-      // Agents
-      const agentsResp = await fetch("/api/agents");
+      const [statusResp, agentsResp] = await Promise.all([
+        fetch("/api/model-ops/status"),
+        fetch("/api/agents")
+      ]);
+      const statusJ = await statusResp.json();
       const agentsJ = await agentsResp.json();
+      const status = statusJ.data || {};
+
+      const readinessEl = document.getElementById("model-readiness");
+      if (readinessEl) {
+        readinessEl.innerHTML = "";
+        addStat(readinessEl, status.status || "UNKNOWN", "Readiness");
+        addStat(readinessEl, status.inventory?.reachable ? "yes" : "no", "Ollama");
+        const installed = (status.small_models || []).filter(m => m.installed).length;
+        addStat(readinessEl, installed + "/" + (status.small_models || []).length, "Installed");
+        const warm = (status.small_models || []).filter(m => m.warm_now).length;
+        addStat(readinessEl, warm, "Warm Now");
+      }
+
+      // Agents
       const agentsEl = document.getElementById("model-agents");
       agentsEl.innerHTML = "";
       if (agentsJ.ok) {
@@ -1103,28 +1150,35 @@
         }
       }
       
-      // Models
-      const modelsResp = await fetch("/api/models");
-      const modelsJ = await modelsResp.json();
+      // Small model pool from the operator readiness inventory.
       const modelsEl = document.getElementById("model-list");
       modelsEl.innerHTML = "";
-      if (modelsJ.ok) {
-        for (const model of modelsJ.data) {
-          const status = model.loaded ? "loaded" : model.status;
-          addKV(modelsEl, model.model_id, status);
+      if (status.small_models) {
+        for (const model of status.small_models) {
+          const label = model.ollama_model || model.model;
+          const value = model.installed
+            ? (model.warm_now ? "installed, warm now" : "installed, idle")
+            : "missing";
+          addKV(modelsEl, label, value, model.installed ? (model.warm_now ? "good" : "") : "bad");
         }
       }
       
-      // Slots
-      const slotsResp = await fetch("/api/slots");
-      const slotsJ = await slotsResp.json();
+      // Role assignments from the same operator readiness report.
       const slotsEl = document.getElementById("model-slots");
       slotsEl.innerHTML = "";
-      if (slotsJ.ok) {
-        for (const slot of slotsJ.data.roles) {
+      if (status.roles) {
+        for (const slot of status.roles) {
           const div = document.createElement("div");
           div.className = "slot-item";
-          div.innerHTML = '<div class="slot-name">' + esc(slot.role) + '</div><div class="slot-model"><span class="slot-status ' + (slot.model_loaded ? "loaded" : "unloaded") + '"></span>' + (slot.assigned_model_id || "none") + '</div>';
+          const issues = slot.issues && slot.issues.length ? slot.issues.join(", ") : "none";
+          const dotClass = !slot.installed_in_ollama ? "missing" : slot.warm_now ? "warm" : "idle";
+          const stateText = !slot.installed_in_ollama ? "missing" : slot.warm_now ? "warm now" : "installed, idle";
+          div.innerHTML =
+            '<div class="slot-name">' + esc(slot.role) + ' <span class="slot-meta">' + esc(slot.slot) + '</span></div>' +
+            '<div class="slot-model"><span class="slot-status ' + dotClass + '"></span>' + esc(slot.assigned_model_id || "none") + '</div>' +
+            '<div class="slot-meta">ollama: ' + esc(slot.ollama_model || "missing") + '</div>' +
+            '<div class="slot-meta">state: ' + esc(stateText) + '</div>' +
+            '<div class="slot-issues">issues: ' + esc(issues) + '</div>';
           slotsEl.appendChild(div);
         }
       }

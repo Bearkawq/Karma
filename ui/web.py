@@ -1711,8 +1711,21 @@ def main():
     host = web_cfg.get("host", "0.0.0.0")
     port = int(web_cfg.get("port", 5000))
     debug = web_cfg.get("debug", False)
-    print(f"Karma Web UI: http://{host}:{port}")
-    print(f"Phone access: http://<local-ip>:{port}")
+
+    # Guard: detect stale or foreign processes on the target port before binding.
+    import socket as _socket
+    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as _s:
+        _s.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
+        if _s.connect_ex(("127.0.0.1", port)) == 0:
+            print(
+                f"[Karma] ERROR: port {port} is already in use.\n"
+                f"  Run: lsof -i :{port}  to identify the process.\n"
+                f"  Kill it with: kill <pid>  then retry."
+            )
+            raise SystemExit(1)
+
+    print(f"[Karma] Starting — http://{host}:{port}")
+    print(f"[Karma] Phone access: http://<local-ip>:{port}")
     app.run(host=host, port=port, debug=debug, threaded=True)
 
 

@@ -73,31 +73,39 @@ class Responder:
     # ── respond ────────────────────────────────────────────────
 
     def respond(self, text: str, memory=None) -> str:
-        """Generate a response. Checks evidence → learned → facts → base templates."""
+        """Generate a response. Checks base templates first, then learned → evidence → facts.
+
+        Base templates (greetings, identity, status) are checked BEFORE retrieval so that
+        conversational queries like "are you functioning" are never answered with retrieved
+        facts from the knowledge store.
+        """
         text_low = text.strip().lower()
 
-        # Layer 0: evidence-first answering via retrieval bus
+        # Layer 0: base templates — checked first so identity/status/greeting queries
+        # are never intercepted by retrieval.
+        base = self._base_response(text_low)
+        if not base.startswith(("I don't understand", "Not sure")):
+            return base
+
+        # Layer 1: learned responses (user-taught, outrank retrieval)
+        learned = self._match_learned(text_low)
+        if learned:
+            return learned
+
+        # Layer 2: evidence-first answering via retrieval bus
         if self._retrieval:
             evidence_answer = self._evidence_answer(text_low)
             if evidence_answer:
                 return evidence_answer
 
-        # Layer 1: learned responses
-        learned = self._match_learned(text_low)
-        if learned:
-            return learned
-
-        # Layer 2: knowledge recall from facts
+        # Layer 3: knowledge recall from facts
         if memory:
             knowledge = self._recall_knowledge(text_low, memory)
             if knowledge:
                 return knowledge
 
-        # Layer 3: base templates
-        base = self._base_response(text_low)
-
         # Layer 4: if truly unknown and memory has facts, suggest guesses
-        if memory and base.startswith("I don't understand"):
+        if memory:
             guesses = self._suggest_guesses(text_low, memory)
             if guesses:
                 return guesses
@@ -242,6 +250,9 @@ class Responder:
         (r"^how'?s?\s+it\s+going", "_status"),
         (r"^you\s+(good|ok|alright|alive)\b", "_status"),
         (r"^(status|you\s+up)\b", "_status"),
+        # Functioning / operational checks — explicit "are you X" phrasing
+        (r"^(are\s+you|is\s+karma)\s+(functioning|working|operational|online|active|running|alive|ok|okay|fine|healthy)\b", "_status"),
+        (r"^(functioning|operational)\b", "_status"),
         # Capabilities
         (r"^(help|what\s+can\s+you\s+do|commands|options)\b", "_help"),
         (r"^(what\s+do\s+you\s+do|how\s+do\s+you\s+work)\b", "_help"),

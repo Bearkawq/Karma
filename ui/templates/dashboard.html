@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Karma</title>
+<link rel="icon" href="/static/icon-192.png">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -266,6 +267,7 @@
       <h2>Agents & Models</h2>
     </div>
     <div class="view-body">
+      <div class="stats-row" id="model-readiness"></div>
       <div class="model-controls">
         <button id="scan-models-btn" class="btn-primary">Scan for Models</button>
         <input type="text" id="scan-path" placeholder="/models" value="/models">
@@ -276,12 +278,12 @@
           <div id="model-agents" class="kv-list"></div>
         </div>
         <div class="card">
-          <h3>Models</h3>
+          <h3>Small Model Pool</h3>
           <div id="model-list" class="kv-list"></div>
         </div>
       </div>
       <div class="card">
-        <h3>Slot Assignments</h3>
+        <h3>Role Slot Assignments</h3>
         <div id="model-slots" class="slot-grid"></div>
       </div>
       <div class="card">
