@@ -187,7 +187,10 @@ class MemorySystem:
             self._last_tasks_save_failed = False
         except Exception as e:
             self._last_tasks_save_failed = True
-            print(f"Error saving tasks: {e}")
+            try:
+                quarantine_file(self.tasks_file)
+            except Exception:
+                pass
 
     # ── aggregate ─────────────────────────────────────────────────
     def store_reflection(self, reflection: Dict[str, Any]) -> None:

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from storage.persistence import atomic_write_text
+from storage.persistence import atomic_write_text, quarantine_file
 
 
 @dataclass
@@ -265,6 +265,10 @@ class SlotManager:
                     self._slots[slot_name].deterministic_only = slot_data.get("deterministic_only", False)
                     self._slots[slot_name].last_updated = slot_data.get("last_updated", datetime.now().isoformat())
         except Exception:
+            try:
+                quarantine_file(p)
+            except Exception:
+                pass
             self._load_quarantined = True
 
 
