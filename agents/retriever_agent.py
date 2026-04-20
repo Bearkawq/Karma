@@ -78,7 +78,7 @@ class RetrieverAgent(BaseAgent):
                     import os
 
                     path = RetrieverAgent._get_index_path()
-                    if os.path.getsize(path) < 1000:  # Empty or near-empty
+                    if not os.path.exists(path) or os.path.getsize(path) < 1000:
                         RetrieverAgent.bootstrap_index(embed_adapter)
                 general_results = self._embed_search(
                     query, memory, retrieval, embed_adapter, limit
