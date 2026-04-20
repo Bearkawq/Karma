@@ -13,6 +13,8 @@ from core.slot_manager import SlotManager
 import agent.services.model_operator_service as model_ops
 from agent.services.model_operator_service import (
     build_model_status_text,
+    build_readiness_report,
+    build_readiness_text,
     assign_model_to_role,
     assign_model_to_slot,
     bootstrap_layout,
@@ -123,6 +125,54 @@ def test_bootstrap_layout_assigns_preferred_available_models(monkeypatch, tmp_pa
     assert reloaded.get_role_assignment('retriever').assigned_model_id == 'nomic-embed-text'
 
 
+def test_readiness_ready_after_sane_bootstrap(monkeypatch, tmp_path):
+    _fake_ollama(
+        monkeypatch,
+        ["qwen3:4b", "granite3.3:2b", "nomic-embed-text:latest", "gemma3:4b", "phi4-mini:latest"],
+        loaded=["granite3.3:2b"],
+    )
+    sm = SlotManager(storage_path=str(tmp_path / 'slots.json'))
+    bootstrap_layout(FakeManager([]), sm)
+
+    ready, text = build_readiness_text(FakeManager([]), SlotManager(storage_path=str(tmp_path / 'slots.json')))
+    assert ready is True
+    assert "Karma model readiness: READY" in text
+    assert "Small model pool installed" in text
+    assert "Ready to roll" in text
+
+
+def test_readiness_reports_missing_ollama_and_models(monkeypatch, tmp_path):
+    monkeypatch.setattr(model_ops, "_request_json", lambda path, timeout=3.0: None)
+    sm = SlotManager(storage_path=str(tmp_path / 'slots.json'))
+
+    report = build_readiness_report(FakeManager([]), sm)
+    assert report["ready"] is False
+    text = model_ops.format_readiness_report(report)
+    assert "Karma model readiness: NOT READY" in text
+    assert "Ollama reachable: False" in text
+    assert "Start Ollama: ollama serve" in text
+    assert "ollama pull qwen3:4b" in text
+
+
+def test_readiness_flags_unsane_bootstrap_layout(monkeypatch, tmp_path):
+    _fake_ollama(
+        monkeypatch,
+        ["qwen3:4b", "granite3.3:2b", "nomic-embed-text:latest", "gemma3:4b", "phi4-mini:latest", "mistral:latest"],
+    )
+    sm = SlotManager(storage_path=str(tmp_path / 'slots.json'))
+    bootstrap_layout(FakeManager([]), sm)
+    sm.assign_role("planner", "mistral:latest")
+
+    report = build_readiness_report(FakeManager([]), SlotManager(storage_path=str(tmp_path / 'slots.json')))
+    assert report["ready"] is False
+    issues = {
+        issue
+        for item in report["issues"]["role_issues"]
+        for issue in item["issues"]
+    }
+    assert "outside-recommended-layout" in issues
+
+
 def test_bootstrap_layout_skips_role_without_suitable_model(monkeypatch, tmp_path):
     _fake_ollama(monkeypatch, ["qwen3:4b"])
     sm = SlotManager(storage_path=str(tmp_path / 'slots.json'))
@@ -147,3 +197,13 @@ def test_cli_model_status_runs(tmp_path):
     res = subprocess.run([sys.executable, 'agent/agent_loop.py', '--models'], cwd=karma_root, env=env, capture_output=True, text=True, timeout=30)
     assert 'Model status:' in res.stdout
     assert 'Small model pool:' in res.stdout
+
+
+def test_cli_readiness_runs(tmp_path):
+    # Live readiness may exit 0 or 1 depending on local Ollama, but it must report clearly.
+    karma_root = str(Path(__file__).resolve().parent.parent)
+    env = {**os.environ, 'PYTHONPATH': karma_root}
+    res = subprocess.run([sys.executable, 'agent/agent_loop.py', '--ready'], cwd=karma_root, env=env, capture_output=True, text=True, timeout=30)
+    assert res.returncode in (0, 1)
+    assert 'Karma model readiness:' in res.stdout
+    assert 'Next steps:' in res.stdout

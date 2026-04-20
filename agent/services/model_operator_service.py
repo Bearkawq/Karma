@@ -222,6 +222,148 @@ def build_model_status_text(manager, slot_mgr) -> str:
     return "\n".join(lines)
 
 
+def build_readiness_report(manager, slot_mgr) -> Dict[str, Any]:
+    """Return a read-only operator readiness report for local model ops."""
+    rows, inventory = build_inventory_rows(manager, slot_mgr)
+
+    small_models = []
+    missing_small_models = []
+    for model_id in SMALL_MODEL_POOL:
+        matched = _find_model(inventory, model_id)
+        present = matched is not None
+        if not present:
+            missing_small_models.append(model_id)
+        small_models.append({
+            "model": model_id,
+            "present": present,
+            "ollama_model": matched,
+            "loaded": _is_loaded(inventory, model_id),
+        })
+
+    role_issues = []
+    layout_issues = []
+    for row in rows:
+        issues = list(row["issues"])
+        if row["deterministic_only"]:
+            issues.append("deterministic-only")
+        assigned = row["assigned_model_id"]
+        preferences = _preference_path(row["role"])
+        if assigned and row["exists_in_ollama"] and assigned not in preferences:
+            issues.append("outside-recommended-layout")
+            layout_issues.append({
+                "role": row["role"],
+                "slot": row["slot"],
+                "assigned_model_id": assigned,
+                "recommended": preferences,
+            })
+        if issues:
+            role_issues.append({
+                "role": row["role"],
+                "slot": row["slot"],
+                "assigned_model_id": assigned,
+                "issues": issues,
+            })
+
+    checks = [
+        {
+            "name": "Ollama reachable",
+            "ok": inventory["reachable"],
+            "detail": "reachable at localhost:11434" if inventory["reachable"] else "not reachable at localhost:11434",
+        },
+        {
+            "name": "Small model pool installed",
+            "ok": not missing_small_models,
+            "detail": "all present" if not missing_small_models else "missing: " + ", ".join(missing_small_models),
+        },
+        {
+            "name": "Role assignments valid",
+            "ok": not role_issues,
+            "detail": "all roles assigned to installed recommended models" if not role_issues else f"{len(role_issues)} role issue(s)",
+        },
+        {
+            "name": "Bootstrap layout sane",
+            "ok": not layout_issues and not role_issues,
+            "detail": "current assignments match recommended layout" if not layout_issues and not role_issues else "run bootstrap after fixing prerequisites",
+        },
+    ]
+
+    ready = all(check["ok"] for check in checks)
+    next_steps = []
+    if not inventory["reachable"]:
+        next_steps.append("Start Ollama: ollama serve")
+    for model_id in missing_small_models:
+        next_steps.append(f"Install missing model: ollama pull {model_id}")
+    if role_issues or layout_issues:
+        next_steps.append("Apply recommended assignments: python3 agent/agent_loop.py --bootstrap-models")
+        next_steps.append("Inspect assignments: python3 agent/agent_loop.py --models")
+    if not next_steps:
+        next_steps.append("Ready to roll: run python3 agent/agent_loop.py or inspect with --models.")
+
+    return {
+        "ready": ready,
+        "status": "READY" if ready else "NOT READY",
+        "inventory": inventory,
+        "small_models": small_models,
+        "roles": rows,
+        "checks": checks,
+        "issues": {
+            "missing_small_models": missing_small_models,
+            "role_issues": role_issues,
+            "layout_issues": layout_issues,
+        },
+        "next_steps": next_steps,
+    }
+
+
+def format_readiness_report(report: Dict[str, Any]) -> str:
+    lines = [f"Karma model readiness: {report['status']}"]
+    inventory = report["inventory"]
+    lines.append(
+        f"Ollama reachable: {inventory['reachable']} | inventory source: {inventory['source']}"
+    )
+    lines.append("")
+
+    lines.append("Checks:")
+    for check in report["checks"]:
+        marker = "ok" if check["ok"] else "fail"
+        lines.append(f"- {marker}: {check['name']} - {check['detail']}")
+    lines.append("")
+
+    lines.append("Required small models:")
+    for model in report["small_models"]:
+        lines.append(
+            f"- {model['model']} | present: {model['present']} | "
+            f"ollama: {model['ollama_model'] or '<missing>'} | loaded: {model['loaded']}"
+        )
+    lines.append("")
+
+    lines.append("Role assignments:")
+    role_issue_map = {
+        (item["role"], item["slot"]): item["issues"]
+        for item in report["issues"]["role_issues"]
+    }
+    for row in report["roles"]:
+        issues = role_issue_map.get((row["role"], row["slot"]), row["issues"])
+        issue_text = ", ".join(issues) if issues else "none"
+        lines.append(
+            f"- {row['role']} -> {row['slot']} | assigned: {row['assigned_model_id'] or '<none>'} | "
+            f"ollama: {row['ollama_model'] or '<missing>'} | loaded: {row['loaded']} | "
+            f"deterministic_only: {row['deterministic_only']} | issues: {issue_text}"
+        )
+    lines.append("")
+
+    lines.append("Next steps:")
+    for step in report["next_steps"]:
+        lines.append(f"- {step}")
+
+    return "\n".join(lines)
+
+
+def build_readiness_text(manager, slot_mgr) -> Tuple[bool, str]:
+    report = build_readiness_report(manager, slot_mgr)
+    return report["ready"], format_readiness_report(report)
+
+
 def _validate_model(manager, model_id: str) -> Tuple[bool, str]:
     inventory = _ollama_inventory(manager)
     matched = _find_model(inventory, model_id)

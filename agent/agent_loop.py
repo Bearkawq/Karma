@@ -2879,6 +2879,20 @@ if __name__ == "__main__":
         print(build_model_status_text(mgr, slot_mgr))
         _sys.exit(0)
 
+    # --ready / --bootstrap-check: read-only local model readiness verdict
+    if "--ready" in _sys.argv or "--bootstrap-check" in _sys.argv:
+        config = _bl()
+        agent = build_agent(config)
+        from core.agent_model_manager import get_agent_model_manager
+        from core.slot_manager import get_slot_manager
+        from agent.services.model_operator_service import build_readiness_text
+
+        mgr = get_agent_model_manager()
+        slot_mgr = get_slot_manager(str(agent.base_dir / "data" / "slot_assignments.json"))
+        ready, text = build_readiness_text(mgr, slot_mgr)
+        print(text)
+        _sys.exit(0 if ready else 1)
+
     # --assign-role ROLE MODEL_ID
     if "--assign-role" in _sys.argv:
         idx = _sys.argv.index("--assign-role")
