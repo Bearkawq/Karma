@@ -158,7 +158,9 @@ def build_inventory_rows(manager, slot_mgr) -> Tuple[List[Dict[str, Any]], Dict[
             "assigned_model_id": assigned,
             "ollama_model": matched_model,
             "exists_in_ollama": matched_model is not None,
+            "installed_in_ollama": matched_model is not None,
             "loaded": _is_loaded(inventory, assigned),
+            "warm_now": _is_loaded(inventory, assigned),
             "deterministic_only": bool(assignment.deterministic_only) if assignment else False,
             "issues": issues,
         })
@@ -180,16 +182,16 @@ def build_model_status_text(manager, slot_mgr) -> str:
             status = "UNASSIGNED"
         elif not row["exists_in_ollama"]:
             status = "MISSING"
-        elif row["loaded"]:
-            status = "LOADED"
+        elif row["warm_now"]:
+            status = "INSTALLED_WARM"
         else:
-            status = "PRESENT"
+            status = "INSTALLED_IDLE"
         issue_text = ", ".join(row["issues"]) if row["issues"] else "none"
         lines.append(
             f"- role: {row['role']} | slot: {row['slot']} | "
             f"assigned: {row['assigned_model_id'] or '<none>'} | "
             f"ollama: {row['ollama_model'] or '<missing>'} | "
-            f"exists: {row['exists_in_ollama']} | loaded: {row['loaded']} | "
+            f"present_on_disk: {row['installed_in_ollama']} | loaded(warm): {row['warm_now']} | "
             f"deterministic_only: {row['deterministic_only']} | "
             f"status: {status} | issues: {issue_text}"
         )
@@ -200,14 +202,14 @@ def build_model_status_text(manager, slot_mgr) -> str:
         matched = _find_model(inventory, model_id)
         loaded = _is_loaded(inventory, model_id)
         lines.append(
-            f"- {model_id} | present: {matched is not None} | "
-            f"ollama: {matched or '<missing>'} | loaded: {loaded}"
+            f"- {model_id} | present_on_disk: {matched is not None} | "
+            f"ollama: {matched or '<missing>'} | loaded(warm): {loaded}"
         )
 
     lines.append("")
     lines.append("Available Ollama models:")
     for model_id in inventory.get("models", []):
-        loaded_flag = " (loaded)" if _is_loaded(inventory, model_id) else ""
+        loaded_flag = " (loaded/warm)" if _is_loaded(inventory, model_id) else ""
         lines.append(f"- {model_id}{loaded_flag}")
 
     broken = [row for row in rows if row["issues"]]
@@ -236,8 +238,10 @@ def build_readiness_report(manager, slot_mgr) -> Dict[str, Any]:
         small_models.append({
             "model": model_id,
             "present": present,
+            "installed": present,
             "ollama_model": matched,
             "loaded": _is_loaded(inventory, model_id),
+            "warm_now": _is_loaded(inventory, model_id),
         })
 
     role_issues = []
@@ -332,8 +336,8 @@ def format_readiness_report(report: Dict[str, Any]) -> str:
     lines.append("Required small models:")
     for model in report["small_models"]:
         lines.append(
-            f"- {model['model']} | present: {model['present']} | "
-            f"ollama: {model['ollama_model'] or '<missing>'} | loaded: {model['loaded']}"
+            f"- {model['model']} | present_on_disk: {model['present']} | "
+            f"ollama: {model['ollama_model'] or '<missing>'} | loaded(warm): {model['warm_now']}"
         )
     lines.append("")
 
@@ -347,7 +351,8 @@ def format_readiness_report(report: Dict[str, Any]) -> str:
         issue_text = ", ".join(issues) if issues else "none"
         lines.append(
             f"- {row['role']} -> {row['slot']} | assigned: {row['assigned_model_id'] or '<none>'} | "
-            f"ollama: {row['ollama_model'] or '<missing>'} | loaded: {row['loaded']} | "
+            f"ollama: {row['ollama_model'] or '<missing>'} | present_on_disk: {row['installed_in_ollama']} | "
+            f"loaded(warm): {row['warm_now']} | "
             f"deterministic_only: {row['deterministic_only']} | issues: {issue_text}"
         )
     lines.append("")

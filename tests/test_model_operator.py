@@ -55,10 +55,23 @@ def test_build_model_status_text_shows_roles_and_inventory(monkeypatch, tmp_path
     assert 'role: planner' in txt
     assert 'slot: planner_slot' in txt
     assert 'assigned: m1' in txt
-    assert 'exists: True' in txt
-    assert 'loaded: True' in txt
+    assert 'present_on_disk: True' in txt
+    assert 'loaded(warm): True' in txt
     assert 'deterministic_only: False' in txt
     assert 'Small model pool:' in txt
+
+
+def test_status_distinguishes_installed_from_warm(monkeypatch, tmp_path):
+    _fake_ollama(monkeypatch, ["qwen3:4b"], loaded=[])
+    sm = SlotManager(storage_path=None)
+    sm.assign_role('planner', 'qwen3:4b')
+
+    txt = build_model_status_text(FakeManager([]), sm)
+    assert 'role: planner' in txt
+    assert 'present_on_disk: True' in txt
+    assert 'loaded(warm): False' in txt
+    assert 'status: INSTALLED_IDLE' in txt
+    assert 'MISSING' not in [line for line in txt.splitlines() if 'role: planner' in line][0]
 
 
 def test_assign_role_and_persist(monkeypatch, tmp_path):
@@ -138,6 +151,7 @@ def test_readiness_ready_after_sane_bootstrap(monkeypatch, tmp_path):
     assert ready is True
     assert "Karma model readiness: READY" in text
     assert "Small model pool installed" in text
+    assert "loaded(warm):" in text
     assert "Ready to roll" in text
 
 
@@ -207,3 +221,18 @@ def test_cli_readiness_runs(tmp_path):
     assert res.returncode in (0, 1)
     assert 'Karma model readiness:' in res.stdout
     assert 'Next steps:' in res.stdout
+
+
+def test_model_ops_runbook_mentions_real_commands_and_warm_wording():
+    text = (KARMA_ROOT / "docs" / "model_ops_runbook.md").read_text(encoding="utf-8")
+    for command in [
+        "python3 agent/agent_loop.py --doctor",
+        "python3 agent/agent_loop.py --ready",
+        "python3 agent/agent_loop.py --models",
+        "python3 agent/agent_loop.py --assign-role planner qwen3:4b",
+        "python3 agent/agent_loop.py --assign-slot navigator_slot granite3.3:2b",
+        "python3 agent/agent_loop.py --bootstrap-models",
+    ]:
+        assert command in text
+    assert "warm" in text
+    assert "installed" in text
