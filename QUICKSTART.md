@@ -1,5 +1,22 @@
 # Karma v3.8.0 — Quick Start
 
+## System State (2026-04-19)
+
+Karma is **operational** on this machine. Ollama is healthy, all 6 agent roles are assigned,
+and `--ready` reports READY. No setup required before running.
+
+```bash
+# Confirm ready state
+python3 agent/agent_loop.py --ready
+
+# Inspect model assignments
+python3 agent/agent_loop.py --models
+```
+
+See `docs/model_ops_runbook.md` for operator commands.
+
+---
+
 ## Shortest Path to Run
 
 ```bash

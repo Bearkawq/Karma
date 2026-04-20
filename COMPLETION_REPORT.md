@@ -135,7 +135,110 @@ All 344 tests pass. Previously 7 failed. All regressions fixed.
 
 ---
 
-## Next Steps
+## Next Steps (superseded — see 2026-04-19 pass below)
 
-1. Register a real local model (Ollama + llama3.2/mistral) in `config/model_registry.json` to enable LLM-backed reasoning
-2. Sync third-ordinal support from `karma` (3.8.0) to `karma_github` (3.9.0)
+~~Register a real local model (Ollama + llama3.2/mistral) in `config/model_registry.json` to enable LLM-backed reasoning~~ — Done.
+~~Sync third-ordinal support from `karma` (3.8.0) to `karma_github` (3.9.0)~~ — Deferred; `karma_github` is a separate project.
+
+---
+
+---
+
+# Karma v3.8.0 — Completion Report (2026-04-19)
+
+## Summary
+
+Four hardening passes completing the model-path integration. System is operational.
+`--ready` reports READY. All 6 agents verified model-first. 330+ tests pass.
+
+---
+
+## Pass 1 — Agent Generate Path
+
+**Scope**: Prove `SummarizerAgent` reaches real model generation; write `_try_model()` unit tests.
+
+| Test coverage added | Result |
+|--------------------|--------|
+| `_try_model()`: no slot, no model_id, missing adapter, load failure, generate exception, success | 6 unit tests |
+| SummarizerAgent: model path, fallback, role name | 4 tests |
+| Live E2E (Ollama): `model_generated=True` confirmed | 2 tests |
+
+Committed: `d6b3711 feat: verify agent generate path — model-first with deterministic fallback`
+
+---
+
+## Pass 2 — Operator Model Surface
+
+**Scope**: Build `--models`, `--assign-role`, `--assign-slot`, `--bootstrap-models`, `--ready` CLI surface backed by `model_operator_service.py`.
+
+| What | Detail |
+|------|--------|
+| `model_operator_service.py` | Full implementation: Ollama inventory, tag-flexible matching, role/slot assignment with validation, bootstrap layout, readiness report |
+| `agent/agent_loop.py` | 4 new CLI flags wired |
+| `docs/model_ops_runbook.md` | Operator command reference with warm-vs-idle explanation |
+| Tests | 15 tests in `test_model_operator.py` |
+
+Committed: `45ab9cd feat: complete operator model status/assignment surface with Ollama inventory`
+`a582e95 feat: add readiness report and expanded model operator tests`
+
+---
+
+## Pass 3 — All Agents Model Path
+
+**Scope**: Audit and test all 5 generation agents (Planner, Critic, Executor, Navigator, Summarizer) for model-first behavior.
+
+| Agent | Model-first | Fallback | Notes |
+|-------|------------|---------|-------|
+| PlannerAgent | `_try_model()` → parse numbered steps | deterministic plan_steps | 6 unit + 2 live tests |
+| CriticAgent | `_try_model()` → `_extract_bullet_issues()` | rule-based | `run_artifact` dict formatted before prompt |
+| ExecutorAgent | `_try_model()` only when task non-empty | deterministic step map | prior results included in prompt |
+| NavigatorAgent | `_try_model()` only when `available_context` non-empty | keyword lookup | `_validate_options()` strips hallucinated paths |
+| SummarizerAgent | already covered Pass 1 | — | — |
+
+31 tests in `tests/test_all_agents_model_path.py`.
+Committed: `c675deb test: verify model-first path for all generation-capable agents`
+
+---
+
+## Pass 4 — Retriever Embedding Path
+
+**Scope**: Verify `RetrieverAgent` reaches `nomic-embed-text`; fix cold-start bug; full embedding path coverage.
+
+**Bug fixed**: `os.path.getsize(path)` raised `FileNotFoundError` when `embed_index.db` didn't exist.
+Fix: added `not os.path.exists(path) or` guard at `agents/retriever_agent.py:81`.
+
+| Test coverage added | Result |
+|--------------------|--------|
+| `_get_embed_adapter()`: 6 edge cases | adapter returned / None on all failure paths |
+| Run method selection: embedding vs keyword fallback | correct branch taken |
+| Embedding failure degradation: query fail, per-doc fail | graceful, no crash |
+| Bootstrap cold-start: missing DB, creates DB, second run skips | 3 tests |
+| Cosine similarity ranking: semantic ranking, 0.4 filter, identical=1.0 | 3 tests |
+| Live E2E (nomic-embed-text): 768-dim, `method=embedding`, semantic > keyword | 6 tests |
+
+26 tests in `tests/test_retriever_embedding_path.py`.
+Committed: `8992f09 fix+test: RetrieverAgent embedding path — missing-file guard and full coverage`
+
+---
+
+## Final State After 2026-04-19 Passes
+
+| Capability | State |
+|-----------|-------|
+| `/mnt/fastnvme` | Mounted and healthy |
+| Ollama | Healthy at localhost:11434 |
+| `qwen3:4b` | Assigned: planner, executor, critic |
+| `granite3.3:2b` | Assigned: summarizer, navigator |
+| `nomic-embed-text` | Assigned: retriever; 768-dim cosine similarity |
+| `--ready` | Reports READY |
+| Model-first agents | All 5 verified |
+| Retriever embedding | Verified + SQLite persistent cache |
+| Operator surface | Fully operational |
+| Warm vs idle | Documented as normal Ollama behavior |
+| Tests | 330+ pass |
+
+## Remaining Optional Work
+
+- `embed_index.db` grows unbounded — no eviction/TTL (low priority)
+- `qwen3:4b` reasoning leakage mitigated by extractors; root cause is model behavior
+- `karma_github` (v3.9.0) has not received these patches — separate project

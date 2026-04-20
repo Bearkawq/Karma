@@ -147,3 +147,27 @@
 - `_validate_options` uses substring match; aliased/abbreviated paths may slip through
 - No summarizer sentence-level hallucination detection (lightweight approach only: system prompt)
 - embed_index.db grows unbounded; no eviction/TTL yet
+
+## 2026-04-19 Claude -> next (model-path hardening + operator surface)
+
+**Task**: Four sequential hardening passes — agent generate path, operator model surface, all-agents model-path coverage, retriever embedding path
+**Phase**: Hardening complete — system operational
+**Confidence**: 0.97
+
+**Known**:
+- All 5 generation agents (planner/executor/critic/summarizer/navigator) verified model-first via `_try_model()`; tests cover model path, fallback, exception, and live E2E
+- RetrieverAgent: `nomic-embed-text` wired via `_get_embed_adapter()`; `embed_index.db` cold-start `FileNotFoundError` fixed (line 81 in `agents/retriever_agent.py`)
+- Operator surface complete: `--models`, `--assign-role`, `--assign-slot`, `--bootstrap-models`, `--ready` all functional
+- `model_operator_service.py` terminology stable: `present_on_disk:`, `loaded(warm):`, status labels `INSTALLED_IDLE`/`INSTALLED_WARM`/`MISSING`/`UNASSIGNED`
+- `--ready` reports READY on this machine
+- warm-vs-idle is normal Ollama residency; not a failure; documented in runbook
+- `/mnt/fastnvme` mounted and healthy; all runtime paths use new mount
+- 330+ tests pass
+
+**Unknown / remaining optional polish**:
+- `embed_index.db` grows unbounded — no eviction/TTL
+- `qwen3:4b` reasoning leakage; extractor-only mitigation
+- `_validate_options` substring match may pass aliased paths
+
+**Recommended Next Role**: N/A — no blocking work. Optional: embed_index TTL, retriever load-testing at scale, granite3.3:2b inference load test.
+**Notes**: System is ready to use. Run `python3 agent/agent_loop.py --ready` to confirm state. See `docs/model_ops_runbook.md` for operator commands.

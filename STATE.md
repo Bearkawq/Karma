@@ -1,19 +1,34 @@
 # STATE.md — Fast Control File
 
-**Last Update**: 2026-03-31
+**Last Update**: 2026-04-19
 **Mode**: normal
 
 ---
 
 ## Current Phase
-[phase: patch]
+[phase: operational — no active blocking work]
+
+## System Status: READY TO ROLL
+
+Karma is operational on this machine. All major technical seams are closed.
+
+| Capability | Status |
+|-----------|--------|
+| Storage / `/mnt/fastnvme` | Mounted and healthy; all runtime paths use `/mnt/fastnvme` |
+| Ollama | Healthy at localhost:11434 |
+| Model pool | `qwen3:4b`, `granite3.3:2b`, `nomic-embed-text`, `gemma3:4b`, `phi4-mini` installed |
+| Role assignments | All 6 roles assigned via `data/slot_assignments.json`; `--ready` reports READY |
+| Model-first agents | All 5 generation agents (planner/executor/critic/summarizer/navigator) verified model-first |
+| Retriever embedding | `nomic-embed-text` wired; 768-dim cosine-similarity search; SQLite persistent cache |
+| Operator surface | `--models`, `--assign-role`, `--assign-slot`, `--bootstrap-models`, `--ready` all working |
+| Test suite | 330+ tests pass |
+| Warm vs idle | Normal Ollama residency behavior — not a failure state |
 
 ## Current Task
-[task description]
-[success criteria]
+No blocking task. System is in maintenance / optional-polish phase.
 
 ## Target Files
-- `path/to/file.py`
+N/A
 
 ---
 
@@ -27,39 +42,15 @@
 
 ---
 
-## Standby Roles
-- OpenCode: Dreamer
-- Codex: Scope Guard
-- Goose/Qwen: Forecaster
-
----
-
-## Mode Status
-- **normal** / triage / innovation-open
-
----
-
-## Reassignment Rules (Triggers)
-1. Repeated failure on same issue (>2 attempts)
-2. Blocked progress (>3 attempts)
-3. Repeated regressions
-4. Unclear root cause after diagnosis
-5. Excessive churn (>3 role swaps in session)
-6. Oversized diffs (>500 lines)
-7. Low-confidence handoff (<0.6)
-8. Idle agent available
-
----
-
 ## Current Blockers Summary
-- [blocker 1]
-- [blocker 2]
+- None. `--ready` reports READY.
 
 ---
 
 ## Current Friction Summary
-- [friction point]
-- [friction point]
+- `qwen3:4b` generates verbose thinking-style text inline even with `think:false`; extractors compensate
+- `granite3.3:2b` sometimes truncates output mid-sentence
+- `_validate_options` uses substring match — aliased paths may occasionally slip through
 
 ---
 
@@ -70,7 +61,7 @@
 ---
 
 ## Recent Handovers
-- [date] [agent] -> [agent]: [task] (confidence: X.X)
+- 2026-04-19 Claude → next: operator/model-path hardening passes complete (confidence: 0.97)
 
 ---
 
