@@ -15,11 +15,13 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class WorkerCapabilities:
     """Capabilities of a worker node."""
+
     can_plan: bool = False
     can_execute: bool = False
     can_retrieve: bool = False
     can_summarize: bool = False
     can_criticize: bool = False
+    can_navigate: bool = False
     can_embed: bool = False
     has_gpu: bool = False
     memory_mb: int = 0
@@ -29,32 +31,29 @@ class WorkerCapabilities:
 @dataclass
 class WorkerNode:
     """A registered worker node."""
+
     node_id: str
     name: str
     host: str
     port: int
     capabilities: WorkerCapabilities = field(default_factory=WorkerCapabilities)
     roles: List[str] = field(default_factory=list)
-    status: str = "offline"  # online, offline, busy, error
+    status: str = "offline"
     last_seen: str = field(default_factory=lambda: datetime.now().isoformat())
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class WorkerRegistry:
-    """Registry for distributed worker nodes.
-    
-    Workers can be:
-    - dell (primary, runs Karma core)
-    - phone (Galaxy S25+, planner worker)
-    - pi (Raspberry Pi, utility worker)
-    """
-    
-    def __init__(self, storage_path: Optional[str] = None):
+    """Registry for distributed worker nodes."""
+
+    def __init__(self, storage_path: Optional[str] = None, auto_register_local: bool = True):
         self._workers: Dict[str, WorkerNode] = {}
         self._storage_path = storage_path
         self._local_node_id = "dell"
         self._load()
-    
+        if auto_register_local and self._local_node_id not in self._workers:
+            self.register_local()
+
     def register(
         self,
         node_id: str,
@@ -77,58 +76,50 @@ class WorkerRegistry:
         self._workers[node_id] = node
         self._save()
         return node
-    
+
     def unregister(self, node_id: str) -> bool:
-        """Unregister a worker node."""
         if node_id in self._workers:
             del self._workers[node_id]
             self._save()
             return True
         return False
-    
+
     def get(self, node_id: str) -> Optional[WorkerNode]:
-        """Get worker by ID."""
         return self._workers.get(node_id)
-    
+
     def get_all(self) -> List[WorkerNode]:
-        """Get all workers."""
         return list(self._workers.values())
-    
+
     def get_by_role(self, role: str) -> List[WorkerNode]:
-        """Get workers that can perform a role."""
         return [w for w in self._workers.values() if role in w.roles]
-    
+
     def get_online(self) -> List[WorkerNode]:
-        """Get online workers."""
         return [w for w in self._workers.values() if w.status == "online"]
-    
+
     def get_by_status(self, status: str) -> List[WorkerNode]:
-        """Get workers by status."""
         return [w for w in self._workers.values() if w.status == status]
-    
+
     def update_status(self, node_id: str, status: str) -> bool:
-        """Update worker status."""
         if node_id in self._workers:
             self._workers[node_id].status = status
             self._workers[node_id].last_seen = datetime.now().isoformat()
             self._save()
             return True
         return False
-    
+
     def update_heartbeat(self, node_id: str) -> bool:
-        """Update worker heartbeat."""
         return self.update_status(node_id, "online")
-    
+
     def is_local(self, node_id: str) -> bool:
-        """Check if node is local (Dell)."""
         return node_id == self._local_node_id
-    
+
     def get_local(self) -> Optional[WorkerNode]:
-        """Get local worker node."""
-        return self._workers.get(self._local_node_id)
-    
+        worker = self._workers.get(self._local_node_id)
+        if worker is None:
+            worker = self.register_local()
+        return worker
+
     def register_local(self) -> WorkerNode:
-        """Register local Dell node."""
         return self.register(
             node_id=self._local_node_id,
             name="Dell",
@@ -140,16 +131,25 @@ class WorkerRegistry:
                 can_retrieve=True,
                 can_summarize=True,
                 can_criticize=True,
+                can_navigate=True,
                 can_embed=True,
                 has_gpu=False,
                 memory_mb=16000,
                 max_concurrent_tasks=4,
             ),
-            roles=["planner", "executor", "retriever", "summarizer", "critic", "navigator", "coder", "embedder"],
+            roles=[
+                "planner",
+                "executor",
+                "retriever",
+                "summarizer",
+                "critic",
+                "navigator",
+                "coder",
+                "embedder",
+            ],
         )
-    
+
     def get_summary(self) -> Dict[str, Any]:
-        """Get registry summary."""
         return {
             "total": len(self._workers),
             "online": len(self.get_by_status("online")),
@@ -166,9 +166,8 @@ class WorkerRegistry:
                 for w in self._workers.values()
             ],
         }
-    
+
     def _save(self) -> None:
-        """Save to disk."""
         if not self._storage_path:
             return
         data = {
@@ -187,26 +186,22 @@ class WorkerRegistry:
         }
         p = Path(self._storage_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-    
+
     def _load(self) -> None:
-        """Load from disk."""
         if not self._storage_path:
             return
         p = Path(self._storage_path)
         if not p.exists():
             return
         try:
-            with open(p, "r") as f:
+            with open(p, "r", encoding="utf-8") as f:
                 data = json.load(f)
             for node_id, wdata in data.items():
                 caps_data = wdata.pop("capabilities", {})
                 capabilities = WorkerCapabilities(**caps_data)
-                self._workers[node_id] = WorkerNode(
-                    capabilities=capabilities,
-                    **wdata,
-                )
+                self._workers[node_id] = WorkerNode(capabilities=capabilities, **wdata)
         except Exception:
             pass
 
@@ -215,7 +210,6 @@ _global_registry: Optional[WorkerRegistry] = None
 
 
 def get_worker_registry(storage_path: Optional[str] = None) -> WorkerRegistry:
-    """Get global worker registry."""
     global _global_registry
     if _global_registry is None:
         _global_registry = WorkerRegistry(storage_path=storage_path)
