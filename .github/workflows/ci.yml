@@ -5,20 +5,20 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
+
       - name: Verify imports
         run: |
           python -c "
@@ -27,27 +27,51 @@ jobs:
           from storage.memory import MemorySystem
           print('Imports OK')
           "
-          
-      - name: Run tests (exclude known failing)
-        run: |
-          python -m pytest tests/ --ignore=tests/test_seat_loop_integration.py --tb=short -q
 
-  test-integration:
+      - name: Lint
+        run: |
+          python -m ruff check .
+
+      - name: Compile all Python files
+        run: |
+          python - <<'PY'
+          import pathlib, py_compile, sys
+          failures = []
+          for path in pathlib.Path('.').rglob('*.py'):
+              parts = set(path.parts)
+              if '.git' in parts or '.venv' in parts or '__pycache__' in parts:
+                  continue
+              try:
+                  py_compile.compile(str(path), doraise=True)
+              except Exception as exc:
+                  failures.append((str(path), str(exc)))
+          if failures:
+              for path, err in failures:
+                  print(f'COMPILE FAIL: {path}: {err}')
+              sys.exit(1)
+          print('Compile OK')
+          PY
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ --tb=short -q
+
+  integration:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
-      - name: Run integration tests
+
+      - name: Run seat-loop integration tests
         run: |
-          echo "Integration tests skipped in regular CI (run manually for full suite)"
+          python -m pytest tests/test_seat_loop_integration.py --tb=short -q
