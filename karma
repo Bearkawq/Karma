@@ -4,18 +4,14 @@
 
 set -euo pipefail
 
-# Resolve KARMA_DIR: script location > env var > default
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KARMA_DIR="${KARMA_DIR:-$SCRIPT_DIR}"
-
 cd "$KARMA_DIR" 2>/dev/null || { echo "Karma not found at $KARMA_DIR"; exit 1; }
 
 cmd="${1:-}"
 shift 2>/dev/null || true
 
 case "$cmd" in
-
-  # ── Run modes ──────────────────────────────────────────────
   gui|web)
     exec python3 ui/web.py
     ;;
@@ -33,7 +29,6 @@ case "$cmd" in
     ;;
 
   golearn)
-    # karma golearn "topic" minutes [mode]
     topic="${1:-}"
     mins="${2:-5}"
     mode="${3:-auto}"
@@ -43,61 +38,65 @@ case "$cmd" in
       echo "  Example: karma golearn \"python asyncio\" 5 depth"
       exit 1
     fi
-    python3 -c "
+    python3 - "$topic" "$mins" "$mode" <<'PY'
+import sys
 from agent.bootstrap import build_agent
+
+topic, mins, mode = sys.argv[1], sys.argv[2], sys.argv[3]
 agent = build_agent()
-agent.run('golearn \"$topic\" $mins $mode')
-"
+result = agent.run(f'golearn "{topic}" {mins} {mode}')
+if result:
+    print(result)
+PY
     ;;
 
-  # ── Upgrade ────────────────────────────────────────────────
   upgrade|pull)
     echo "=== Karma Upgrade ==="
-
-    # Method 1: git pull (if .git exists)
     if [ -d .git ]; then
       echo "[1/2] Pulling from GitHub..."
-      git pull origin main 2>&1 || echo "  git pull failed"
+      branch="$(git remote show origin 2>/dev/null | sed -n '/HEAD branch/s/.*: //p' | head -n 1)"
+      branch="${branch:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo master)}"
+      git pull origin "$branch" 2>&1 || echo "  git pull failed"
     else
       echo "[1/2] No .git — skipping pull"
     fi
 
-    # Compile check
-    echo "[2/2] Verifying..."
-    errors=0
-    for f in agent/agent_loop.py core/planner.py core/symbolic.py core/events.py \
-             core/responder.py tools/tool_builder.py \
-             research/session.py research/crawler.py research/brancher.py \
-             research/index.py research/timekeeper.py \
-             storage/memory.py tools/tool_interface.py ml/ml.py \
-             ui/cockpit.py ui/web.py; do
-      if [ -f "$f" ]; then
-        python3 -m py_compile "$f" 2>/dev/null || { echo "  FAIL: $f"; errors=$((errors+1)); }
-      fi
-    done
+    echo "[2/2] Verifying Python compile..."
+    python3 - <<'PY'
+import pathlib
+import py_compile
+import sys
 
-    if [ "$errors" -eq 0 ]; then
-      echo "=== Upgrade complete (all files OK) ==="
-    else
-      echo "=== Upgrade done with $errors compile errors ==="
-    fi
+errors = []
+for path in pathlib.Path('.').rglob('*.py'):
+    parts = set(path.parts)
+    if '.git' in parts or '.venv' in parts or '__pycache__' in parts:
+        continue
+    try:
+        py_compile.compile(str(path), doraise=True)
+    except Exception as exc:
+        errors.append((str(path), str(exc)))
+if errors:
+    for path, err in errors:
+        print(f"  FAIL: {path}: {err}")
+    sys.exit(1)
+print("=== Upgrade complete (all Python files compile) ===")
+PY
     ;;
 
-  # ── Status ─────────────────────────────────────────────────
   status)
     echo "=== Karma Status ==="
     echo "Dir: $KARMA_DIR"
-    python3 -c "
-import json, os
+    python3 - <<'PY' 2>/dev/null || echo "Could not read status"
+import json
 from pathlib import Path
+from agent.bootstrap import get_version
 
-# Config
 with open('config.json') as f:
     cfg = json.load(f)
-print(f'Version: {cfg[\"system\"][\"version\"]}')
-print(f'Tools: {cfg[\"tools\"][\"enabled\"]}')
+print(f'Version: {get_version()}')
+print(f'Tools: {cfg["tools"]["enabled"]}')
 
-# Memory stats
 facts_f = Path('data/facts.json')
 if facts_f.exists():
     with open(facts_f) as f:
@@ -105,36 +104,34 @@ if facts_f.exists():
     learn_facts = sum(1 for k in facts if k.startswith('learn:'))
     print(f'Facts: {len(facts)} total, {learn_facts} from golearn')
 
-# Sessions
 learn_dir = Path('data/learn')
 if learn_dir.exists():
     sessions = [d for d in learn_dir.iterdir() if d.is_dir()]
     print(f'GoLearn sessions: {len(sessions)}')
 
-# Events
 ev = Path('data/events.jsonl')
 if ev.exists():
-    lines = ev.read_text().splitlines()
-    print(f'Events logged: {len(lines)}')
+    print(f'Events logged: {sum(1 for _ in ev.open(encoding="utf-8", errors="replace"))}')
 
-# State
 state_f = Path('data/agent_state.json')
 if state_f.exists():
     with open(state_f) as f:
         st = json.load(f)
-    print(f'Last run: {st.get(\"last_run\", \"never\")}')
+    print(f'Last run: {st.get("last_run", "never")}')
     logs = st.get('execution_log', [])
     if logs:
         succ = sum(1 for l in logs if l.get('success'))
         print(f'Decisions: {len(logs)} ({succ} successful)')
 
-# Disk
-total = sum(f.stat().st_size for f in Path('.').rglob('*') if f.is_file() and '.git' not in str(f) and '.venv' not in str(f))
+total = sum(
+    f.stat().st_size
+    for f in Path('.').rglob('*')
+    if f.is_file() and '.git' not in str(f) and '.venv' not in str(f)
+)
 print(f'Disk: {total // 1024} KB')
-" 2>/dev/null || echo "Could not read status"
+PY
     ;;
 
-  # ── Log ────────────────────────────────────────────────────
   log)
     n="${1:-20}"
     if [ -f data/events.jsonl ]; then
@@ -149,49 +146,45 @@ for line in sys.stdin:
         ts = e.get('t','')[-8:]
         detail = data.get('subtopic') or data.get('topic') or data.get('url','') or ''
         print(f'  {ts} {kind:20s} {str(detail)[:50]}')
-    except: pass
+    except Exception:
+        pass
 "
     else
       echo "No events yet"
     fi
     ;;
 
-  # ── Clean ──────────────────────────────────────────────────
   clean)
     echo "=== Karma Cleanup ==="
-    # Remove __pycache__
-    find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null
+    find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
     echo "Cleared __pycache__"
 
-    # Show learn sessions
     if [ -d data/learn ]; then
       count=$(find data/learn -maxdepth 1 -type d | wc -l)
       size=$(du -sh data/learn 2>/dev/null | cut -f1)
       echo "GoLearn data: $((count-1)) sessions, $size"
-      read -p "Delete all learn sessions? [y/N] " ans
+      read -r -p "Delete all learn sessions? [y/N] " ans
       if [ "$ans" = "y" ] || [ "$ans" = "Y" ]; then
         rm -rf data/learn/*
         echo "Cleared"
       fi
     fi
 
-    # Show log size
     if [ -f data/logs/karma.log ]; then
       size=$(du -sh data/logs/karma.log | cut -f1)
       echo "Log file: $size"
-      read -p "Truncate log? [y/N] " ans
+      read -r -p "Truncate log? [y/N] " ans
       if [ "$ans" = "y" ] || [ "$ans" = "Y" ]; then
         > data/logs/karma.log
         echo "Truncated"
       fi
     fi
 
-    # Events
     if [ -f data/events.jsonl ]; then
       lines=$(wc -l < data/events.jsonl)
       echo "Events: $lines entries"
       if [ "$lines" -gt 500 ]; then
-        read -p "Trim to last 200? [y/N] " ans
+        read -r -p "Trim to last 200? [y/N] " ans
         if [ "$ans" = "y" ] || [ "$ans" = "Y" ]; then
           tail -200 data/events.jsonl > data/events.jsonl.tmp
           mv data/events.jsonl.tmp data/events.jsonl
@@ -201,20 +194,16 @@ for line in sys.stdin:
     fi
     ;;
 
-  # ── Next ───────────────────────────────────────────────────
   next)
-    # Usage: karma next list
     sub="${1:-list}"
     shift 2>/dev/null || true
     if [ "$sub" = "list" ]; then
       python3 - <<'PY'
 from storage.memory import MemorySystem
-from pathlib import Path
 
 mem = MemorySystem()
 mem.load_all()
 
-# Pending tasks (if tasks file uses id/title)
 tasks = getattr(mem, 'tasks', {})
 print('Pending tasks:')
 if tasks:
@@ -225,15 +214,14 @@ if tasks:
 else:
     print('  (no pending tasks)')
 
-# Recent run history
 runs = []
-for k,v in mem.facts.items():
+for k, v in mem.facts.items():
     if isinstance(v, dict) and v.get('topic') == 'run_history':
-        runs.append((v.get('last_updated',''), k, v.get('value', v)))
+        runs.append((v.get('last_updated', ''), k, v.get('value', v)))
 runs.sort(reverse=True)
 print('\nRecent runs:')
 if runs:
-    for ts,k,val in runs[:5]:
+    for ts, k, val in runs[:5]:
         summary = val.get('summary') if isinstance(val, dict) else str(val)
         print(f'  - {k} ({ts}): {summary}')
 else:
@@ -245,7 +233,6 @@ PY
     fi
     ;;
 
-  # ── Help ───────────────────────────────────────────────────
   help|--help|-h|"")
     cat <<'HELP'
 Karma — Local Autonomous Agent
@@ -256,7 +243,7 @@ Karma — Local Autonomous Agent
   karma cli                         Launch CLI REPL
   karma golearn "topic" [min] [mode] Run golearn (default 5min, auto mode)
 
-  karma upgrade                     Pull from GitHub + sync from Dell
+  karma upgrade                     Pull current branch + compile all Python
   karma pull                        Same as upgrade
   karma status                      Show agent stats, facts, sessions
   karma log [n]                     Show last n events (default 20)
