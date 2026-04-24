@@ -7,17 +7,17 @@ worker health, and fallback rules.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-from distributed.worker_registry import WorkerRegistry, get_worker_registry, WorkerCapabilities
 from distributed.worker_client import WorkerClient, get_worker_client
+from distributed.worker_registry import WorkerRegistry, get_worker_registry
 
 
 @dataclass
 class SchedulingDecision:
     """Result of scheduling decision."""
+
     task_id: str
     role: str
     selected_worker: str
@@ -29,6 +29,7 @@ class SchedulingDecision:
 @dataclass
 class ScheduleResult:
     """Result from scheduling execution."""
+
     success: bool
     task_id: str
     result: Any
@@ -39,17 +40,8 @@ class ScheduleResult:
 
 
 class Scheduler:
-    """Schedules role tasks to appropriate workers.
-    
-    Considerations:
-    - Worker health
-    - Model availability
-    - Device capability
-    - Latency
-    - Fallback rules
-    """
-    
-    # Default role to worker mapping
+    """Schedules role tasks to appropriate workers."""
+
     DEFAULT_ROLE_PREFERENCES = {
         "planner": ["phone", "dell"],
         "executor": ["dell"],
@@ -60,7 +52,7 @@ class Scheduler:
         "coder": ["dell"],
         "embedder": ["dell", "pi"],
     }
-    
+
     def __init__(
         self,
         worker_registry: Optional[WorkerRegistry] = None,
@@ -69,11 +61,11 @@ class Scheduler:
         self._registry = worker_registry or get_worker_registry()
         self._client = worker_client or get_worker_client()
         self._role_preferences = dict(self.DEFAULT_ROLE_PREFERENCES)
-    
+
     def set_role_preference(self, role: str, worker_order: List[str]) -> None:
         """Set preferred worker order for a role."""
         self._role_preferences[role] = worker_order
-    
+
     def schedule(
         self,
         role: str,
@@ -81,46 +73,43 @@ class Scheduler:
         force_worker: Optional[str] = None,
         allow_fallback: bool = True,
     ) -> ScheduleResult:
-        """Schedule and execute a role task.
-        
-        Args:
-            role: Role to execute
-            input_data: Task input
-            force_worker: Force specific worker
-            allow_fallback: Allow fallback to local
-            
-        Returns:
-            ScheduleResult with execution details
-        """
+        """Schedule and execute a role task."""
         task_id = str(uuid.uuid4())[:8]
-        
-        # Determine worker
         decision = self._select_worker(role, force_worker, allow_fallback)
         decision.task_id = task_id
         decision.role = role
-        
-        # Execute on selected worker
+
+        if not decision.selected_worker:
+            return ScheduleResult(
+                success=False,
+                task_id=task_id,
+                result=None,
+                error="no_worker_available",
+                worker_id="",
+                execution_time_ms=0.0,
+                scheduling_decision=decision,
+            )
+
         result = self._client.execute_role(
             role=role,
             input_data=input_data,
             preferred_worker=decision.selected_worker,
             force_local=(decision.selected_worker == "dell"),
         )
-        
-        # If failed and fallback allowed, try fallback
+
         if not result.success and allow_fallback and not decision.fallback_used:
             fallback_worker = self._get_fallback_worker(role)
             if fallback_worker and fallback_worker != decision.selected_worker:
                 decision.fallback_used = True
                 decision.fallback_reason = "primary_worker_failed"
                 decision.selected_worker = fallback_worker
-                
                 result = self._client.execute_role(
                     role=role,
                     input_data=input_data,
                     preferred_worker=fallback_worker,
+                    force_local=(fallback_worker == "dell"),
                 )
-        
+
         return ScheduleResult(
             success=result.success,
             task_id=task_id,
@@ -130,7 +119,7 @@ class Scheduler:
             execution_time_ms=result.execution_time_ms,
             scheduling_decision=decision,
         )
-    
+
     def _select_worker(
         self,
         role: str,
@@ -138,56 +127,29 @@ class Scheduler:
         allow_fallback: bool,
     ) -> SchedulingDecision:
         """Select best worker for a role."""
-        # Force specific worker
         if force_worker:
-            return SchedulingDecision(
-                task_id="",
-                role=role,
-                selected_worker=force_worker,
-                fallback_used=False,
-                fallback_reason=None,
-                confidence=1.0,
-            )
-        
-        # Get preferred workers for role
+            return SchedulingDecision("", role, force_worker, False, None, 1.0)
+
         preferred = self._role_preferences.get(role, ["dell"])
-        
-        # Find first available worker
         for worker_id in preferred:
             worker = self._registry.get(worker_id)
-            if worker and worker.status == "online":
-                # Check capabilities
-                if self._worker_can_role(worker, role):
-                    return SchedulingDecision(
-                        task_id="",
-                        role=role,
-                        selected_worker=worker_id,
-                        fallback_used=False,
-                        fallback_reason=None,
-                        confidence=0.9,
-                    )
-        
-        # Fall back to local
+            if worker and worker.status == "online" and self._worker_can_role(worker, role):
+                return SchedulingDecision("", role, worker_id, False, None, 0.9)
+
         if allow_fallback:
-            return SchedulingDecision(
-                task_id="",
-                role=role,
-                selected_worker="dell",
-                fallback_used=True,
-                fallback_reason="no_preferred_worker_available",
-                confidence=0.5,
-            )
-        
-        # No worker available
-        return SchedulingDecision(
-            task_id="",
-            role=role,
-            selected_worker="",
-            fallback_used=False,
-            fallback_reason="no_worker_available",
-            confidence=0.0,
-        )
-    
+            local = self._registry.get_local()
+            if local and local.status == "online" and self._worker_can_role(local, role):
+                return SchedulingDecision(
+                    "",
+                    role,
+                    local.node_id,
+                    True,
+                    "no_preferred_worker_available",
+                    0.5,
+                )
+
+        return SchedulingDecision("", role, "", False, "no_worker_available", 0.0)
+
     def _worker_can_role(self, worker, role: str) -> bool:
         """Check if worker can execute a role."""
         caps = worker.capabilities
@@ -197,33 +159,30 @@ class Scheduler:
             "retriever": caps.can_retrieve,
             "summarizer": caps.can_summarize,
             "critic": caps.can_criticize,
+            "navigator": caps.can_navigate,
             "coder": caps.can_execute,
             "embedder": caps.can_embed,
         }
         return role_capability_map.get(role, False)
-    
+
     def _get_fallback_worker(self, role: str) -> Optional[str]:
         """Get fallback worker for a role."""
-        # Always fall back to local
         local = self._registry.get_local()
-        if local and local.status == "online":
+        if local and local.status == "online" and self._worker_can_role(local, role):
             return local.node_id
         return None
-    
+
     def get_worker_for_role(self, role: str) -> Optional[str]:
         """Get best worker for a role without executing."""
         decision = self._select_worker(role, None, True)
         return decision.selected_worker if decision.confidence > 0 else None
-    
+
     def get_schedule_summary(self) -> Dict[str, Any]:
         """Get scheduling system summary."""
-        workers = self._registry.get_all()
-        
         role_workers = {}
         for role in self._role_preferences:
             worker = self.get_worker_for_role(role)
             role_workers[role] = worker
-        
         return {
             "role_preferences": self._role_preferences,
             "role_assignments": role_workers,
