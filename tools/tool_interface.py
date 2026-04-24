@@ -11,24 +11,23 @@ Implements a modular tool interface with:
 - Failure mode handling
 """
 
-import json
 import subprocess
 import os
 import shutil
 import shlex
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
 
 class Tool:
     """Base tool class with metadata and execution"""
-    
+
     def __init__(self, name: str, definition: Dict[str, Any]):
         self.name = name
         self.definition = definition
         self.last_executed = None
-        
+
     def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the tool with given parameters"""
         validation = self.validate_params(params)
@@ -74,14 +73,14 @@ class Tool:
                 'params': params,
                 'exception': type(e).__name__
             }
-    
+
     def validate_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Validate input parameters against schema"""
         errors = []
         valid = True
-        
+
         schema = self.definition.get('parameters', {})
-        
+
         for param_name, param_def in schema.items():
             if param_def.get('required', False) and param_name not in params:
                 errors.append(f'Missing required parameter: {param_name}')
@@ -89,32 +88,32 @@ class Tool:
             elif param_name in params:
                 value = params[param_name]
                 expected_type = param_def.get('type', 'string')
-                
+
                 if not self._check_type(value, expected_type):
                     errors.append(f'Invalid type for {param_name}: expected {expected_type}, got {type(value).__name__}')
                     valid = False
-        
+
         return {'valid': valid, 'errors': errors}
-    
+
     def check_preconditions(self, params: Dict[str, Any]) -> bool:
         """Check if tool preconditions are met"""
         preconditions = self.definition.get('preconditions', [])
-        
+
         for condition in preconditions:
             if not self._evaluate_condition(condition, params):
                 return False
-        
+
         return True
-    
+
     def _execute(self, params: Dict[str, Any]) -> Any:
         """Actual tool execution (to be implemented by subclasses)"""
         raise NotImplementedError("Subclasses must implement _execute method")
-    
+
     def _track_effects(self, result: Any, params: Dict[str, Any]):
         """Track tool effects"""
         # Default implementation - can be overridden
         pass
-    
+
     def _check_type(self, value: Any, expected_type: str) -> bool:
         """Check if value matches expected type"""
         type_map = {
@@ -125,12 +124,12 @@ class Tool:
             'array': list,
             'object': dict
         }
-        
+
         expected = type_map.get(expected_type, str)
         if isinstance(expected, tuple):
             return isinstance(value, expected)
         return isinstance(value, expected)
-    
+
     def _evaluate_condition(self, condition: str, params: Dict[str, Any]) -> bool:
         """Evaluate a precondition"""
         try:
@@ -146,7 +145,7 @@ class Tool:
             return True
         except Exception:
             return False
-    
+
     def get_metadata(self) -> Dict[str, Any]:
         """Get tool metadata"""
         return {
@@ -164,7 +163,7 @@ class Tool:
 
 class ShellTool(Tool):
     """Shell command execution tool"""
-    
+
     def __init__(self, name: str, definition: Dict[str, Any]):
         super().__init__(name, definition)
         self.allowed_commands = definition.get('allowed_commands', [])
@@ -182,7 +181,7 @@ class ShellTool(Tool):
         if not argv:
             raise ValueError('Command cannot be empty')
         return argv
-    
+
     def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute shell command"""
         command = params.get('command', '')
@@ -227,18 +226,18 @@ class ShellTool(Tool):
 
 class FileTool(Tool):
     """File system tool"""
-    
+
     def __init__(self, name: str, definition: Dict[str, Any]):
         super().__init__(name, definition)
         self.max_size = definition.get('max_size', 10 * 1024 * 1024)  # 10MB default
         self.workspace_root = definition.get("workspace_root")
         raw_paths = definition.get('allowed_paths', ['~', '/tmp', '/home', '/opt'])
         self.allowed_paths = [self._normalize_allowed_path(p) for p in raw_paths]
-    
+
     def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """File operation execution"""
         operation = params.get('operation')
-        
+
         if operation == 'read':
             return self._read_file(params)
         elif operation == 'write':
@@ -249,67 +248,66 @@ class FileTool(Tool):
             return self._list_files(params)
         else:
             raise ValueError(f'Unknown file operation: {operation}')
-    
+
     def _read_file(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Read file contents"""
         path = self._resolve_path(params.get('path'))
-        
+
         if not os.path.exists(path):
             raise FileNotFoundError(f'File not found: {path}')
-        
+
         if os.path.getsize(path) > self.max_size:
             raise ValueError(f'File too large: {path} (>{self.max_size} bytes)')
-        
+
         with open(path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read()
-        
+
         return {'content': content, 'path': path, 'size': len(content)}
-    
+
     def _write_file(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Write to file"""
         path = self._resolve_path(params.get('path'))
         content = params.get('content', '')
         mode = params.get('mode', 'w')
-        
+
         # Check size
         if len(content) > self.max_size:
             raise ValueError(f'Content too large: {len(content)} bytes (>{self.max_size} bytes)')
-        
+
         # Write file with explicit UTF-8 encoding to match read path
         with open(path, mode, encoding='utf-8', errors='strict') as f:
             f.write(content)
-        
+
         return {'path': path, 'size': len(content), 'mode': mode}
-    
+
     def _search_files(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Search for files using pathlib for safer path handling"""
-        from pathlib import Path
         path = self._resolve_path(params.get('path', '.'))
         pattern = params.get('pattern', '*')
-        
+
         if not os.path.exists(path):
             raise FileNotFoundError(f'Path not found: {path}')
-        
+
         # Use pathlib for safer recursive glob
         base = Path(path)
         matches = sorted(str(p) for p in base.rglob(pattern) if p.is_file())
 
         return {'path': path, 'pattern': pattern, 'matches': matches}
-    
+
     def _list_files(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """List directory contents"""
         path = self._resolve_path(params.get('path', '.'))
-        
+
         if not os.path.exists(path):
             raise FileNotFoundError(f'Path not found: {path}')
-        
+
         if not os.path.isdir(path):
             raise NotADirectoryError(f'Not a directory: {path}')
-        
+
         entries = sorted(os.listdir(path))
 
         return {'path': path, 'entries': entries}
-    
+
     def _normalize_allowed_path(self, path: str) -> str:
         expanded = os.path.expanduser(path)
         if self.workspace_root and not os.path.isabs(expanded):
@@ -343,11 +341,11 @@ class FileTool(Tool):
 
 class SystemTool(Tool):
     """System inspection tool"""
-    
+
     def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """System inspection execution"""
         operation = params.get('operation')
-        
+
         if operation == 'info':
             return self._system_info()
         elif operation == 'disk':
@@ -358,12 +356,12 @@ class SystemTool(Tool):
             return self._cpu_info()
         else:
             raise ValueError(f'Unknown system operation: {operation}')
-    
+
     def _system_info(self) -> Dict[str, Any]:
         """Get system information"""
         import platform
         import sys
-        
+
         return {
             'system': platform.system(),
             'node': platform.node(),
@@ -374,13 +372,12 @@ class SystemTool(Tool):
             'python_version': sys.version,
             'platform': platform.platform()
         }
-    
+
     def _disk_info(self) -> Dict[str, Any]:
         """Get disk information"""
-        import shutil
-        
+
         total, used, free = shutil.disk_usage('/')
-        
+
         return {
             'total': total,
             'used': used,
@@ -388,7 +385,7 @@ class SystemTool(Tool):
             'used_percent': used / total * 100,
             'free_percent': free / total * 100
         }
-    
+
     def _memory_info(self) -> Dict[str, Any]:
         """Get memory information"""
         try:
@@ -410,7 +407,7 @@ class SystemTool(Tool):
             'swap_free': swap.free,
             'swap_percent': swap.percent
         }
-    
+
     def _cpu_info(self) -> Dict[str, Any]:
         """Get CPU information"""
         try:
@@ -462,20 +459,20 @@ class InvalidTool(Tool):
 
 class ToolManager:
     """Manager for multiple tools"""
-    
+
     def __init__(self):
         self.tools = {}
         self.tool_instances = {}
-    
+
     def register_tool(self, name: str, definition: Dict[str, Any]):
         """Register a tool definition"""
         self.tools[name] = definition
-    
+
     def get_tool(self, name: str) -> Optional[Tool]:
         """Get a tool instance"""
         if name in self.tool_instances:
             return self.tool_instances[name]
-        
+
         if name in self.tools:
             definition = self.tools[name]
             category = definition.get('category', 'general')
@@ -493,22 +490,22 @@ class ToolManager:
 
             self.tool_instances[name] = tool
             return tool
-        
+
         return None
-    
+
     def execute_tool(self, name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a tool by name"""
         tool = self.get_tool(name)
         if not tool:
             return {'success': False, 'error': f'Tool not found: {name}'}
-        
+
         return tool.execute(params)
-    
+
     def get_tool_metadata(self, name: str) -> Optional[Dict[str, Any]]:
         """Get tool metadata"""
         tool = self.get_tool(name)
         return tool.get_metadata() if tool else None
-    
+
     def list_tools(self) -> List[str]:
         """List all available tools"""
         return list(self.tools.keys())
@@ -517,7 +514,7 @@ class ToolManager:
 # Example tool definitions and usage
 if __name__ == "__main__":
     tm = ToolManager()
-    
+
     # Register tools
     tm.register_tool('shell_ls', {
         'name': 'shell_ls',
@@ -534,7 +531,7 @@ if __name__ == "__main__":
         'allowed_commands': ['ls'],
         'timeout': 10
     })
-    
+
     tm.register_tool('file_read', {
         'name': 'file_read',
         'category': 'file',
@@ -550,7 +547,7 @@ if __name__ == "__main__":
         'max_size': 1048576,  # 1MB
         'allowed_paths': ['~', '/tmp', '/home']
     })
-    
+
     tm.register_tool('system_info', {
         'name': 'system_info',
         'category': 'system',
@@ -561,25 +558,25 @@ if __name__ == "__main__":
         'cost': 1,
         'failure_modes': []
     })
-    
+
     # Execute tools
     print("Tool Interface Tests:")
-    
+
     # Shell tool
     result = tm.execute_tool('shell_ls', {'command': 'ls -la', 'path': '.'})
     print(f"Shell tool result: {result}")
-    
+
     # File tool
     result = tm.execute_tool('file_read', {'path': __file__, 'max_lines': 5})
     print(f"File tool result: {result}")
-    
+
     # System tool
     result = tm.execute_tool('system_info', {})
     print(f"System tool result: {result}")
-    
+
     # List tools
     print(f"Available tools: {tm.list_tools()}")
-    
+
     # Get metadata
     metadata = tm.get_tool_metadata('shell_ls')
     print(f"Tool metadata: {metadata}")

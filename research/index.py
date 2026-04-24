@@ -75,7 +75,7 @@ class NoteWriter:
         """Score a single artifact's quality."""
         text = artifact.get("text", "")
         size = len(text)
-        
+
         if size < 200:
             return "weak"
         if size > 5000:
@@ -86,14 +86,14 @@ class NoteWriter:
         """Score the overall evidence quality for a note."""
         total_text = sum(len(a.get("text", "")) for a in artifacts if a)
         artifact_count = len([a for a in artifacts if a])
-        
+
         if total_text < 500:
             level = "weak"
         elif total_text < 2000:
             level = "medium"
         else:
             level = "strong"
-        
+
         return {
             "level": level,
             "total_text_bytes": total_text,
@@ -104,13 +104,13 @@ class NoteWriter:
         """Extract key concepts/definitions from text."""
         concepts = []
         topic_words = set(topic.lower().split())
-        
+
         definition_patterns = [
             r"(\w+(?:\s+\w+)?)\s+is\s+(?:a|an|the)\s+[^.!?]{10,100}",
             r"(\w+(?:\s+\w+)?)\s+refers\s+to\s+[^.!?]{10,100}",
             r"(\w+(?:\s+\w+)?)\s+means\s+[^.!?]{10,100}",
         ]
-        
+
         for pattern in definition_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 phrase = match.group(0).strip()
@@ -120,13 +120,13 @@ class NoteWriter:
                     break
             if len(concepts) >= 5:
                 break
-        
+
         return concepts[:5]
 
     def _extract_commands(self, text: str) -> List[str]:
         """Extract command-line examples from text."""
         commands = []
-        
+
         cmd_patterns = [
             r"\$\s+[a-zA-Z0-9_\-./]+[^\n]{5,100}",
             r">\s+[a-zA-Z0-9_\-./]+[^\n]{5,100}",
@@ -136,7 +136,7 @@ class NoteWriter:
             r"python\s+[^\n]{5,50}",
             r"curl\s+[^\n]{5,100}",
         ]
-        
+
         for pattern in cmd_patterns:
             for match in re.finditer(pattern, text):
                 cmd = match.group(0).strip()
@@ -146,13 +146,13 @@ class NoteWriter:
                     break
             if len(commands) >= 5:
                 break
-        
+
         return commands[:5]
 
     def _extract_procedures(self, text: str, topic: str) -> List[Dict[str, str]]:
         """Extract step-by-step procedures from text."""
         procedures = []
-        
+
         step_patterns = [
             r"(?:step\s+)?\d+[\.\)]\s*([^.\n]{10,100})",
             r"first(?:ly)?\s+([^.\n]{10,100})",
@@ -161,7 +161,7 @@ class NoteWriter:
             r"next\s+([^.\n]{10,100})",
             r"finally\s+([^.\n]{10,100})",
         ]
-        
+
         for pattern in step_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 step = match.group(1).strip()
@@ -171,13 +171,13 @@ class NoteWriter:
                     break
             if len(procedures) >= 5:
                 break
-        
+
         return procedures[:5]
 
     def _extract_caveats(self, text: str) -> List[str]:
         """Extract warnings and caveats from text."""
         caveats = []
-        
+
         caveat_patterns = [
             r"(?:warning|caution|注意)[^:]*:\s*([^.\n]{10,100})",
             r"(?:but|however|although)[^.]*not\s+[^.!?]{10,100}",
@@ -185,7 +185,7 @@ class NoteWriter:
             r"(?:careful|注意)[^.!?]{10,100}",
             r"(?:error|fail|exception)[^.]*(?:when|if|in)[^.!?]{10,100}",
         ]
-        
+
         for pattern in caveat_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 caveat = match.group(0).strip()
@@ -195,7 +195,7 @@ class NoteWriter:
                     break
             if len(caveats) >= 3:
                 break
-        
+
         return caveats[:3]
 
     # ── extraction heuristics ─────────────────────────────────
@@ -524,7 +524,7 @@ class NoteWriter:
                         useful_artifacts_live: Optional[int] = None,
                         useful_artifacts_cached: Optional[int] = None) -> str:
         sources_count = sum(len(n.get('artifact_ids', [])) for n in notes)
-        
+
         lines = [
             f"# GoLearn Report: {root_topic}",
             "",
@@ -534,7 +534,7 @@ class NoteWriter:
             f"**Topics explored**: {len(visited_topics)}",
             f"**Sources fetched**: {sources_count}",
         ]
-        
+
         # PHASE 2: MultiProvider truth - show all providers attempted
         if providers_attempted:
             lines.append(f"**Providers attempted**: {', '.join(providers_attempted)}")
@@ -544,7 +544,7 @@ class NoteWriter:
             lines.append("**Provider failures**:")
             for prov, fail in provider_failures.items():
                 lines.append(f"  - {prov}: {fail}")
-        
+
         # PHASE 3: Cache truth - show result origin
         if result_origin:
             origin_label = {
@@ -554,39 +554,39 @@ class NoteWriter:
                 "live_failed": "Live search failed, fallback used",
             }.get(result_origin, result_origin)
             lines.append(f"**Result origin**: {origin_label}")
-        
+
         # Add cache status if available
         if cache_status:
             lines.append(f"**Cache status**: {cache_status}")
             if cache_hits is not None and cache_hits > 0:
                 lines.append(f"**Cache hits**: {cache_hits}")
-        
+
         # Add provider diagnostics if available
         if provider_code or provider_diagnostic:
             lines.append(f"**Provider status**: {provider_code or 'ok'}")
             if provider_diagnostic:
                 lines.append(f"**Provider message**: {provider_diagnostic}")
-        
+
         # PHASE 4: Artifact truth - separate live vs cached
         if accepted_sources is not None:
             live_str = f" (live: {accepted_sources_live})" if accepted_sources_live else ""
             cached_str = f" (cached: {accepted_sources_cached})" if accepted_sources_cached else ""
             lines.append(f"**Accepted sources**: {accepted_sources}{live_str}{cached_str}")
-        
+
         if useful_artifacts is not None:
             live_str = f" (live: {useful_artifacts_live})" if useful_artifacts_live else ""
             cached_str = f" (cached: {useful_artifacts_cached})" if useful_artifacts_cached else ""
             lines.append(f"**Useful artifacts**: {useful_artifacts}{live_str}{cached_str}")
-        
+
         # Add stop reason if available
         if stop_reason:
             lines.append(f"**Stop reason**: {stop_reason}")
-        
+
         # Add provenance warning for cache-only replay
         if result_origin in ("cache", "cache_replay_only") or cache_status in ("cache_hit",):
             lines.append("")
             lines.append("> **Note**: Results are from cache/local replay, not fresh live search.")
-            
+
         lines.extend(["", "---", ""])
 
         for note in notes:

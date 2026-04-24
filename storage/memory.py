@@ -20,7 +20,7 @@ import json
 
 from storage.episodic import EpisodicStore
 from storage.facts import FactStore
-from storage.persistence import atomic_write_text, load_json_file, quarantine_file, save_json_file
+from storage.persistence import quarantine_file, save_json_file
 
 
 class MemorySystem:
@@ -198,7 +198,7 @@ class MemorySystem:
         try:
             save_json_file(self.tasks_file, self.tasks)
             self._last_tasks_save_failed = False
-        except Exception as e:
+        except Exception:
             self._last_tasks_save_failed = True
             try:
                 quarantine_file(self.tasks_file)

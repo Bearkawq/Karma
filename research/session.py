@@ -115,10 +115,10 @@ class GoLearnSession:
         """Query local memory/evidence for existing knowledge about a topic."""
         if not self.memory:
             return []
-        
+
         local_notes = []
         topic_lower = topic.lower()
-        
+
         # Check memory facts for related content
         for key, value in self.memory.facts.items():
             key_lower = key.lower()
@@ -131,7 +131,7 @@ class GoLearnSession:
                     "summary": summary[:500] if summary else "",
                     "source": "local_memory",
                 })
-        
+
         return local_notes[:3]
 
     def _load_prior_progress(self, topic: str) -> None:
@@ -268,7 +268,7 @@ class GoLearnSession:
             if stop_reason == "completed":
                 pulse.emit_success(f"Learned about {self.session.topic} - {accepted} sources, {useful} useful", "golearn")
             elif stop_reason == "low_yield":
-                pulse.emit_warning(f"Learning stopped early - not enough useful results", "golearn")
+                pulse.emit_warning("Learning stopped early - not enough useful results", "golearn")
             elif stop_reason == "budget_exhausted":
                 pulse.emit_result(f"Completed learning {self.session.topic} - time's up", "golearn")
             else:
@@ -301,7 +301,7 @@ class GoLearnSession:
                           subtopic=subtopic, time_remaining=self.timer.remaining())
 
         results, provider_diag = self.provider.search(subtopic, max_results=MAX_PAGES_PER_SLICE)
-        
+
         # Track provider truth (PHASE 2)
         if provider_diag.details.get("providers_tried"):
             self.session.providers_attempted = provider_diag.details["providers_tried"]
@@ -309,17 +309,17 @@ class GoLearnSession:
             self.session.provider_used = provider_diag.details["provider_used"]
         if provider_diag.details.get("provider_failures"):
             self.session.provider_failures = provider_diag.details["provider_failures"]
-        
+
         self.session.provider_code = provider_diag.code
         self.session.provider_diagnostic = provider_diag.message
-        
+
         # Track cache provenance (PHASE 3)
         result_origin = provider_diag.details.get("result_origin", "live")
         if self.session.result_origin is None:
             self.session.result_origin = result_origin
         elif self.session.result_origin != result_origin:
             self.session.result_origin = "mixed"
-        
+
         if provider_diag.code == DiagnosticCode.CACHE_HIT:
             self.session.cache_hits += 1
             if self.session.cache_status is None:
@@ -331,13 +331,13 @@ class GoLearnSession:
 
         if not results:
             self._slice_failures.append({
-                "subtopic": subtopic, 
+                "subtopic": subtopic,
                 "reason": provider_diag.code,
                 "diagnostic": provider_diag.message,
             })
             if provider_diag.code != DiagnosticCode.PROVIDER_OK and provider_diag.code != DiagnosticCode.CACHE_HIT:
                 self.session.provider_diagnostic = provider_diag.message
-            
+
             # Try local knowledge fallback when live search fails
             local_knowledge = self._query_local_knowledge(subtopic)
             if local_knowledge:
@@ -350,7 +350,7 @@ class GoLearnSession:
                     self.session.result_origin = "cache"
                 elif self.session.result_origin == "live":
                     self.session.result_origin = "mixed"
-            
+
             if self.session.cache_status is None:
                 self.session.cache_status = "cache_miss"
             if self.session.result_origin is None:

@@ -15,9 +15,8 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from threading import Lock
 from collections import deque
 
@@ -34,7 +33,7 @@ class DropItem:
     state: str = "queued"
     error: Optional[str] = None
     result: Optional[Dict[str, Any]] = None
-    
+
     @property
     def name(self) -> str:
         return os.path.basename(self.path) or self.path
@@ -42,12 +41,12 @@ class DropItem:
 
 class DropBay:
     """File/folder drop queue for ingestion."""
-    
+
     def __init__(self, max_items: int = 100):
         self._items: deque = deque(maxlen=max_items)
         self._lock = Lock()
         self._processing = False
-    
+
     def add_drop(self, path: str) -> DropItem:
         """Add a file or folder to drop bay."""
         item = DropItem(
@@ -56,37 +55,37 @@ class DropBay:
             timestamp=datetime.now().isoformat(),
             state="queued",
         )
-        
+
         with self._lock:
             self._items.append(item)
-        
+
         return item
-    
+
     def add_multiple(self, paths: List[str]) -> List[DropItem]:
         """Add multiple files/folders."""
         return [self.add_drop(p) for p in paths]
-    
+
     def get_queued_items(self) -> List[DropItem]:
         """Get all queued items."""
         with self._lock:
             return [i for i in self._items if i.state == "queued"]
-    
+
     def get_processing_items(self) -> List[DropItem]:
         """Get items being processed."""
         with self._lock:
             return [i for i in self._items if i.state == "processing"]
-    
+
     def get_completed_items(self, limit: int = 20) -> List[DropItem]:
         """Get completed items."""
         with self._lock:
             completed = [i for i in self._items if i.state == "completed"]
             return completed[-limit:]
-    
+
     def get_failed_items(self) -> List[DropItem]:
         """Get failed items."""
         with self._lock:
             return [i for i in self._items if i.state == "failed"]
-    
+
     def get_all_items(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get all items as dicts."""
         with self._lock:
@@ -102,7 +101,7 @@ class DropBay:
                 }
                 for i in items
             ]
-    
+
     def mark_processing(self, path: str) -> bool:
         """Mark an item as processing."""
         with self._lock:
@@ -111,7 +110,7 @@ class DropBay:
                     item.state = "processing"
                     return True
         return False
-    
+
     def mark_completed(self, path: str, result: Optional[Dict[str, Any]] = None) -> bool:
         """Mark an item as completed."""
         with self._lock:
@@ -121,7 +120,7 @@ class DropBay:
                     item.result = result
                     return True
         return False
-    
+
     def mark_failed(self, path: str, error: str) -> bool:
         """Mark an item as failed."""
         with self._lock:
@@ -131,7 +130,7 @@ class DropBay:
                     item.error = error
                     return True
         return False
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get drop bay status."""
         with self._lock:
@@ -139,7 +138,7 @@ class DropBay:
             processing = sum(1 for i in self._items if i.state == "processing")
             completed = sum(1 for i in self._items if i.state == "completed")
             failed = sum(1 for i in self._items if i.state == "failed")
-            
+
             return {
                 "total": len(self._items),
                 "queued": queued,
@@ -148,7 +147,7 @@ class DropBay:
                 "failed": failed,
                 "is_processing": self._processing,
             }
-    
+
     def clear_completed(self) -> None:
         """Clear completed items."""
         with self._lock:
@@ -156,7 +155,7 @@ class DropBay:
                 (i for i in self._items if i.state not in ("completed", "failed")),
                 maxlen=self._items.maxlen
             )
-    
+
     def clear_all(self) -> None:
         """Clear all items."""
         with self._lock:

@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from agent.agent_loop import AgentLoop
 
@@ -89,7 +88,6 @@ def test_generate_candidates_uses_seat_when_core_empty():
     """_generate_candidates() calls seat planner for unknown intent."""
     agent = _make_agent()
 
-    from core.agent_model_manager import PipelineResult
 
     seat_candidate = [
         {
@@ -2046,7 +2044,11 @@ def test_critic_timeout_does_not_affect_fast_critic():
 
 def test_evict_stale_removes_old_rows():
     """Rows older than TTL are removed; bootstrap rows are kept."""
-    import tempfile, os, sqlite3, struct, time
+    import tempfile
+    import os
+    import sqlite3
+    import struct
+    import time
 
     from agents.retriever_agent import RetrieverAgent
 
@@ -2114,7 +2116,11 @@ def test_evict_stale_removes_old_rows():
 
 def test_evict_stale_enforces_max_rows():
     """When non-bootstrap rows exceed _EMBED_MAX_ROWS, oldest are removed."""
-    import tempfile, os, sqlite3, struct, time
+    import tempfile
+    import os
+    import sqlite3
+    import struct
+    import time
 
     from agents.retriever_agent import RetrieverAgent
 
@@ -2873,7 +2879,7 @@ def test_recovery_steps_inherit_original_prior_results():
 
 def test_format_run_artifact_content_success():
     """_format_run_artifact_content produces structured text from a clean run."""
-    from agent.agent_loop import AgentLoop, load_config
+    from agent.agent_loop import AgentLoop
 
     artifact = {
         "task": "fetch and process",
@@ -2895,7 +2901,7 @@ def test_format_run_artifact_content_success():
 
 def test_format_run_artifact_content_with_failure_and_recovery():
     """_format_run_artifact_content captures failure and recovery info."""
-    from agent.agent_loop import AgentLoop, load_config
+    from agent.agent_loop import AgentLoop
 
     artifact = {
         "task": "complex task",
@@ -3759,9 +3765,6 @@ class TestTryRunHistoryResponse:
     """Tests for AgentLoop._try_run_history_response."""
 
     def test_recovery_query_invokes_retriever(self):
-        from unittest.mock import patch, MagicMock
-        from agents.retriever_agent import RetrieverAgent
-        from agents.base_agent import AgentResult
 
         agent = _make_agent_with_clean_memory()
         # Put a linked run_history fact in memory
@@ -4613,7 +4616,8 @@ def test_session_summary_reflects_tool_run_via_run_last():
 def _populate_runs(agent, tasks):
     """Write N run digests to memory, returning the hash keys written."""
     keys = []
-    import hashlib, datetime
+    import hashlib
+    import datetime
     for task, outcome, kind in tasks:
         ts = datetime.datetime.now().isoformat(timespec="seconds")
         run_key = "run:" + hashlib.md5(f"{task}{ts}".encode()).hexdigest()[:8]

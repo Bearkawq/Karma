@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List
 from dataclasses import dataclass
 
 
@@ -88,7 +88,7 @@ DOCS_RULES = SiteRule(
 
 class SiteRuleEngine:
     """Engine for applying site-specific rules."""
-    
+
     def __init__(self):
         self.rules: Dict[str, SiteRule] = {
             "wikipedia": WIKIPEDIA_RULES,
@@ -104,24 +104,24 @@ class SiteRuleEngine:
             prefer_sections=[],
             extract_summary=False,
         )
-    
+
     def get_rule(self, site_name: str) -> SiteRule:
         """Get rules for a specific site."""
         return self.rules.get(site_name, self.default_rule)
-    
+
     def is_valid_link(self, url: str, rule: SiteRule) -> bool:
         """Check if a link is valid according to rules."""
         # Check ignore patterns
         for pattern in rule.ignore_patterns:
             if re.search(pattern, url, re.IGNORECASE):
                 return False
-        
+
         # Check link pattern
         if rule.link_pattern and not re.search(rule.link_pattern, url):
             return False
-        
+
         return True
-    
+
     def filter_links(self, links: List[str], rule: SiteRule) -> List[str]:
         """Filter links according to site rules."""
         filtered = []
@@ -129,49 +129,49 @@ class SiteRuleEngine:
             if self.is_valid_link(link, rule):
                 filtered.append(link)
         return filtered
-    
+
     def extract_summary(self, content: str, rule: SiteRule) -> str:
         """Extract summary from content based on site rules."""
         if not rule.extract_summary:
             return content[:1000]
-        
+
         # For Wikipedia, try to extract lead paragraph
         if rule.site_name == "wikipedia":
             # Find the lead paragraph (first paragraph before first h2)
             match = re.search(r"^(.+?)\n==", content, re.MULTILINE | re.DOTALL)
             if match:
                 return match.group(1).strip()[:1000]
-        
+
         # Default: return first 1000 chars
         return content[:1000]
-    
+
     def score_link(self, url: str, topic: str, rule: SiteRule) -> float:
         """Score a link based on topic relevance."""
         url_lower = url.lower()
         topic_lower = topic.lower()
-        
+
         # Check if URL contains topic keywords
         score = 0.0
-        
+
         # Direct topic match in URL
         for word in topic_lower.split():
             if word in url_lower:
                 score += 0.5
-        
+
         # Prefer main article over subpages
         if url.count("/") == url_base_path(url).count("/") + 1:
             score += 0.2
-        
+
         # Wikipedia-specific scoring
         if rule.site_name == "wikipedia":
             # Prefer non-parenthesized titles
             if "(" not in url:
                 score += 0.1
-            
+
             # Penalize disambiguation pages
             if "disambiguation" in url_lower:
                 score -= 0.3
-        
+
         return score
 
 

@@ -6,7 +6,7 @@ It helps navigate through resources, artifacts, states, queues, memory, and view
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 import time
 
 from agents.base_agent import (
@@ -190,7 +190,8 @@ class NavigatorAgent(BaseAgent):
         4. Code/repo keywords in task → scan project files
         5. Empty string → deterministic fallback
         """
-        import os, re
+        import os
+        import re
 
         task = (context.task or "").lower()
         raw_task = context.task or ""

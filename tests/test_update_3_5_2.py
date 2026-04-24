@@ -9,7 +9,6 @@ Tests for:
 6. Regression checks
 """
 
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -26,24 +25,24 @@ def test_provider_fallback_engages_on_blocked():
     """Primary provider blocked should engage fallback."""
     from research.providers import FallbackProvider, DuckDuckGoProvider, DiagnosticCode, ProviderDiagnostics
     from unittest.mock import Mock
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
         primary = DuckDuckGoProvider(session_dir)
-        
+
         # Mock primary to return blocked
         primary.search = Mock(return_value=([], ProviderDiagnostics(
             code=DiagnosticCode.SEARCH_PROVIDER_BLOCKED,
             message="Blocked",
             provider="duckduckgo"
         )))
-        
+
         fallback = FallbackProvider(primary)
-        
+
         # Fallback should try the primary, which is blocked
         # The fallback should still return the blocked result from primary
         results, diag = fallback.search("test query", max_results=3)
-        
+
         assert diag.code == DiagnosticCode.SEARCH_PROVIDER_BLOCKED
 
 
@@ -52,14 +51,14 @@ def test_fallback_queries_generated():
     from research.providers import FallbackProvider, DuckDuckGoProvider
     from pathlib import Path
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
         primary = DuckDuckGoProvider(session_dir)
         fallback = FallbackProvider(primary)
-        
+
         fallback_queries = fallback._generate_fallback_queries("python decorators tutorial")
-        
+
         assert len(fallback_queries) > 0
         assert all(isinstance(q, str) for q in fallback_queries)
 
@@ -69,14 +68,14 @@ def test_fallback_queries_include_programming_specific():
     from research.providers import FallbackProvider, DuckDuckGoProvider
     from pathlib import Path
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
         primary = DuckDuckGoProvider(session_dir)
         fallback = FallbackProvider(primary)
-        
+
         fallback_queries = fallback._generate_fallback_queries("python asyncio")
-        
+
         assert any("documentation" in q.lower() for q in fallback_queries)
 
 
@@ -85,24 +84,24 @@ def test_is_usable_result_filters_junk():
     from research.providers import FallbackProvider, DuckDuckGoProvider, SearchResult, ProviderDiagnostics, DiagnosticCode
     from pathlib import Path
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
         primary = DuckDuckGoProvider(session_dir)
         fallback = FallbackProvider(primary)
-        
+
         # Very low quality results
         junk_results = [
             SearchResult(title="A", url="https://example.com/a", snippet="", quality=0.05),
             SearchResult(title="B", url="https://example.com/b", snippet="", quality=0.02),
         ]
-        
+
         is_usable = fallback._is_usable_result(junk_results, ProviderDiagnostics(
             code=DiagnosticCode.PROVIDER_OK,
             message="ok",
             provider="test"
         ))
-        
+
         assert is_usable == False
 
 
@@ -112,7 +111,7 @@ def test_cache_entry_creation():
     """Cache should create entries correctly."""
     from research.cache import CacheEntry
     from datetime import datetime
-    
+
     entry = CacheEntry(
         key="test_key",
         provider="duckduckgo",
@@ -122,7 +121,7 @@ def test_cache_entry_creation():
         diagnostic_code="provider_ok",
         diagnostic_message="ok",
     )
-    
+
     assert entry.key == "test_key"
     assert entry.provider == "duckduckgo"
 
@@ -131,7 +130,7 @@ def test_cache_entry_stale_detection():
     """Cache should detect stale entries."""
     from research.cache import CacheEntry
     from datetime import datetime, timedelta
-    
+
     entry = CacheEntry(
         key="test_key",
         provider="duckduckgo",
@@ -142,7 +141,7 @@ def test_cache_entry_stale_detection():
         diagnostic_message="ok",
         ttl_hours=24,
     )
-    
+
     assert entry.is_stale() == True
 
 
@@ -150,7 +149,7 @@ def test_cache_entry_fresh_detection():
     """Cache should detect fresh entries."""
     from research.cache import CacheEntry
     from datetime import datetime
-    
+
     entry = CacheEntry(
         key="test_key",
         provider="duckduckgo",
@@ -161,7 +160,7 @@ def test_cache_entry_fresh_detection():
         diagnostic_message="ok",
         ttl_hours=24,
     )
-    
+
     assert entry.is_stale() == False
 
 
@@ -170,18 +169,18 @@ def test_golearn_cache_search_round_trip():
     import tempfile
     from research.cache import GoLearnCache
     from research.providers import SearchResult
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = GoLearnCache(tmpdir)
-        
+
         results = [
             SearchResult(title="Test", url="https://example.com", snippet="test", quality=0.8),
         ]
-        
+
         cache.put_search("test query", "duckduckgo", results, "provider_ok", "ok")
-        
+
         cached_results, entry = cache.get_search("test query", "duckduckgo")
-        
+
         assert cached_results is not None
         assert len(cached_results) == 1
         assert cached_results[0].title == "Test"
@@ -191,21 +190,21 @@ def test_golearn_cache_fetch_round_trip():
     """Cache should store and retrieve fetch results."""
     import tempfile
     from research.cache import GoLearnCache
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = GoLearnCache(tmpdir)
-        
+
         artifact = {
             "id": "art_0001",
             "url": "https://example.com",
             "title": "Test Page",
             "text": "Test content",
         }
-        
+
         cache.put_fetch("https://example.com", "duckduckgo", artifact, "provider_ok", "ok")
-        
+
         cached_artifact, entry = cache.get_fetch("https://example.com", "duckduckgo")
-        
+
         assert cached_artifact is not None
         assert cached_artifact["id"] == "art_0001"
         assert cached_artifact.get("_cache_hit") is None  # Raw artifact doesn't have cache marker
@@ -217,12 +216,12 @@ def test_cache_stale_detection():
     from research.cache import GoLearnCache
     from research.providers import SearchResult
     from datetime import datetime, timedelta
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = GoLearnCache(tmpdir)
-        
+
         results = [SearchResult(title="Test", url="https://example.com", snippet="test", quality=0.8)]
-        
+
         # Manually create a stale entry
         from research.cache import CacheEntry
         stale_entry = CacheEntry(
@@ -237,13 +236,13 @@ def test_cache_stale_detection():
         )
         cache._search_index["stale_key"] = stale_entry
         cache._save_index()
-        
+
         # Reload cache
         cache2 = GoLearnCache(tmpdir)
-        
+
         # Stale entry should not be returned
         cached_results, entry = cache2.get_search("stale query", "duckduckgo")
-        
+
         assert cached_results is None
 
 
@@ -251,12 +250,12 @@ def test_cache_status_detection():
     """Cache should correctly report cache status."""
     import tempfile
     from research.cache import GoLearnCache
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = GoLearnCache(tmpdir)
-        
+
         status = cache.get_cache_status("new query", "https://new.com", "duckduckgo")
-        
+
         assert status == "cache_miss"
 
 
@@ -265,15 +264,15 @@ def test_cache_stats():
     import tempfile
     from research.cache import GoLearnCache
     from research.providers import SearchResult
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = GoLearnCache(tmpdir)
-        
+
         results = [SearchResult(title="Test", url="https://example.com", snippet="test", quality=0.8)]
         cache.put_search("test query", "duckduckgo", results, "provider_ok", "ok")
-        
+
         stats = cache.get_stats()
-        
+
         assert "search_entries" in stats
         assert "fetch_entries" in stats
         assert stats["search_entries"] == 1
@@ -283,9 +282,8 @@ def test_cache_stats():
 
 def test_session_json_contains_cache_fields():
     """session.json should contain cache_status and cache_hits."""
-    import tempfile
     from research.session import ResearchSession
-    
+
     session = ResearchSession(
         id="test_001",
         topic="test topic",
@@ -297,7 +295,7 @@ def test_session_json_contains_cache_fields():
         accepted_sources=3,
         useful_artifacts=3,
     )
-    
+
     assert session.cache_status == "cache_partial"
     assert session.cache_hits == 5
 
@@ -306,11 +304,11 @@ def test_partial_success_report():
     """Report should reflect partial success state."""
     from research.index import NoteWriter
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         nw = NoteWriter()
         report_path = Path(tmpdir) / "report.md"
-        
+
         nw.generate_report(
             session_id="test_001",
             root_topic="Python",
@@ -324,9 +322,9 @@ def test_partial_success_report():
             cache_status="cache_partial",
             cache_hits=3,
         )
-        
+
         report_content = report_path.read_text()
-        
+
         assert "**Cache status**: cache_partial" in report_content
         assert "**Cache hits**: 3" in report_content
 
@@ -336,23 +334,23 @@ def test_partial_success_report():
 def test_diagnostic_code_cache_constants():
     """Diagnostic codes should include cache codes."""
     from research.providers import DiagnosticCode
-    
+
     assert DiagnosticCode.CACHE_HIT == "cache_hit"
     assert DiagnosticCode.CACHE_PARTIAL == "cache_partial"
 
 
 def test_provider_returns_cache_diagnostic():
     """Provider should return cache diagnostic when cache hits."""
-    from research.providers import create_provider, DiagnosticCode
-    
+    from research.providers import create_provider
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
-        
+
         provider = create_provider(session_dir, "duckduckgo", use_cache=True)
-        
+
         # The provider should return diagnostics
         results, diag = provider.search("test query", max_results=3)
-        
+
         # Either we get results or we get a diagnostic code
         assert diag is not None
         assert diag.code is not None
@@ -363,11 +361,10 @@ def test_provider_returns_cache_diagnostic():
 def test_golearn_followup_after_cache_hit():
     """GoLearn follow-up should handle cache hits."""
     from agent.dialogue_manager import DialogueManager
-    from core.conversation_state import ConversationState
-    
+
     cs = ConversationState()
     dm = DialogueManager(cs, None, None, None)
-    
+
     cache_result = {
         "session": {
             "topic": "python decorators",
@@ -379,9 +376,9 @@ def test_golearn_followup_after_cache_hit():
             "cache_hits": 1,
         }
     }
-    
+
     dm.set_last_golearn_result(cache_result)
-    
+
     response = dm._handle_golearn_followup("summarize that")
     assert response is not None
     assert "cache" in response.lower()
@@ -390,11 +387,10 @@ def test_golearn_followup_after_cache_hit():
 def test_golearn_followup_after_partial_cache():
     """GoLearn follow-up should handle partial cache."""
     from agent.dialogue_manager import DialogueManager
-    from core.conversation_state import ConversationState
-    
+
     cs = ConversationState()
     dm = DialogueManager(cs, None, None, None)
-    
+
     partial_result = {
         "session": {
             "topic": "python decorators",
@@ -406,9 +402,9 @@ def test_golearn_followup_after_partial_cache():
             "cache_hits": 2,
         }
     }
-    
+
     dm.set_last_golearn_result(partial_result)
-    
+
     response = dm._handle_golearn_followup("continue")
     assert response is not None
     assert "cache" in response.lower()
@@ -426,24 +422,24 @@ def test_grammar_still_matches_golearn():
 def test_provider_factory_works():
     """Provider factory should create cached provider."""
     from research.providers import create_provider, CachedProvider
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
-        
+
         provider = create_provider(session_dir, "duckduckgo", use_cache=True)
-        
+
         assert isinstance(provider, CachedProvider)
 
 
 def test_provider_factory_without_cache():
     """Provider factory should create non-cached provider."""
     from research.providers import create_provider, FallbackProvider
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
-        
+
         provider = create_provider(session_dir, "duckduckgo", use_cache=False)
-        
+
         assert isinstance(provider, FallbackProvider)
 
 

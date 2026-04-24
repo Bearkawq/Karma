@@ -9,11 +9,9 @@ Implements hierarchical task planning with:
 - Cost-based planning optimization
 """
 
-import json
 import os
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple
 from datetime import datetime
-from collections import deque
 
 
 class Planner:
@@ -29,12 +27,12 @@ class Planner:
         self.plan_trace = []
         self._cap_map = capability_map
         self.workspace_root = workspace_root or os.getcwd()
-        
+
     def add_action(self, name: str, action_def: Dict[str, Any]):
         """Add an action definition to the planner"""
         self.actions[name] = action_def
         self._log_trace(f"Added action: {name}")
-    
+
     def plan_actions(self, intent: Dict[str, Any],
                      evidence: List = None) -> List[Dict[str, Any]]:
         """Generate candidate Action dicts from an intent dict.
@@ -250,21 +248,21 @@ class Planner:
             Tuple of (success, action_sequence, total_cost)
         """
         self._log_trace(f"Planning for goal: {goal}")
-        
+
         context = context or {}
-        
+
         # Check if goal is already achieved
         if self._is_goal_achieved(goal, context):
             self._log_trace("Goal already achieved")
             return True, [], 0.0
-        
+
         # Try to find primitive action
         if goal in self.actions:
             action = self.actions[goal]
             if self._check_preconditions(action, context):
                 self._log_trace(f"Found primitive action: {goal}")
                 return True, [goal], action.get('cost', 1)
-        
+
         # Try to find compound actions
         for action_name, action in self.actions.items():
             if goal in action.get('effects', []):
@@ -274,7 +272,7 @@ class Planner:
                     subplan, subcost = self._plan_subgoals(action.get('subgoals', []), context)
                     if subplan:
                         return True, [action_name] + subplan, action.get('cost', 1) + subcost
-        
+
         # Try to decompose goal into subgoals
         subgoals = self._decompose_goal(goal, context)
         if subgoals:
@@ -282,15 +280,15 @@ class Planner:
             subplan, subcost = self._plan_subgoals(subgoals, context)
             if subplan:
                 return True, subplan, subcost
-        
+
         self._log_trace("No valid plan found")
         return False, [], float('inf')
-    
+
     def _plan_subgoals(self, subgoals: List[str], context: Dict[str, Any]) -> Tuple[List[str], float]:
         """Plan for multiple subgoals"""
         total_plan = []
         total_cost = 0
-        
+
         for subgoal in subgoals:
             success, plan, cost = self.plan(subgoal, context)
             if not success:
@@ -298,39 +296,39 @@ class Planner:
                 return [], float('inf')
             total_plan.extend(plan)
             total_cost += cost
-        
+
         return total_plan, total_cost
-    
+
     def _decompose_goal(self, goal: str, context: Dict[str, Any]) -> List[str]:
         """Decompose a goal into subgoals"""
         # Simple decomposition: split by logical operators
         if 'and' in goal:
             return [g.strip() for g in goal.split('and')]
-        
+
         # Try to find compound actions that achieve this goal
         for action_name, action in self.actions.items():
             if goal in action.get('effects', []):
                 return action.get('subgoals', [])
-        
+
         return []
-    
+
     def _is_goal_achieved(self, goal: str, context: Dict[str, Any]) -> bool:
         """Check if goal is already achieved"""
         # Check world state
         if goal in self.world_state and self.world_state[goal]:
             return True
-        
+
         # Check context
         if goal in context and context[goal]:
             return True
-        
+
         return False
-    
+
     def _check_preconditions(self, action: Dict[str, Any], context: Dict[str, Any]) -> bool:
         """Check if action preconditions are met"""
         if not action.get('preconditions'):
             return True
-        
+
         # Check world state preconditions
         for condition in action['preconditions']:
             if condition not in self.world_state or not self.world_state[condition]:
@@ -338,19 +336,19 @@ class Planner:
                 if condition not in context or not context[condition]:
                     self._log_trace(f"Precondition not met: {condition}")
                     return False
-        
+
         self._log_trace("All preconditions met")
         return True
-    
+
     def update_world_state(self, state: Dict[str, Any]):
         """Update the world state"""
         self.world_state.update(state)
         self._log_trace(f"Updated world state: {state}")
-    
+
     def get_trace(self) -> List[Dict[str, Any]]:
         """Get planning trace"""
         return self.plan_trace.copy()
-    
+
     def _log_trace(self, message: str):
         """Log planning step"""
         self.plan_trace.append({
@@ -362,7 +360,7 @@ class Planner:
 # Example HTN planner usage
 if __name__ == "__main__":
     planner = Planner()
-    
+
     # Add primitive actions
     planner.add_action('list_files', {
         'preconditions': ['filesystem_available'],
@@ -371,7 +369,7 @@ if __name__ == "__main__":
         'subgoals': [],
         'parameters': {'path': {'type': 'string', 'required': False}}
     })
-    
+
     planner.add_action('read_file', {
         'preconditions': ['file_exists', 'filesystem_available'],
         'effects': ['file_content_available'],
@@ -379,7 +377,7 @@ if __name__ == "__main__":
         'subgoals': [],
         'parameters': {'filename': {'type': 'string', 'required': True}}
     })
-    
+
     # Add compound actions
     planner.add_action('search_and_read', {
         'preconditions': ['filesystem_available'],
@@ -388,27 +386,27 @@ if __name__ == "__main__":
         'subgoals': ['find_file', 'read_file'],
         'parameters': {'filename': {'type': 'string', 'required': True}}
     })
-    
+
     # Set initial world state
     planner.update_world_state({
         'filesystem_available': True
     })
-    
+
     # Test planning
     print("HTN Planning Tests:")
-    
+
     # Simple goal
     success, plan, cost = planner.plan('list_files')
     print(f"Goal: list_files -> Success: {success}, Plan: {plan}, Cost: {cost}")
-    
+
     # Compound goal
     success, plan, cost = planner.plan('search_and_read', {'filename': 'report.txt'})
     print(f"Goal: search_and_read -> Success: {success}, Plan: {plan}, Cost: {cost}")
-    
+
     # Complex goal with decomposition
     success, plan, cost = planner.plan('file_content_available')
     print(f"Goal: file_content_available -> Success: {success}, Plan: {plan}, Cost: {cost}")
-    
+
     # Show trace
     print("\nPlanning Trace:")
     for step in planner.get_trace():

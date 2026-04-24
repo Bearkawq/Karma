@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from research.crawler import (
-    WebFetcher, _HIGH_QUALITY_DOMAINS, _HIGH_QUALITY_PATTERNS, _LOW_QUALITY_PATTERNS,
+    WebFetcher,
 )
 from research.brancher import SubtopicBrancher
 from research.index import NoteWriter

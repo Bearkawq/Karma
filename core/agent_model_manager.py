@@ -54,6 +54,18 @@ def get_slot_manager(storage_path: Optional[str] = None):
 class AgentModelManager:
     """Manages agents and local model adapters for Karma."""
 
+    # Compatibility constants retained for older tests and tooling.
+    # Tuple shape: (model_id, roles, context_window, max_tokens)
+    _OLLAMA_LLM_SEATS = [
+        ("qwen3:4b", ["planner", "executor", "critic"], 32768, 4096),
+        ("granite3.3:2b", ["summarizer", "navigator"], 8192, 2048),
+    ]
+
+    # Tuple shape: (model_id, roles, embedding_dim)
+    _OLLAMA_EMBED_SEATS = [
+        ("nomic-embed-text", ["retriever"], 768),
+    ]
+
     _DEFAULT_MODEL_REGISTRY = [
         {
             "model_id": "qwen3:4b",

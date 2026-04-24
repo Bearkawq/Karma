@@ -13,9 +13,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from threading import Lock
-from collections import deque
 
 
 @dataclass
@@ -30,19 +29,19 @@ class ProviderHealth:
     deprioritized: bool = False
     deprioritize_until: Optional[str] = None
     consecutive_failures: int = 0
-    
+
     @property
     def success_rate(self) -> float:
         if self.total_queries == 0:
             return 1.0
         return self.successful_queries / self.total_queries
-    
+
     @property
     def error_rate(self) -> float:
         if self.total_queries == 0:
             return 0.0
         return self.failed_queries / self.total_queries
-    
+
     def should_deprioritize(self) -> bool:
         """Check if provider should be deprioritized."""
         if self.deprioritized and self.deprioritize_until:
@@ -54,7 +53,7 @@ class ProviderHealth:
 
 class ProviderHealthMonitor:
     """Monitors research provider health."""
-    
+
     def __init__(
         self,
         failure_threshold: int = 3,
@@ -64,46 +63,46 @@ class ProviderHealthMonitor:
         self._lock = Lock()
         self._failure_threshold = failure_threshold
         self._deprioritize_duration = deprioritize_duration_minutes * 60
-    
+
     def record_success(self, provider_name: str) -> None:
         """Record a successful query."""
         with self._lock:
             if provider_name not in self._providers:
                 self._providers[provider_name] = ProviderHealth(provider_name)
-            
+
             health = self._providers[provider_name]
             health.total_queries += 1
             health.successful_queries += 1
             health.last_success = datetime.now().isoformat()
             health.consecutive_failures = 0
-            
+
             if health.deprioritized and health.success_rate > 0.7:
                 health.deprioritized = False
                 health.deprioritize_until = None
-    
+
     def record_failure(self, provider_name: str, error: Optional[str] = None) -> None:
         """Record a failed query."""
         with self._lock:
             if provider_name not in self._providers:
                 self._providers[provider_name] = ProviderHealth(provider_name)
-            
+
             health = self._providers[provider_name]
             health.total_queries += 1
             health.failed_queries += 1
             health.last_failure = datetime.now().isoformat()
             health.consecutive_failures += 1
-            
+
             if health.consecutive_failures >= self._failure_threshold:
                 health.deprioritized = True
                 health.deprioritize_until = (
                     datetime.now().timestamp() + self._deprioritize_duration
                 )
-    
+
     def get_health(self, provider_name: str) -> Optional[ProviderHealth]:
         """Get health for a specific provider."""
         with self._lock:
             return self._providers.get(provider_name)
-    
+
     def get_all_health(self) -> List[Dict[str, Any]]:
         """Get health for all providers."""
         with self._lock:
@@ -123,7 +122,7 @@ class ProviderHealthMonitor:
                 }
                 for h in self._providers.values()
             ]
-    
+
     def get_working_providers(self) -> List[str]:
         """Get list of providers that are working (not deprioritized)."""
         with self._lock:
@@ -131,23 +130,23 @@ class ProviderHealthMonitor:
                 h.provider_name for h in self._providers.values()
                 if not h.should_deprioritize()
             ]
-    
+
     def get_best_provider(self) -> Optional[str]:
         """Get the provider with highest success rate."""
         with self._lock:
             if not self._providers:
                 return None
-            
+
             working = [
                 h for h in self._providers.values()
                 if not h.should_deprioritize()
             ]
-            
+
             if not working:
                 return None
-            
+
             return max(working, key=lambda h: h.success_rate).provider_name
-    
+
     def reset_provider(self, provider_name: str) -> None:
         """Reset a provider's health status."""
         with self._lock:
@@ -156,21 +155,21 @@ class ProviderHealthMonitor:
                 health.deprioritized = False
                 health.deprioritize_until = None
                 health.consecutive_failures = 0
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get provider health summary."""
         with self._lock:
             total_providers = len(self._providers)
             healthy = sum(1 for h in self._providers.values() if h.success_rate > 0.7)
             deprioritized = sum(1 for h in self._providers.values() if h.deprioritized)
-            
+
             return {
                 "total_providers": total_providers,
                 "healthy": healthy,
                 "deprioritized": deprioritized,
                 "providers": self.get_all_health(),
             }
-    
+
     def save_health(self, path: str) -> None:
         """Persist provider health to file."""
         with self._lock:
@@ -179,7 +178,7 @@ class ProviderHealthMonitor:
         p.parent.mkdir(parents=True, exist_ok=True)
         with open(p, "w") as f:
             json.dump(health_data, f, indent=2)
-    
+
     def clear(self) -> None:
         """Clear all provider health data (for testing)."""
         with self._lock:

@@ -7,10 +7,10 @@
     "tool_sequence": [
       "file"
     ],
-    "success_count": 4717,
+    "success_count": 4811,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.153362",
-    "last_used": "2026-04-19T07:03:22.843712",
+    "last_used": "2026-04-24T19:48:53.004325",
     "shape": {
       "intent": "list_files",
       "entity_types": [
@@ -56,10 +56,10 @@
     "tool_sequence": [
       "self_check"
     ],
-    "success_count": 809,
+    "success_count": 825,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.391428",
-    "last_used": "2026-04-19T07:02:57.654374",
+    "last_used": "2026-04-24T19:48:39.491033",
     "shape": {
       "intent": "self_check",
       "entity_types": [],
@@ -102,10 +102,10 @@
     "tool_sequence": [
       "list_capabilities"
     ],
-    "success_count": 1214,
+    "success_count": 1236,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.820451",
-    "last_used": "2026-04-19T07:03:13.754757",
+    "last_used": "2026-04-24T19:48:46.355701",
     "shape": {
       "intent": "list_capabilities",
       "entity_types": [],
@@ -144,10 +144,10 @@
     "tool_sequence": [
       "file"
     ],
-    "success_count": 1200,
+    "success_count": 1224,
     "confidence": 1.0,
     "created": "2026-03-12T01:09:23.685031",
-    "last_used": "2026-04-19T07:03:17.631369",
+    "last_used": "2026-04-24T19:48:47.644598",
     "shape": {
       "intent": "search_files",
       "entity_types": [

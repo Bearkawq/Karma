@@ -11,7 +11,7 @@ All scoring is deterministic — no ML, no external deps.
 
 from __future__ import annotations
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 def score_evidence(item: Dict[str, Any], query_words: set,

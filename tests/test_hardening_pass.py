@@ -1,9 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 
-import pytest
 
 from agent.agent_loop import AgentLoop, load_config
-from tools.tool_interface import ShellTool, ToolManager, CustomTool, InvalidTool
+from tools.tool_interface import ShellTool, ToolManager, InvalidTool
 
 
 def test_parse_cache_stores_none_for_conversation():

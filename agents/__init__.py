@@ -41,7 +41,7 @@ def get_agent_by_role(role: str):
 
 __all__ = [
     "BaseAgent",
-    "AgentStatus", 
+    "AgentStatus",
     "AgentCapabilities",
     "AgentContext",
     "AgentResult",

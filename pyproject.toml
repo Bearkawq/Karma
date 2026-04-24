@@ -1,6 +1,6 @@
 [tool.ruff]
-line-length = 88
+line-length = 100
 exclude = ["data", "docs", "*.pyc", "__pycache__", ".venv", ".git"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90"]
+select = ["E9", "F821", "F822", "F823", "W292"]

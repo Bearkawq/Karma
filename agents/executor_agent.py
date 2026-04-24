@@ -6,7 +6,7 @@ It executes actions through existing Karma tooling.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import time
 
 from agents.base_agent import (
@@ -20,7 +20,7 @@ class ExecutorAgent(BaseAgent):
     Executes actions defined in plans. Works through existing
     Karma command systems and tools.
     """
-    
+
     def __init__(self):
         super().__init__("executor", "executor")
         self._capabilities = AgentCapabilities(
@@ -30,10 +30,10 @@ class ExecutorAgent(BaseAgent):
             tags=["execution", "action", "tooling"],
         )
         self._status = AgentStatus.READY
-    
+
     def get_capabilities(self) -> AgentCapabilities:
         return self._capabilities
-    
+
     _SYSTEM = (
         "You are an executor. Given a task and prior context, output the exact concrete "
         "steps or commands needed. Tool-grounded: prefer specific commands, file paths, "
@@ -103,21 +103,21 @@ class ExecutorAgent(BaseAgent):
             self._record_execution(False)
             return AgentResult(success=False, error=str(e),
                                execution_time_ms=(time.time() - start_time) * 1000)
-    
+
     def _execute_step(
-        self, 
-        step: Dict[str, Any], 
-        memory: Any, 
+        self,
+        step: Dict[str, Any],
+        memory: Any,
         tool_manager: Any
     ) -> Dict[str, Any]:
         """Execute a single step."""
         action = step.get("action", "")
         target = step.get("target", "")
-        
+
         # Deterministic action mapping
         action_map = {
             "research": "golearn",
-            "ingest": "ingest", 
+            "ingest": "ingest",
             "summarize": "digest",
             "file_operation": "file",
             "execute": "shell",
@@ -125,7 +125,7 @@ class ExecutorAgent(BaseAgent):
             "health_check": "self_check",
             "process": "process",
         }
-        
+
         return {
             "step": step.get("step"),
             "action": action,

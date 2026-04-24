@@ -1709,15 +1709,9 @@
       "key": "3815435053a229d4",
       "provider": "fallback",
       "query_or_url": "test query",
-      "timestamp": "2026-04-18T15:58:09",
+      "timestamp": "2026-04-24T19:07:24",
       "data": {
         "results": [
-          {
-            "title": "SQL Practice Online - Free SQL Sandbox | SQLSandboxes",
-            "url": "https://www.sqlsandboxes.com/",
-            "snippet": "Practice SQL queries with real datasets. No downloads. Master joins, analytics, and SQL for interviews in your browser.",
-            "quality": 0.5
-          },
           {
             "title": "SQL Playground",
             "url": "https://sqltutorial.org/playground/",
@@ -1728,6 +1722,12 @@
             "title": "SQL Fiddle - Online SQL Compiler for learning & practice",
             "url": "https://sqlfiddle.com/",
             "snippet": "SQL Fiddle is a web-based platform that lets you write, edit, and execute any SQL query. You can also use AI chat and SQL query generator to learn and practice SQL with different databases.",
+            "quality": 0.5
+          },
+          {
+            "title": "RunSQL - Online SQL Playground for MySQL, PostgreSQL, and SQL Server",
+            "url": "https://runsql.com/",
+            "snippet": "Explore, learn, and share SQL queries in our free online SQL playground. Support for MySQL, PostgreSQL, and SQL Server, perfect for testing and enhancing your SQL skills.",
             "quality": 0.5
           }
         ]

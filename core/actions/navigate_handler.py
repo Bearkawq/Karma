@@ -12,10 +12,10 @@ from navigator import navigate_wikipedia
 
 class NavigateHandler:
     """Handler for site navigation."""
-    
+
     def __init__(self, agent):
         self.agent = agent
-    
+
     def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Navigate a site (e.g., Wikipedia) to gather information."""
         topic = params.get("topic", "").strip()
@@ -25,20 +25,20 @@ class NavigateHandler:
                 "output": None,
                 "error": "No topic provided. Use: navigate wikipedia <topic>",
             }
-        
+
         site = params.get("site", "wikipedia")
-        
+
         try:
             session_dir = self.agent.base_dir / "data" / "learn"
             result = navigate_wikipedia(topic, max_pages=5, max_depth=2, session_dir=session_dir)
-            
+
             if not result.success or not result.pages:
                 return {
                     "success": False,
                     "output": None,
                     "error": f"Navigation failed: {result.stop_reason}",
                 }
-            
+
             lines = [
                 f"# Wikipedia Navigation: {topic}",
                 "",
@@ -46,7 +46,7 @@ class NavigateHandler:
                 f"**Stop reason**: {result.stop_reason}",
                 "",
             ]
-            
+
             for i, page in enumerate(result.pages, 1):
                 lines.append(f"## {i}. {page.title}")
                 lines.append(f"URL: {page.url}")
@@ -57,14 +57,14 @@ class NavigateHandler:
                 lines.append("")
                 lines.append("---")
                 lines.append("")
-            
+
             lines.extend([
                 "",
                 f"**Total content**: {len(result.total_content)} chars",
                 "",
                 "Content saved to local knowledge for future use.",
             ])
-            
+
             return {
                 "success": True,
                 "output": {"content": "\n".join(lines)},

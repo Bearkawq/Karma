@@ -23,13 +23,10 @@ Scenarios covered:
 from __future__ import annotations
 
 import json
-import os
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -603,7 +600,6 @@ class TestAgentLoopStateRecovery:
 class TestBootDoctorAfterCorruption:
 
     def _make_svc(self, state: dict, memory=None, health=None):
-        from storage.memory import MemorySystem
         from agent.services.status_query_service import StatusQueryService
         if memory is None:
             memory = MagicMock()

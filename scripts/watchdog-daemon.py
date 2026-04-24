@@ -55,18 +55,18 @@ def check_process(name, port=None, path="/api/tags"):
     )
     if result.returncode != 0:
         return False, "not running"
-    
+
     # Check port if specified
     if port:
         result = subprocess.run(
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", 
+            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
              f"http://127.0.0.1:{port}{path}"],
             capture_output=True,
             timeout=5
         )
         if result.returncode != 0 or b"200" not in result.stdout:
             return False, "not responding on port"
-    
+
     return True, "ok"
 
 def check_ollama():
@@ -92,20 +92,20 @@ def check_bridge():
     bridge_path = Path("/home/mikoleye/karma/bridge")
     if not bridge_path.exists():
         return False, "bridge dir missing"
-    
+
     for subdir in ["inbox", "outbox", "planner"]:
         p = bridge_path / subdir
         if not p.exists():
             return False, f"bridge/{subdir} missing"
         if not os.access(p, os.W_OK):
             return False, f"bridge/{subdir} not writable"
-    
+
     return True, "ok"
 
 def check_system():
     """Check system health."""
     issues = []
-    
+
     # Memory
     result = subprocess.run(
         ["free", "-h"],
@@ -125,7 +125,7 @@ def check_system():
                             issues.append(f"low memory: {available}")
                 except:
                     pass
-    
+
     # Disk
     result = subprocess.run(
         ["df", "-h", "/"],
@@ -143,7 +143,7 @@ def check_system():
                             issues.append(f"disk: {pct}% full")
                     except:
                         pass
-    
+
     if issues:
         return False, ", ".join(issues)
     return True, "ok"
@@ -164,24 +164,24 @@ def restart_service(name):
 
 def main():
     log("=== Watchdog Daemon Starting ===")
-    
+
     os.makedirs("/var/log", exist_ok=True)
     os.makedirs("/var/lib", exist_ok=True)
-    
+
     services = {
         "ollama": check_ollama,
         "openclaw-gateway": check_openclaw,
         "goose": check_goose,
         "bridge": check_bridge,
     }
-    
+
     while True:
         state = load_state()
-        
+
         for name, check_func in services.items():
             try:
                 ok, status = check_func()
-                
+
                 if not ok:
                     log(f"CHECK FAILED: {name} - {status}")
 
@@ -205,7 +205,7 @@ def main():
                     state[name] = 0  # Reset on success
             except Exception as e:
                 log(f"ERROR checking {name}: {e}")
-        
+
         # System check
         try:
             ok, status = check_system()
@@ -213,7 +213,7 @@ def main():
                 log(f"SYSTEM WARNING: {status}")
         except Exception as e:
             log(f"ERROR checking system: {e}")
-        
+
         save_state(state)
         time.sleep(CHECK_INTERVAL)
 

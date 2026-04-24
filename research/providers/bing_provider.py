@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from research.crawler import (
     MAX_PAGE_SIZE,
@@ -106,17 +106,17 @@ class BingProvider(SearchProvider):
     def _parse_results(self, html_text: str, max_results: int) -> List[SearchResult]:
         """Parse Bing search results with robust fallback patterns."""
         results: List[SearchResult] = []
-        
+
         link_patterns = [
             re.compile(r'href="(https?://[^"]+)"[^>]*><h2', re.DOTALL),
             re.compile(r'<a[^>]+class="b_title"[^>]*href="(https?://[^"]+)"', re.DOTALL),
             re.compile(r'class="b_algo"[^>]*>.*?href="(https?://[^"]+)"', re.DOTALL),
         ]
-        
+
         generic_pattern = re.compile(r'href="(https?://[^"]+)"')
-        
+
         all_links = generic_pattern.findall(html_text)
-        
+
         external_links = []
         for link in all_links:
             if any(ex in link for ex in ["r.bing.com", "th.bing.com", ".css", ".ico", ".png", ".jpg", "javascript:", "/sa/simg"]):
@@ -125,47 +125,47 @@ class BingProvider(SearchProvider):
                 continue
             if link.startswith("http") and "bing.com" not in link:
                 external_links.append(link)
-        
+
         seen = set()
         unique_links = []
         for link in external_links:
             if link not in seen:
                 seen.add(link)
                 unique_links.append(link)
-        
+
         links = unique_links[:max_results + 5]
-        
+
         title_patterns = [
             re.compile(r'<h2[^>]*>(.*?)</h2>', re.DOTALL),
             re.compile(r'class="b_title"[^>]*>(.*?)</', re.DOTALL),
             re.compile(r'<title>(.*?)</title>', re.DOTALL),
         ]
-        
+
         titles = []
         for pat in title_patterns:
             titles = pat.findall(html_text)
             if titles:
                 break
-        
+
         snippet_patterns = [
             re.compile(r'class="b_caption"[^>]*>(.*?)</p>', re.DOTALL),
             re.compile(r'class="b_desc"[^>]*>(.*?)</div>', re.DOTALL),
             re.compile(r'<p[^>]*>(.*?)</p>', re.DOTALL),
         ]
-        
+
         snippets = []
         for pat in snippet_patterns:
             snippets = pat.findall(html_text)
             if snippets:
                 break
-        
+
         for i, url in enumerate(links[:max_results]):
             if not url.startswith("http"):
                 continue
             title = self._strip_html(titles[i]) if i < len(titles) else "Untitled"
             snippet = self._strip_html(snippets[i]) if i < len(snippets) else ""
             results.append(SearchResult(title=title, url=url, snippet=snippet))
-        
+
         return results
 
     def _score_domain(self, url: str) -> float:

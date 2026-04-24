@@ -33,23 +33,23 @@ class ActionReceipt:
     result_status: str = "success"
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 
 class ReceiptStore:
     """Stores action receipts."""
-    
+
     def __init__(self, max_receipts: int = 500):
         self._receipts: deque = deque(maxlen=max_receipts)
         self._lock = Lock()
-    
+
     def add_receipt(self, receipt: ActionReceipt) -> None:
         """Add a new action receipt."""
         with self._lock:
             self._receipts.append(receipt)
-    
+
     def create_receipt(
         self,
         action_name: str,
@@ -67,66 +67,66 @@ class ReceiptStore:
         )
         self.add_receipt(receipt)
         return receipt
-    
+
     def get_latest_receipt(self) -> Optional[ActionReceipt]:
         """Get the most recent receipt."""
         with self._lock:
             if self._receipts:
                 return self._receipts[-1]
         return None
-    
+
     def get_recent_receipts(self, limit: int = 20) -> List[ActionReceipt]:
         """Get recent receipts."""
         with self._lock:
             return list(self._receipts)[-limit:]
-    
+
     def get_receipts_for_action(self, action_name: str) -> List[ActionReceipt]:
         """Get receipts for a specific action."""
         with self._lock:
             return [r for r in self._receipts if r.action_name == action_name]
-    
+
     def add_artifact(self, receipt: ActionReceipt, artifact_id: str) -> None:
         """Add an artifact to a receipt."""
         with self._lock:
             if receipt in self._receipts:
                 receipt.artifacts_generated.append(artifact_id)
-    
+
     def add_mutation(self, receipt: ActionReceipt, mutation: Dict[str, Any]) -> None:
         """Add a state mutation to a receipt."""
         with self._lock:
             if receipt in self._receipts:
                 receipt.state_mutations.append(mutation)
-    
+
     def set_error(self, receipt: ActionReceipt, error: str) -> None:
         """Mark receipt as failed."""
         with self._lock:
             if receipt in self._receipts:
                 receipt.result_status = "failure"
                 receipt.error = error
-    
+
     def set_status(self, receipt: ActionReceipt, status: str) -> None:
         """Set receipt status."""
         with self._lock:
             if receipt in self._receipts:
                 receipt.result_status = status
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get receipt statistics."""
         with self._lock:
             total = len(self._receipts)
             if total == 0:
                 return {"total": 0, "success": 0, "failure": 0}
-            
+
             success = sum(1 for r in self._receipts if r.result_status == "success")
             failure = sum(1 for r in self._receipts if r.result_status == "failure")
-            
+
             times = [r.execution_time_ms for r in self._receipts]
             avg_time = sum(times) / len(times) if times else 0
-            
+
             action_counts: Dict[str, int] = {}
             for r in self._receipts:
                 action_counts[r.action_name] = action_counts.get(r.action_name, 0) + 1
-            
+
             return {
                 "total": total,
                 "success": success,
@@ -135,7 +135,7 @@ class ReceiptStore:
                 "avg_execution_time_ms": avg_time,
                 "action_counts": action_counts,
             }
-    
+
     def save_receipts(self, path: str) -> None:
         """Persist receipts to file."""
         with self._lock:
@@ -144,7 +144,7 @@ class ReceiptStore:
         p.parent.mkdir(parents=True, exist_ok=True)
         with open(p, "w") as f:
             json.dump(receipts, f, indent=2)
-    
+
     def clear(self) -> None:
         """Clear all receipts (for testing)."""
         with self._lock:

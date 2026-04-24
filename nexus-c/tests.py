@@ -8,7 +8,7 @@ import asyncio
 import sys
 import time
 from types import SimpleNamespace
-from nexus_c import NexusC, ToolRegistry, OllamaConnector, ExecutionContext
+from nexus_c import NexusC
 
 
 def make_fast_agent():
@@ -148,17 +148,17 @@ async def test_memory():
     print("\n[TEST 10] Memory system")
     agent = make_fast_agent()
     initial_count = len(agent.memory.entries)
-    
+
     # Add some memories
     agent.memory.add("test task 1", "context 1", "success", 0.8)
     agent.memory.add("test task 2", "context 2", "failure", 0.9)
-    
+
     assert len(agent.memory.entries) == initial_count + 2
-    
+
     # Recall
     recalled = agent.memory.recall("test", top_k=5)
     assert len(recalled) > 0
-    
+
     # Get insights
     insights = agent.memory.get_insights()
     print(f"✅ PASSED - Insights: {insights}")
@@ -279,7 +279,7 @@ async def run_all_tests():
     print("="*60)
     print("NEXUS-C STABILITY TEST SUITE")
     print("="*60)
-    
+
     tests = [
         test_status,
         test_tools_list,
@@ -301,10 +301,10 @@ async def run_all_tests():
         test_tool_autodetect,
         test_deliberation_timeout_fallback,
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test in tests:
         try:
             result = await test()
@@ -313,11 +313,11 @@ async def run_all_tests():
         except Exception as e:
             print(f"❌ FAILED: {e}")
             failed += 1
-    
+
     print("\n" + "="*60)
     print(f"RESULTS: {passed} passed, {failed} failed")
     print("="*60)
-    
+
     return failed == 0
 
 if __name__ == "__main__":

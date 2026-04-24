@@ -25,10 +25,10 @@ class RateLimiter:
         """Check if a request is allowed under rate limits."""
         now = time.time()
         self.requests = [t for t in self.requests if now - t < self.window_seconds]
-        
+
         if len(self.requests) >= self.max_requests:
             return False
-        
+
         self.requests.append(now)
         return True
 
@@ -49,7 +49,7 @@ class RateLimiterWrapper:
     """Wrapper that enforces rate limiting on a provider."""
 
     def __init__(self, provider, max_requests: int = RATE_LIMIT_REQUESTS):
-        from .base import DiagnosticCode, ProviderDiagnostics, SearchProvider
+        from .base import DiagnosticCode, ProviderDiagnostics
         self.provider = provider
         self.primary = provider  # expose for provider-chain traversal
         self.limiter = RateLimiter(max_requests)
@@ -69,7 +69,7 @@ class RateLimiterWrapper:
                 provider=self.name,
                 details={"wait_seconds": wait},
             )
-        
+
         return self.provider.search(query, max_results)
 
     def fetch(self, url: str, timeout: float = None):

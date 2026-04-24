@@ -26,17 +26,17 @@ class RetryProvider(SearchProvider):
 
     def search(self, query: str, max_results: int = 5) -> tuple[List[SearchResult], ProviderDiagnostics]:
         last_diag: Optional[ProviderDiagnostics] = None
-        
+
         for attempt in range(self.max_attempts):
             results, diag = self.primary.search(query, max_results)
             last_diag = diag
-            
+
             if results or diag.code not in (
                 DiagnosticCode.SEARCH_TIMEOUT,
                 DiagnosticCode.SEARCH_PROVIDER_BLOCKED,
             ):
                 return results, diag
-            
+
             if attempt < self.max_attempts - 1:
                 delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
                 time.sleep(delay)
@@ -62,11 +62,11 @@ class FallbackProvider(SearchProvider):
 
     def search(self, query: str, max_results: int = 5) -> tuple[List[SearchResult], ProviderDiagnostics]:
         results, diag = self.primary.search(query, max_results)
-        
+
         if results and self._is_usable_result(results, diag):
             return results, diag
-        
-        if diag.code in (DiagnosticCode.SEARCH_PROVIDER_BLOCKED, DiagnosticCode.SEARCH_EMPTY, 
+
+        if diag.code in (DiagnosticCode.SEARCH_PROVIDER_BLOCKED, DiagnosticCode.SEARCH_EMPTY,
                         DiagnosticCode.SEARCH_PARSE_ERROR, DiagnosticCode.SEARCH_TIMEOUT):
             fallback_queries = self._generate_fallback_queries(query)
             for fallback_q in fallback_queries:
@@ -92,9 +92,9 @@ class FallbackProvider(SearchProvider):
         words = query.lower().split()
         if len(words) <= 1:
             return []
-        
+
         core = words[0] if len(words) == 1 else " ".join(words[:2])
-        
+
         fallbacks = [
             f"{core} tutorial",
             f"{core} documentation",
@@ -102,13 +102,13 @@ class FallbackProvider(SearchProvider):
             f"{core} guide",
             f"{core} basics",
         ]
-        
+
         if any(w in query.lower() for w in ["python", "javascript", "java", "rust", "go"]):
             fallbacks.extend([
                 f"{core} official docs",
                 f"{core} w3schools",
             ])
-        
+
         return fallbacks[:5]
 
     def fetch(self, url: str, timeout: Optional[float] = None) -> Optional[Dict[str, Any]]:

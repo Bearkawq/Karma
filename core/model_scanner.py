@@ -40,15 +40,15 @@ class ScanReceipt:
 
 class ModelScanner:
     """Scans local paths for compatible model files."""
-    
+
     # File patterns that indicate models
     GGUF_PATTERNS = ["*.gguf", "*.GGUF"]
     SAFETENSORS_PATTERNS = ["*.safetensors", "*.bin"]
     MANIFEST_FILES = ["config.json", "model.safetensors.index.json", "manifest.json"]
-    
+
     def __init__(self):
         self._last_scan: Optional[ScanReceipt] = None
-    
+
     def scan(
         self,
         path: str,
@@ -66,7 +66,7 @@ class ModelScanner:
             ScanReceipt with discovered models
         """
         scan_path = Path(path).expanduser().resolve()
-        
+
         if not scan_path.exists():
             return ScanReceipt(
                 scan_path=path,
@@ -74,7 +74,7 @@ class ModelScanner:
                 models_found=0,
                 errors=[f"Path does not exist: {path}"],
             )
-        
+
         if not os.access(scan_path, os.R_OK):
             return ScanReceipt(
                 scan_path=path,
@@ -82,10 +82,10 @@ class ModelScanner:
                 models_found=0,
                 errors=[f"Path not readable: {path}"],
             )
-        
+
         candidates = []
         errors = []
-        
+
         try:
             if scan_path.is_file():
                 # Single file
@@ -95,10 +95,10 @@ class ModelScanner:
             elif scan_path.is_dir():
                 # Directory
                 candidates = self._scan_directory(scan_path, recursive, max_depth)
-        
+
         except Exception as e:
             errors.append(f"Scan error: {str(e)}")
-        
+
         receipt = ScanReceipt(
             scan_path=path,
             scan_time=datetime.now().isoformat(),
@@ -106,10 +106,10 @@ class ModelScanner:
             candidates=candidates,
             errors=errors,
         )
-        
+
         self._last_scan = receipt
         return receipt
-    
+
     def _scan_directory(
         self,
         path: Path,
@@ -118,7 +118,7 @@ class ModelScanner:
     ) -> List[Dict[str, Any]]:
         """Scan a directory for models."""
         candidates = []
-        
+
         try:
             for entry in path.iterdir():
                 if entry.is_file():
@@ -137,14 +137,14 @@ class ModelScanner:
                         )
         except PermissionError:
             pass
-        
+
         return candidates
-    
+
     def _identify_file(self, path: Path) -> Optional[Dict[str, Any]]:
         """Identify a model file."""
         name = path.stem
         suffix = path.suffix.lower()
-        
+
         # GGUF files
         if suffix == ".gguf":
             return {
@@ -155,14 +155,14 @@ class ModelScanner:
                 "guessed_capability": self._guess_capability_from_name(name),
                 "runtime_hint": "llama.cpp",
             }
-        
+
         # Check for model directory markers
         return None
-    
+
     def _identify_directory(self, path: Path) -> Optional[Dict[str, Any]]:
         """Identify a model directory."""
         name = path.name
-        
+
         # Check for manifest
         manifest = None
         for mf in self.MANIFEST_FILES:
@@ -174,22 +174,22 @@ class ModelScanner:
                     break
                 except Exception:
                     pass
-        
+
         if manifest:
             # This looks like a model directory
             model_type = "directory"
             runtime = "transformers"
             capability = "unknown"
-            
+
             # Try to determine capability from manifest
             if "architectures" in manifest:
                 capability = "llm"
             elif "model_type" in manifest:
                 capability = "llm"
-            
+
             # Calculate size
             total_size = self._directory_size(path)
-            
+
             return {
                 "path": str(path),
                 "name": name,
@@ -199,7 +199,7 @@ class ModelScanner:
                 "runtime_hint": runtime,
                 "manifest": manifest,
             }
-        
+
         # Check for safetensors files
         safetensors = list(path.glob("*.safetensors"))
         if safetensors:
@@ -212,13 +212,13 @@ class ModelScanner:
                 "guessed_capability": self._guess_capability_from_name(name),
                 "runtime_hint": "transformers",
             }
-        
+
         return None
-    
+
     def _guess_capability_from_name(self, name: str) -> str:
         """Guess model capability from filename."""
         name_lower = name.lower()
-        
+
         if any(w in name_lower for w in ["embed", "embedding", "dense", "rerank"]):
             return "embedding"
         elif any(w in name_lower for w in ["code", "coder", "codex"]):
@@ -227,7 +227,7 @@ class ModelScanner:
             return "llm"
         else:
             return "llm"  # Default assumption
-    
+
     def _directory_size(self, path: Path) -> int:
         """Calculate total size of directory."""
         total = 0
@@ -238,11 +238,11 @@ class ModelScanner:
         except PermissionError:
             pass
         return total
-    
+
     def get_last_scan(self) -> Optional[ScanReceipt]:
         """Get the last scan receipt."""
         return self._last_scan
-    
+
     def format_size(self, bytes: int) -> str:
         """Format bytes as human-readable string."""
         for unit in ["B", "KB", "MB", "GB", "TB"]:

@@ -6,7 +6,7 @@ Extracted from AgentLoop to keep the orchestrator lean.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class ReflectionEngine:

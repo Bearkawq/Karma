@@ -13,7 +13,7 @@ class ActionContext:
     
     Provides access to agent subsystems without relying on singletons.
     """
-    
+
     def __init__(self, agent: Any):
         self.agent = agent
         self.memory = agent.memory
@@ -27,10 +27,10 @@ class ActionContext:
 
 class BaseActionHandler:
     """Base class for action handlers."""
-    
+
     def __init__(self, context: ActionContext):
         self.context = context
-    
+
     def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the action.
         

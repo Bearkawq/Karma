@@ -1,8 +1,6 @@
 """Tests for live-status / current-state introspection lane."""
 
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 from agent.agent_loop import AgentLoop, load_config
 

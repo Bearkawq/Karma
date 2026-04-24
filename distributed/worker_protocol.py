@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from enum import Enum
 
 
@@ -56,7 +56,7 @@ class WorkerProtocol:
     - POST /unload_model - Unload a model
     - GET /status - Node status
     """
-    
+
     @staticmethod
     def build_health_request() -> Dict[str, Any]:
         """Build health check request."""
@@ -64,7 +64,7 @@ class WorkerProtocol:
             "endpoint": "/health",
             "method": "GET",
         }
-    
+
     @staticmethod
     def build_capabilities_request() -> Dict[str, Any]:
         """Build capabilities request."""
@@ -72,7 +72,7 @@ class WorkerProtocol:
             "endpoint": "/capabilities",
             "method": "GET",
         }
-    
+
     @staticmethod
     def build_task_request(task: WorkerTask) -> Dict[str, Any]:
         """Build task execution request."""
@@ -85,7 +85,7 @@ class WorkerProtocol:
                 "input_data": task.input_data,
             },
         }
-    
+
     @staticmethod
     def build_load_model_request(model_id: str) -> Dict[str, Any]:
         """Build model load request."""
@@ -94,7 +94,7 @@ class WorkerProtocol:
             "method": "POST",
             "body": {"model_id": model_id},
         }
-    
+
     @staticmethod
     def build_unload_model_request(model_id: str) -> Dict[str, Any]:
         """Build model unload request."""
@@ -103,7 +103,7 @@ class WorkerProtocol:
             "method": "POST",
             "body": {"model_id": model_id},
         }
-    
+
     @staticmethod
     def build_status_request() -> Dict[str, Any]:
         """Build status request."""
@@ -111,7 +111,7 @@ class WorkerProtocol:
             "endpoint": "/status",
             "method": "GET",
         }
-    
+
     @staticmethod
     def parse_response(response: Dict[str, Any]) -> WorkerResponse:
         """Parse worker response."""

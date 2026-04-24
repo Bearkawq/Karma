@@ -63,25 +63,25 @@ def create_provider(session_dir: Path, provider_name: str = "duckduckgo", use_ca
     Cache is essential for replaying previous successful sessions.
     """
     providers: List[SearchProvider] = []
-    
+
     ddg = DuckDuckGoProvider(session_dir)
     ddg_rate_limited = RateLimiterWrapper(ddg)
     providers.append(RetryProvider(ddg_rate_limited))
-    
+
     brave = BraveSearchProvider(session_dir)
     brave_rate_limited = RateLimiterWrapper(brave)
     providers.append(RetryProvider(brave_rate_limited))
-    
+
     browser = BrowserSearchProvider(session_dir)
     providers.append(browser)
-    
+
     multi = MultiProvider(providers)
-    
+
     wrapped = FallbackProvider(multi)
-    
+
     if use_cache:
         from research.cache import get_cache
         cache = get_cache()
         wrapped = CachedProvider(wrapped, cache)
-    
+
     return wrapped

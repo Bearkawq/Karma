@@ -1,12 +1,9 @@
 """Lightweight environment observer — monitors file changes, system stats, memory."""
 
 from __future__ import annotations
-import os
-import time
 import threading
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class EnvironmentObserver:

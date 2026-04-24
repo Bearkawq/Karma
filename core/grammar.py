@@ -5,7 +5,7 @@ Runs BEFORE symbolic parsing. If confidence > 0.7, symbolic is skipped.
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 GRAMMAR_RULES: Dict[str, List[str]] = {
     "list_files": [

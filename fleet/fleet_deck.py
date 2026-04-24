@@ -10,7 +10,6 @@ Install on Android:
 4. python3 fleet_deck.py
 """
 import os
-import sys
 import asyncio
 import yaml
 from pathlib import Path
@@ -56,7 +55,7 @@ class FleetDeck:
         self.session_id = datetime.now().strftime("%Y%m%d-%H%M")
         self.tick = 0
         self.refresh_count = 0
-        
+
     def load_yaml(self, path: Path) -> Optional[Dict]:
         """Load YAML file with markdown wrapper handling and error recovery."""
         try:
@@ -90,7 +89,7 @@ class FleetDeck:
         except Exception as e:
             print(f"  Warning: Failed to load {path.name}: {str(e)[:50]}")
         return None
-    
+
     def load_text(self, path: Path, lines: int = 10) -> str:
         """Load text file, return first N lines, handle missing/empty."""
         try:
@@ -106,7 +105,7 @@ class FleetDeck:
                 return "".join(result)
         except:
             return ""
-    
+
     def get_project_context(self, project: str) -> Dict:
         """Get project context from .fleet directory with graceful missing dir handling."""
         fleet_dir = KARMA_ROOT / project / ".fleet"
@@ -120,15 +119,15 @@ class FleetDeck:
             "rules": "",
             "fleet_dir_exists": fleet_dir.exists() if project in PROJECTS else False
         }
-        
+
         # Project doesn't exist
         if project not in PROJECTS:
             return ctx
-        
+
         # .fleet directory missing
         if not fleet_dir.exists():
             return ctx
-        
+
         # Load files, all gracefully handle missing/empty
         ctx["yaml"] = self.load_yaml(fleet_dir / "project.yaml")
         ctx["context"] = self.load_text(fleet_dir / "recent_context.md", 15)
@@ -136,23 +135,23 @@ class FleetDeck:
         ctx["handoffs"] = self.load_text(fleet_dir / "handoff_index.md", 15)
         ctx["notes"] = self.load_text(fleet_dir / "notes.md", 15)
         ctx["rules"] = self.load_text(fleet_dir / "local_rules.md", 15)
-        
+
         return ctx
-    
+
     def render(self):
         """Render the UI."""
         self.tick += 1
         print("\033[2J\033[H", end="")
-        
+
         target = self.current_project or "NONE"
-        
+
         # Header
         print(f"{C['copper']}╔{'═'*50}╗{R}")
         print(f"{C['copper']}║{R} {C['bronze']}◈ FLEET DECK{R}           {D}Session: {self.session_id}{R}   {C['copper']}║{R}")
         print(f"{C['copper']}╠{'═'*50}╣{R}")
         print(f"{C['copper']}║{R} {C['accent']}TARGET:{R} {target:<10} {D}|{R} {C['accent']}TICK:{R} {self.tick:03d}        {C['copper']}║{R}")
         print(f"{C['copper']}╠{'═'*50}╣{R}")
-        
+
         # Workers
         workers = [
             ("builder-1", "idle", "nexus"),
@@ -160,35 +159,35 @@ class FleetDeck:
             ("checker-1", "idle", "-"),
             ("scout-1", "blocked", "nexus"),
         ]
-        
+
         def w_icon(s):
             if s == "idle": return f"{C['green']}●{R}"
             if s == "busy": return f"{C['yellow']}◐{R}"
             return f"{C['red']}◌{R}"
-        
+
         for w, s, p in workers:
             print(f"{C['copper']}║{R} {w_icon(s)} {w:<10} {D}→{R} {p:<8}                                          {C['copper']}║{R}")
-        
+
         print(f"{C['copper']}╠{'═'*50}╣{R}")
-        
+
         # Project info
         if self.current_project:
             ctx = self.get_project_context(self.current_project)
             name = "N/A"
             ptype = "unknown"
             has_context = False
-            
+
             if ctx.get("yaml") and ctx["yaml"]:
                 try:
                     name = ctx["yaml"].get("project", {}).get("name", self.current_project.upper())
                     ptype = ctx["yaml"].get("project", {}).get("type", "unknown")
                 except:
                     name = self.current_project.upper()
-            
+
             # Check if .fleet directory exists
             if ctx.get("fleet_dir_exists", False):
                 has_context = bool(ctx.get("context", "").strip())
-            
+
             if not ctx.get("fleet_dir_exists", False):
                 # .fleet dir missing - show warning
                 print(f"{C['copper']}║{R} {C['bronze']}PROJECT:{R} {name:<15} {C['red']}⚠ NO .FLEET{R}             {C['copper']}║{R}")
@@ -204,36 +203,36 @@ class FleetDeck:
                 print(f"{C['copper']}║{R} {D}Context: {context_line:<35}      {C['copper']}║{R}")
         else:
             print(f"{C['copper']}║{R} {D}No project selected{R}                                  {C['copper']}║{R}")
-        
+
         print(f"{C['copper']}╠{'═'*50}╣{R}")
-        
+
         # Status indicators
         karma_status = f"{C['green']}●{R} OK" if KARMA_ROOT.exists() else f"{C['red']}●{R} MISSING"
         print(f"{C['copper']}║{R} Fleet: {karma_status}    {C['green']}●{R} Memory: OK   {C['green']}●{R} State: CLEAN              {C['copper']}║{R}")
         print(f"{C['copper']}╠{'═'*50}╣{R}")
         print(f"{C['copper']}║{R} [T]arget [C]ontext [K]tasks [H]andoffs [N]otes [R]efresh [Q]uit {C['copper']}║{R}")
         print(f"{C['copper']}╚{'═'*50}╝{R}")
-        
+
         print(f"\n{D}{KARMA_ROOT}{R}")
         print(f"{C['accent']}> {R}", end="", flush=True)
-    
+
     async def run(self):
         """Main loop."""
         print(f"\n  Fleet Deck v1.0 - {self.session_id}\n")
         print(f"  Projects: {', '.join(PROJECTS)}")
         print(f"  Platform: {PLATFORM}")
         print(f"  Karma: {KARMA_ROOT}\n")
-        
+
         while True:
             self.render()
             try:
                 cmd = input().strip().lower()
             except (EOFError, KeyboardInterrupt):
                 break
-            
+
             if not cmd:
                 continue
-            
+
             if cmd in ['q', 'quit', 'exit']:
                 print("\n  Bye!")
                 break
@@ -286,7 +285,7 @@ class FleetDeck:
                     else:
                         h = ctx.get("handoffs", "").strip()
                         if h and "none" not in h.lower():
-                            print(f"\n  === HANDOFFS ===")
+                            print("\n  === HANDOFFS ===")
                             print(h)
                         else:
                             print("\n  No pending handoffs")
@@ -298,7 +297,7 @@ class FleetDeck:
                     if not ctx.get("fleet_dir_exists", False):
                         print(f"\n  ⚠ No .fleet directory for {self.current_project}")
                     else:
-                        print(f"\n  === NOTES ===")
+                        print("\n  === NOTES ===")
                         print(ctx.get("notes", "No notes") or "No notes available")
             elif cmd == 'r':
                 self.refresh_count += 1
@@ -318,7 +317,7 @@ async def main():
         print("  On Android: Copy karma folder to ~/storage/shared/karma/")
         print("  On Desktop: Should already be at /home/mikoleye/karma")
         return
-    
+
     deck = FleetDeck()
     await deck.run()
 

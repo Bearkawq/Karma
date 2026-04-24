@@ -39,7 +39,6 @@ from core.runtime_governor import RuntimeGovernor, _MISS
 from core.dialogue import (
     classify_dialogue_act,
     choose_response_goal,
-    retrieval_mode_for_goal,
     command_signal_score,
 )
 from core.conversation_state import ConversationState
@@ -53,7 +52,6 @@ from core.responder import Responder
 from core.grammar import grammar_match
 from tools.tool_builder import ToolBuilder
 from tools.code_tool import CodeTool
-from tools.self_upgrade import SelfUpgrade
 from core.post_execute import PostExecutor
 from core.maintenance import MaintenanceScheduler
 from agent.dialogue_manager import DialogueManager
@@ -2883,7 +2881,7 @@ def load_config(path: str = "config.json") -> Dict[str, Any]:
 if __name__ == "__main__":
     import sys as _sys
 
-    from agent.bootstrap import load_config as _bl, build_agent, get_version
+    from agent.bootstrap import load_config as _bl, build_agent
 
     # --doctor: run health check and exit (0=healthy, 1=warning/issues)
     if "--doctor" in _sys.argv:

@@ -1,8 +1,7 @@
 """Tests for operator summary, boot doctor, run detail, failure-first sort, and badges."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from agent.agent_loop import AgentLoop, load_config
 
@@ -70,7 +69,6 @@ def test_outcome_badge_unknown_falls_back():
 
 
 def test_persist_run_digest_stores_outcome_badge():
-    from agent.services.run_history_service import outcome_badge as _badge
 
     agent = _make_agent_clean()
     artifact = {

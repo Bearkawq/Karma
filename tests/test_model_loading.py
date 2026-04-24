@@ -216,7 +216,6 @@ class TestOllamaModelLoadingLive:
 
     def test_execute_receives_loaded_models_from_real_init(self):
         from core.agent_model_manager import AgentModelManager
-        from core.role_router import RouteDecision, InvocationMode
 
         mgr = AgentModelManager()
         mgr.initialize()

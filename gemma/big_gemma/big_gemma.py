@@ -4,7 +4,6 @@ Big Gemma - STG Deep Reasoning Engine
 Role: Deep reasoning, heavy analysis, architecture support, escalation target
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -117,7 +116,7 @@ def complete_task(task, result):
     """Mark task complete and store result."""
     outbox = KARMA_ROOT / "bridge" / "outbox"
     outbox.mkdir(exist_ok=True)
-    
+
     response = {
         "from": "big_gemma",
         "to": task.get("from", "unknown"),
@@ -125,7 +124,7 @@ def complete_task(task, result):
         "result": result,
         "timestamp": datetime.now().isoformat()
     }
-    
+
     outfile = outbox / f"big_gemma_response_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     outfile.write_text(json.dumps(response, indent=2))
     return outfile
@@ -134,17 +133,17 @@ def complete_task(task, result):
 def init_big_gemma():
     """Initialize big Gemma on STG."""
     print("Initializing Big Gemma...")
-    
+
     ROLE_FILE.write_text(ROLE)
     print(f"  Created: {ROLE_FILE}")
-    
+
     if not MEMORY_FILE.exists():
         MEMORY_FILE.write_text(DEFAULT_MEMORY)
         print(f"  Created: {MEMORY_FILE}")
-    
+
     print(f"  Karma root: {KARMA_ROOT}")
     print(f"  Bridge inbox: {KARMA_ROOT / 'bridge' / 'inbox'}")
-    
+
     print("Big Gemma initialized!")
     return True
 
@@ -155,7 +154,7 @@ def show_status():
     print(f"Role: {ROLE_FILE} - {'exists' if ROLE_FILE.exists() else 'MISSING'}")
     print(f"Memory: {MEMORY_FILE} - {'exists' if MEMORY_FILE.exists() else 'MISSING'}")
     print(f"Karma Root: {KARMA_ROOT} - {'exists' if KARMA_ROOT.exists() else 'MISSING'}")
-    
+
     tasks = check_inbox()
     print(f"Pending tasks from Little Gemma: {len(tasks)}")
     for t in tasks:
@@ -183,10 +182,10 @@ def main():
             for t in tasks:
                 print(json.dumps(t, indent=2))
             return
-    
+
     print("Big Gemma - STG Deep Reasoning Engine")
     print("Usage: big_gemma.py [init|status|memory|role|inbox]")
-    print(f"\nModel: Using gemma4 as Big Gemma on STG")
+    print("\nModel: Using gemma4 as Big Gemma on STG")
 
 
 if __name__ == "__main__":

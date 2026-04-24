@@ -20,26 +20,26 @@ class MultiProvider(SearchProvider):
     def search(self, query: str, max_results: int = 5) -> tuple[List[SearchResult], ProviderDiagnostics]:
         tried_providers: List[str] = []
         provider_failures: Dict[str, str] = {}
-        
+
         for provider in self.providers:
             tried_providers.append(provider.name)
             results, diag = provider.search(query, max_results)
-            
+
             if results:
                 diag.details["providers_tried"] = tried_providers
                 diag.details["provider_used"] = provider.name
                 diag.details["provider_failures"] = provider_failures
                 return results, diag
-            
+
             provider_failures[provider.name] = f"{diag.code}: {diag.message}"
-            
+
             if diag.code in (
                 DiagnosticCode.SEARCH_PROVIDER_BLOCKED,
                 DiagnosticCode.SEARCH_TIMEOUT,
                 DiagnosticCode.SEARCH_PARSE_ERROR,
             ):
                 continue
-        
+
         return [], ProviderDiagnostics(
             code=DiagnosticCode.PROVIDER_EXHAUSTED,
             message="All providers failed",

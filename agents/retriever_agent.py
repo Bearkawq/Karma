@@ -6,7 +6,7 @@ It searches local knowledge, memory, artifacts, and ingested data.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import time
 
 from agents.base_agent import (
@@ -443,7 +443,8 @@ class RetrieverAgent(BaseAgent):
 
     @classmethod
     def _ensure_db(cls):
-        import sqlite3, os
+        import sqlite3
+        import os
 
         path = cls._get_index_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -462,7 +463,8 @@ class RetrieverAgent(BaseAgent):
     @classmethod
     def bootstrap_index(cls, adapter):
         """Bootstrap persistent index with project structure for cold-start."""
-        import os, time
+        import os
+        import time
 
         if not adapter:
             return False
@@ -551,7 +553,8 @@ class RetrieverAgent(BaseAgent):
         - If remaining rows exceed _EMBED_MAX_ROWS, evict oldest first.
         Evicted keys are also removed from the in-process cache.
         """
-        import sqlite3, time as _t
+        import sqlite3
+        import time as _t
 
         cutoff = _t.time() - cls._EMBED_TTL_DAYS * 86400
         try:
@@ -604,7 +607,8 @@ class RetrieverAgent(BaseAgent):
             return
         cls._cache_loaded = True
         try:
-            import sqlite3, struct
+            import sqlite3
+            import struct
 
             con = sqlite3.connect(cls._get_index_path())
             for row in con.execute("SELECT key, vector FROM vectors"):
@@ -619,7 +623,8 @@ class RetrieverAgent(BaseAgent):
     def _persist_vector(cls, key: str, vec: list, meta: str = ""):
         """Write one vector to the persistent DB and trigger periodic eviction."""
         try:
-            import struct, sqlite3, time as _t
+            import struct
+            import time as _t
             import json
 
             blob = struct.pack(f"{len(vec)}f", *vec)

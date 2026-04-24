@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 from enum import Enum
 
@@ -67,7 +66,7 @@ class BaseAgent(ABC):
     Agents are functional workers, not personalities.
     Karma remains in control; agents are tools.
     """
-    
+
     def __init__(self, agent_id: str, role_name: str):
         self.agent_id = agent_id
         self.role_name = role_name
@@ -75,12 +74,12 @@ class BaseAgent(ABC):
         self._capabilities = AgentCapabilities()
         self._last_error: Optional[str] = None
         self._execution_count = 0
-    
+
     @abstractmethod
     def get_capabilities(self) -> AgentCapabilities:
         """Return what this agent can do."""
         pass
-    
+
     @abstractmethod
     def run(self, context: AgentContext) -> AgentResult:
         """Execute the agent's task.
@@ -92,22 +91,22 @@ class BaseAgent(ABC):
             AgentResult with output or error
         """
         pass
-    
+
     @property
     def status(self) -> AgentStatus:
         """Current agent status."""
         return self._status
-    
+
     @property
     def is_available(self) -> bool:
         """Check if agent can be used."""
         return self._status in (AgentStatus.READY, AgentStatus.ACTIVE)
-    
+
     @property
     def last_error(self) -> Optional[str]:
         """Last error encountered."""
         return self._last_error
-    
+
     def warmup(self) -> bool:
         """Optional warmup/initialization.
         
@@ -116,7 +115,7 @@ class BaseAgent(ABC):
         """
         self._status = AgentStatus.READY
         return True
-    
+
     def shutdown(self) -> bool:
         """Optional cleanup/unload.
         
@@ -125,22 +124,22 @@ class BaseAgent(ABC):
         """
         self._status = AgentStatus.UNLOADED
         return True
-    
+
     def enable(self) -> None:
         """Enable this agent."""
         if self._status == AgentStatus.DISABLED:
             self._status = AgentStatus.READY
-    
+
     def disable(self) -> None:
         """Disable this agent."""
         self._status = AgentStatus.DISABLED
-    
+
     def _record_execution(self, success: bool) -> None:
         """Record execution for telemetry."""
         self._execution_count += 1
         if not success:
             self._status = AgentStatus.ERROR
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get agent statistics."""
         return {
@@ -288,14 +287,14 @@ def _extract_bullet_issues(text: str) -> str:
 
 class NullAgent(BaseAgent):
     """Null agent that does nothing - for disabled roles."""
-    
+
     def __init__(self, agent_id: str = "null", role_name: str = "null"):
         super().__init__(agent_id, role_name)
         self._status = AgentStatus.DISABLED
-    
+
     def get_capabilities(self) -> AgentCapabilities:
         return AgentCapabilities()
-    
+
     def run(self, context: AgentContext) -> AgentResult:
         return AgentResult(
             success=False,

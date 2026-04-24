@@ -48,7 +48,7 @@ def run_smoke():
 
         # Must not be empty
         if not result.strip():
-            print(f"  FAIL: run() returned empty string")
+            print("  FAIL: run() returned empty string")
             failed += 1
             continue
 
@@ -61,11 +61,11 @@ def run_smoke():
 
         # Print clean output
         print(f"  Output: {result[:200]}")
-        print(f"  PASS")
+        print("  PASS")
         passed += 1
 
     # Test normalizer directly
-    print(f"\n--- Test: Normalizer unit ---")
+    print("\n--- Test: Normalizer unit ---")
     from core.normalize import Normalizer
     n = Normalizer()
     cases = [
@@ -82,11 +82,11 @@ def run_smoke():
             norm_pass = False
             failed += 1
     if norm_pass:
-        print(f"  All normalizer cases passed")
+        print("  All normalizer cases passed")
         passed += 1
 
     # Test entity extraction fix
-    print(f"\n--- Test: Entity extraction ---")
+    print("\n--- Test: Entity extraction ---")
     from core.symbolic import SymbolicCore
     sc = SymbolicCore()
     sc.add_rule(r'(?P<command>read)\s+(?:the\s+)?file\s+(?:named?\s+)?(?P<filename>\S+)', 'read_file', 0.85)
@@ -94,14 +94,14 @@ def run_smoke():
     entities = intent.get("entities", {})
     if entities.get("filename") == "config.json" and entities.get("command") == "read":
         print(f"  Entities: {entities}")
-        print(f"  PASS")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: expected filename=config.json, command=read, got {entities}")
         failed += 1
 
     # Test typo tolerance
-    print(f"\n--- Test: Typo tolerance ---")
+    print("\n--- Test: Typo tolerance ---")
     from core.symbolic import SymbolicCore as SC2
     sc2 = SC2()
     sc2.add_rule(r'(?P<command>list|show)\s+(?:(?:the|my|all)\s+)?files', 'list_files', 0.9)
@@ -109,7 +109,7 @@ def run_smoke():
     typo_intent = sc2.classify_intent("lsit files")
     if typo_intent.get("intent") == "list_files":
         print(f"  'lsit files' -> {typo_intent['intent']} (conf={typo_intent['confidence']:.2f})")
-        print(f"  PASS")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: 'lsit files' -> {typo_intent.get('intent')}")
@@ -118,39 +118,38 @@ def run_smoke():
     typo_intent2 = sc2.classify_intent("raed file named foo.py")
     if typo_intent2.get("intent") == "read_file":
         print(f"  'raed file named foo.py' -> {typo_intent2['intent']}")
-        print(f"  PASS")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: 'raed file named foo.py' -> {typo_intent2.get('intent')}")
         failed += 1
 
     # Test intent chaining
-    print(f"\n--- Test: Intent chaining ---")
+    print("\n--- Test: Intent chaining ---")
     result = agent.run("list files then what can you do")
     if isinstance(result, str) and "path:" in result and ("tool" in result.lower() or "help" in result.lower() or "learn" in result.lower()):
-        print(f"  Chained output has both results")
-        print(f"  PASS")
+        print("  Chained output has both results")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: chain result: {result[:120]}")
         failed += 1
 
     # Test context memory ("again")
-    print(f"\n--- Test: Context memory (again) ---")
+    print("\n--- Test: Context memory (again) ---")
     agent.run("list files")  # prime context
     result_again = agent.run("again")
     if isinstance(result_again, str) and "path:" in result_again:
-        print(f"  'again' replayed list_files")
-        print(f"  PASS")
+        print("  'again' replayed list_files")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: 'again' returned: {result_again[:100]}")
         failed += 1
 
     # Test ML confidence calibration
-    print(f"\n--- Test: ML confidence calibration ---")
+    print("\n--- Test: ML confidence calibration ---")
     from ml.ml import NaiveBayesClassifier
-    import math
     nb = NaiveBayesClassifier()
     nb.train([
         {"intent": "list_files", "features": ["list", "files"]},
@@ -160,7 +159,7 @@ def run_smoke():
     _, conf = nb.classify(["list", "files"])
     if 0.3 < conf < 0.95:  # should NOT be ~1.0 anymore
         print(f"  Confidence: {conf:.3f} (reasonable range)")
-        print(f"  PASS")
+        print("  PASS")
         passed += 1
     else:
         print(f"  FAIL: confidence={conf:.3f} (expected 0.3-0.95)")

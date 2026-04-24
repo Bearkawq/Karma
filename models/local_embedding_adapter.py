@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import urllib.request
 import urllib.error
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from models.base_model_adapter import (
     BaseModelAdapter, ModelMetadata, ModelCapabilities, ModelStatus, ModelType

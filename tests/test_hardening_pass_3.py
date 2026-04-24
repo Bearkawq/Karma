@@ -14,7 +14,6 @@ class TestNavigatorStructuralGrounding:
     def test_structural_pattern_triggers_grounding(self):
         """Abstract task like 'what file handles retrieval' should trigger grounding."""
         from agents.navigator_agent import NavigatorAgent
-        from agents.base_agent import AgentContext
 
         agent = NavigatorAgent()
 
@@ -46,7 +45,6 @@ class TestNavigatorStructuralGrounding:
     def test_scan_real_paths_handles_structural(self):
         """_scan_real_paths should return project files for structural patterns."""
         from agents.navigator_agent import NavigatorAgent
-        from agents.base_agent import AgentContext
 
         mock_context = MagicMock()
         mock_context.task = "how does the routing work?"

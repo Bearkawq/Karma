@@ -80,7 +80,7 @@ class WebFetcher:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:
                 raw = resp.read(MAX_PAGE_SIZE).decode("utf-8", errors="replace")
-        except urllib.error.URLError as e:
+        except urllib.error.URLError:
             self.last_search_failure = "timeout"
             self.last_search_diagnostic = self.PROVIDER_DIAGNOSTICS["search_timeout"]
             return []

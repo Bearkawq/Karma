@@ -17,7 +17,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 from collections import deque
 from threading import Lock
 from enum import Enum
@@ -109,14 +109,14 @@ class PredictionEngine:
         # Later, record observation
         engine.observe(pred_id, "success")
     """
-    
+
     DEFAULT_MISMATCH_THRESHOLDS = {
         MismatchSeverity.LOW: 0.1,
         MismatchSeverity.MEDIUM: 0.3,
         MismatchSeverity.HIGH: 0.5,
         MismatchSeverity.CRITICAL: 0.8,
     }
-    
+
     def __init__(
         self,
         base_dir: str,
@@ -126,33 +126,33 @@ class PredictionEngine:
     ):
         self._base_dir = Path(base_dir)
         self._base_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._reasoning_callback = mismatch_callback
         self._default_ttl = default_ttl_seconds
         self._max_pending = max_pending_predictions
-        
+
         self._predictions: Dict[str, Prediction] = {}
         self._observations: Dict[str, Observation] = {}
         self._mismatch_history: deque = deque(maxlen=500)
-        
+
         self._domain_stats: Dict[PredictionDomain, PredictionStats] = {
             d: PredictionStats() for d in PredictionDomain
         }
-        
+
         self._lock = Lock()
-        
+
         self._load_state()
-    
+
     def _state_path(self) -> Path:
         return self._base_dir / "data" / "prediction_engine.json"
-    
+
     def _load_state(self):
         """Load persisted state."""
         p = self._state_path()
         if p.exists():
             try:
                 data = json.loads(p.read_text())
-                
+
                 for pdata in data.get("predictions", []):
                     domain = PredictionDomain(pdata["domain"])
                     self._predictions[pdata["prediction_id"]] = Prediction(
@@ -165,7 +165,7 @@ class PredictionEngine:
                         expires_at=pdata["expires_at"],
                         metadata=pdata.get("metadata", {}),
                     )
-                
+
                 for m in data.get("mismatch_history", []):
                     domain = PredictionDomain(m["domain"])
                     self._mismatch_history.append(MismatchEvent(
@@ -180,15 +180,15 @@ class PredictionEngine:
                         timestamp=m["timestamp"],
                         reasoning_triggered=m.get("reasoning_triggered"),
                     ))
-                    
+
             except Exception:
                 pass
-    
+
     def _save_state(self):
         """Persist state."""
         p = self._state_path()
         p.parent.mkdir(parents=True, exist_ok=True)
-        
+
         predictions_data = [
             {
                 "prediction_id": p.prediction_id,
@@ -202,7 +202,7 @@ class PredictionEngine:
             }
             for p in self._predictions.values()
         ]
-        
+
         mismatch_data = [
             {
                 "mismatch_id": m.mismatch_id,
@@ -218,19 +218,19 @@ class PredictionEngine:
             }
             for m in self._mismatch_history
         ]
-        
+
         p.write_text(json.dumps({
             "predictions": predictions_data,
             "mismatch_history": mismatch_data,
         }, indent=2, default=str))
-    
+
     def register_reasoning_callback(
         self,
         callback: Callable[[MismatchEvent], None]
     ) -> None:
         """Register callback for reasoning triggers."""
         self._reasoning_callback = callback
-    
+
     def predict(
         self,
         domain: PredictionDomain,
@@ -254,10 +254,10 @@ class PredictionEngine:
             Prediction ID for later observation
         """
         from uuid import uuid4
-        
+
         ttl = ttl_seconds or self._default_ttl
         now = datetime.now()
-        
+
         pred_id = str(uuid4())[:12]
         prediction = Prediction(
             prediction_id=pred_id,
@@ -269,21 +269,21 @@ class PredictionEngine:
             expires_at=(now + timedelta(seconds=ttl)).isoformat(),
             metadata=metadata or {},
         )
-        
+
         with self._lock:
             # Cleanup expired predictions if at capacity
             self._cleanup_expired()
-            
+
             if len(self._predictions) >= self._max_pending:
                 self._cleanup_expired()
-            
+
             self._predictions[pred_id] = prediction
-            
+
             stats = self._domain_stats[domain]
             stats.total_predictions += 1
-        
+
         return pred_id
-    
+
     def observe(
         self,
         prediction_id: str,
@@ -301,12 +301,12 @@ class PredictionEngine:
             MismatchEvent if mismatch detected, None otherwise
         """
         from uuid import uuid4
-        
+
         with self._lock:
             prediction = self._predictions.get(prediction_id)
             if not prediction:
                 return None
-            
+
             obs_id = str(uuid4())[:12]
             observation = Observation(
                 observation_id=obs_id,
@@ -315,31 +315,31 @@ class PredictionEngine:
                 observed_at=datetime.now().isoformat(),
                 metadata=metadata or {},
             )
-            
+
             self._observations[obs_id] = observation
-            
+
             mismatch = self._check_mismatch(prediction, observation)
-            
+
             if mismatch:
                 self._mismatch_history.append(mismatch)
                 stats = self._domain_stats[prediction.domain]
                 stats.mismatches += 1
                 stats.resolved_predictions += 1
-                
+
                 if mismatch.triggered_reasoning and self._reasoning_callback:
                     try:
                         self._reasoning_callback(mismatch)
                     except Exception:
                         pass
-            
+
             # Remove resolved prediction
             del self._predictions[prediction_id]
-            
+
             self._update_stats(prediction.domain)
             self._save_state()
-            
+
             return mismatch
-    
+
     def _check_mismatch(
         self,
         prediction: Prediction,
@@ -347,27 +347,27 @@ class PredictionEngine:
     ) -> Optional[MismatchEvent]:
         """Check if observation mismatches prediction."""
         from uuid import uuid4
-        
+
         expected = prediction.expected
         actual = observation.actual
-        
+
         # Calculate deviation
         deviation = self._calculate_deviation(expected, actual)
-        
+
         # Determine severity based on confidence and deviation
         severity = self._classify_severity(
             expected, actual, deviation, prediction.confidence
         )
-        
+
         # Trigger reasoning if significant mismatch
         trigger_reasoning = severity in (
             MismatchSeverity.HIGH,
             MismatchSeverity.CRITICAL,
         )
-        
+
         if severity == MismatchSeverity.NONE:
             return None
-        
+
         return MismatchEvent(
             mismatch_id=str(uuid4())[:12],
             prediction_id=prediction.prediction_id,
@@ -379,7 +379,7 @@ class PredictionEngine:
             triggered_reasoning=trigger_reasoning,
             timestamp=datetime.now().isoformat(),
         )
-    
+
     def _calculate_deviation(self, expected: Any, actual: Any) -> float:
         """Calculate deviation between expected and actual."""
         # Numeric deviation
@@ -387,11 +387,11 @@ class PredictionEngine:
             if expected == 0:
                 return 1.0 if actual != 0 else 0.0
             return min(1.0, abs(actual - expected) / abs(expected))
-        
+
         # Boolean deviation
         if isinstance(expected, bool) and isinstance(actual, bool):
             return 1.0 if expected != actual else 0.0
-        
+
         # String deviation (simple containment check)
         if isinstance(expected, str) and isinstance(actual, str):
             if expected.lower() == actual.lower():
@@ -399,17 +399,17 @@ class PredictionEngine:
             if expected.lower() in actual.lower() or actual.lower() in expected.lower():
                 return 0.3
             return 1.0
-        
+
         # List/set deviation
         if isinstance(expected, (list, set)) and isinstance(actual, (list, set)):
             if not expected:
                 return 0.0 if not actual else 1.0
             matching = len(set(expected) & set(actual))
             return 1.0 - (matching / max(len(expected), len(actual), 1))
-        
+
         # Generic equality check
         return 0.0 if expected == actual else 1.0
-    
+
     def _classify_severity(
         self,
         expected: Any,
@@ -420,13 +420,13 @@ class PredictionEngine:
         """Classify mismatch severity."""
         if deviation == 0.0:
             return MismatchSeverity.NONE
-        
+
         # Adjust threshold based on prediction confidence
         # High confidence predictions have lower mismatch tolerance
         confidence_adjustment = (1.0 - confidence) * 0.2
-        
+
         effective_threshold = 0.1 + confidence_adjustment
-        
+
         if deviation < effective_threshold + 0.1:
             return MismatchSeverity.LOW
         elif deviation < effective_threshold + 0.3:
@@ -435,7 +435,7 @@ class PredictionEngine:
             return MismatchSeverity.HIGH
         else:
             return MismatchSeverity.CRITICAL
-    
+
     def _cleanup_expired(self):
         """Remove expired predictions."""
         now = datetime.now()
@@ -447,13 +447,13 @@ class PredictionEngine:
             stats = self._predictions[pid].domain
             self._domain_stats[stats].resolved_predictions += 1
             del self._predictions[pid]
-    
+
     def _update_stats(self, domain: PredictionDomain):
         """Update domain statistics."""
         stats = self._domain_stats[domain]
         if stats.resolved_predictions > 0:
             stats.accuracy_rate = 1.0 - (stats.mismatches / stats.resolved_predictions)
-        
+
         # Calculate average deviation from recent mismatches
         recent_mismatches = [
             m for m in self._mismatch_history
@@ -461,7 +461,7 @@ class PredictionEngine:
         ][-20:]
         if recent_mismatches:
             stats.average_deviation = sum(m.deviation for m in recent_mismatches) / len(recent_mismatches)
-    
+
     def get_pending_predictions(
         self,
         domain: Optional[PredictionDomain] = None,
@@ -472,7 +472,7 @@ class PredictionEngine:
             if domain:
                 preds = [p for p in preds if p.domain == domain]
             return preds
-    
+
     def get_mismatch_history(
         self,
         domain: Optional[PredictionDomain] = None,
@@ -483,20 +483,20 @@ class PredictionEngine:
         if domain:
             mismatches = [m for m in mismatches if m.domain == domain]
         return mismatches[-limit:]
-    
+
     def get_domain_stats(self, domain: PredictionDomain) -> PredictionStats:
         """Get statistics for a domain."""
         return self._domain_stats[domain]
-    
+
     def get_all_stats(self) -> Dict[str, PredictionStats]:
         """Get all domain statistics."""
         return {d.value: s for d, s in self._domain_stats.items()}
-    
+
     def get_prediction_summary(self) -> Dict[str, Any]:
         """Get summary of prediction engine state."""
         total_pending = len(self._predictions)
         total_mismatches = len(self._mismatch_history)
-        
+
         domain_summary = {}
         for domain, stats in self._domain_stats.items():
             domain_summary[domain.value] = {
@@ -506,7 +506,7 @@ class PredictionEngine:
                 "accuracy_rate": stats.accuracy_rate,
                 "pending": len([p for p in self._predictions.values() if p.domain == domain]),
             }
-        
+
         return {
             "total_predictions": sum(s.total_predictions for s in self._domain_stats.values()),
             "pending_predictions": total_pending,
@@ -514,7 +514,7 @@ class PredictionEngine:
             "by_domain": domain_summary,
             "reasoning_triggered": sum(1 for m in self._mismatch_history if m.triggered_reasoning),
         }
-    
+
     def predict_and_observe(
         self,
         domain: PredictionDomain,

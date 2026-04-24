@@ -10,7 +10,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 try:
     from research.pulse import get_pulse
@@ -427,7 +427,7 @@ class CodeTool:
         module_name = Path(path).stem
         test_lines = [
             f"# Auto-generated tests for {path}",
-            f"import sys",
+            "import sys",
             f"sys.path.insert(0, '{str(Path(path).parent)}')",
             f"from {module_name} import *",
             "",

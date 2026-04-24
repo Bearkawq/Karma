@@ -3,36 +3,36 @@
     "assigned_model_id": "qwen3:4b",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.223844"
+    "last_updated": "2026-04-24T19:51:37.547282"
   },
   "coder_slot": {
     "assigned_model_id": "qwen3:4b",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.226066"
+    "last_updated": "2026-04-24T19:51:37.552208"
   },
   "summarizer_slot": {
     "assigned_model_id": "granite3.3:2b",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.235537"
+    "last_updated": "2026-04-24T19:51:37.566206"
   },
   "embedder_slot": {
     "assigned_model_id": "nomic-embed-text",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.277887"
+    "last_updated": "2026-04-24T19:51:37.618216"
   },
   "navigator_slot": {
     "assigned_model_id": "granite3.3:2b",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.238544"
+    "last_updated": "2026-04-24T19:51:37.569631"
   },
   "general_language_slot": {
     "assigned_model_id": "qwen3:4b",
     "fallback_enabled": true,
     "deterministic_only": false,
-    "last_updated": "2026-04-20T14:13:23.227830"
+    "last_updated": "2026-04-24T19:51:37.556133"
   }
 }

@@ -6,7 +6,7 @@ It decomposes user goals into executable steps.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import time
 
 from agents.base_agent import (
@@ -20,7 +20,7 @@ class PlannerAgent(BaseAgent):
     This agent breaks down high-level goals into actionable steps.
     Does not directly mutate system state unless explicitly allowed.
     """
-    
+
     def __init__(self):
         super().__init__("planner", "planner")
         self._capabilities = AgentCapabilities(
@@ -31,10 +31,10 @@ class PlannerAgent(BaseAgent):
             tags=["planning", "decomposition", "task-analysis"],
         )
         self._status = AgentStatus.READY
-    
+
     def get_capabilities(self) -> AgentCapabilities:
         return self._capabilities
-    
+
     _SYSTEM = (
         "You are a task planner. Output a numbered action plan only. "
         "Each step: one line, format '1. ACTION: target'. "
@@ -108,16 +108,16 @@ class PlannerAgent(BaseAgent):
         if not steps:
             steps = [{"step": 1, "action": "process", "target": text[:120]}]
         return steps
-    
+
     def _decompose_task(
-        self, 
-        intent: str, 
-        task: str, 
+        self,
+        intent: str,
+        task: str,
         entities: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Decompose task into actionable steps."""
         steps = []
-        
+
         # Map intents to step templates
         if intent in ("golearn", "salvage_golearn"):
             steps = [
@@ -147,7 +147,7 @@ class PlannerAgent(BaseAgent):
             steps = [
                 {"step": 1, "action": "process", "target": task},
             ]
-        
+
         return steps
 
 

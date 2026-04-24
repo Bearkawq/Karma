@@ -8,7 +8,6 @@ Tests for:
 5. Regression checks
 """
 
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -59,7 +58,7 @@ def test_golearn_kali_linux():
 def test_diagnostic_code_constants():
     """Diagnostic codes should be properly defined."""
     from research.providers import DiagnosticCode
-    
+
     assert DiagnosticCode.SEARCH_PROVIDER_BLOCKED == "search_provider_blocked"
     assert DiagnosticCode.SEARCH_TIMEOUT == "search_timeout"
     assert DiagnosticCode.SEARCH_PARSE_ERROR == "search_parse_error"
@@ -76,14 +75,14 @@ def test_diagnostic_code_constants():
 def test_provider_diagnostics_class():
     """ProviderDiagnostics should properly store diagnostic info."""
     from research.providers import ProviderDiagnostics, DiagnosticCode
-    
+
     diag = ProviderDiagnostics(
         code=DiagnosticCode.SEARCH_PROVIDER_BLOCKED,
         message="Search provider blocked the request",
         provider="duckduckgo",
         details={"retry_after": 60}
     )
-    
+
     assert diag.code == "search_provider_blocked"
     assert diag.provider == "duckduckgo"
     assert diag.details["retry_after"] == 60
@@ -92,14 +91,14 @@ def test_provider_diagnostics_class():
 def test_search_result_dataclass():
     """SearchResult should store result information properly."""
     from research.providers import SearchResult
-    
+
     result = SearchResult(
         title="Python Decorators Tutorial",
         url="https://example.com/decorators",
         snippet="Learn about Python decorators...",
         quality=0.8
     )
-    
+
     assert result.title == "Python Decorators Tutorial"
     assert result.quality == 0.8
 
@@ -109,9 +108,9 @@ def test_search_result_dataclass():
 def test_session_json_contains_provider_fields():
     """session.json should contain provider and diagnostic fields."""
     import tempfile
-    from research.session import GoLearnSession, ResearchSession
+    from research.session import ResearchSession
     from research.providers import DiagnosticCode
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a minimal session
         session = ResearchSession(
@@ -127,7 +126,7 @@ def test_session_json_contains_provider_fields():
             useful_artifacts=3,
             stop_reason="budget_exhausted",
         )
-        
+
         assert session.provider == "duckduckgo"
         assert session.provider_code == DiagnosticCode.PROVIDER_OK
         assert session.accepted_sources == 3
@@ -138,11 +137,11 @@ def test_session_json_contains_provider_fields():
 def test_report_contains_provider_info():
     """report.md should contain provider diagnostics."""
     from research.index import NoteWriter
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         nw = NoteWriter()
         report_path = Path(tmpdir) / "report.md"
-        
+
         # Generate report with provider info
         nw.generate_report(
             session_id="test_001",
@@ -158,9 +157,9 @@ def test_report_contains_provider_info():
             accepted_sources=3,
             useful_artifacts=3,
         )
-        
+
         report_content = report_path.read_text()
-        
+
         assert "duckduckgo" in report_content
         assert "Provider status" in report_content
         assert "provider_ok" in report_content
@@ -174,11 +173,10 @@ def test_report_contains_provider_info():
 def test_golearn_followup_after_blocked():
     """Blocked golearn should not break follow-up conversation."""
     from agent.dialogue_manager import DialogueManager
-    from core.conversation_state import ConversationState
-    
+
     cs = ConversationState()
     dm = DialogueManager(cs, None, None, None)
-    
+
     # Simulate a blocked golearn result
     blocked_result = {
         "session": {
@@ -190,14 +188,14 @@ def test_golearn_followup_after_blocked():
             "provider_code": "search_provider_blocked",
         }
     }
-    
+
     dm.set_last_golearn_result(blocked_result)
-    
+
     # Test "continue" follow-up after blocked run
     response = dm._handle_golearn_followup("continue")
     assert response is not None
     assert "blocked" in response.lower() or "limited" in response.lower()
-    
+
     # Test "summarize that" follow-up after blocked run
     response = dm._handle_golearn_followup("summarize that")
     assert response is not None
@@ -207,11 +205,10 @@ def test_golearn_followup_after_blocked():
 def test_golearn_followup_after_successful():
     """Successful golearn should provide useful follow-up."""
     from agent.dialogue_manager import DialogueManager
-    from core.conversation_state import ConversationState
-    
+
     cs = ConversationState()
     dm = DialogueManager(cs, None, None, None)
-    
+
     # Simulate a successful golearn result
     success_result = {
         "session": {
@@ -225,9 +222,9 @@ def test_golearn_followup_after_successful():
             "useful_artifacts": 3,
         }
     }
-    
+
     dm.set_last_golearn_result(success_result)
-    
+
     # Test "summarize that" follow-up after successful run
     response = dm._handle_golearn_followup("summarize that")
     assert response is not None
@@ -247,32 +244,32 @@ def test_shell_rules_still_match():
 def test_golearn_dispatch_routes_correctly():
     """golearn intent should have tool='golearn' in action."""
     from core.grammar import grammar_match
-    
+
     gram = grammar_match('golearn "python decorators" 5')
     assert gram is not None
     assert gram["intent"] == "golearn"
-    
+
     _DIRECT_TOOL_MAP = {
         "golearn": "golearn",
         "salvage_golearn": "golearn",
     }
-    
+
     tool = _DIRECT_TOOL_MAP.get(gram.get("intent", ""))
     assert tool == "golearn"
 
 
 def test_provider_creation():
     """Provider factory should create valid providers."""
-    from research.providers import create_provider, DuckDuckGoProvider, FallbackProvider, CachedProvider
-    
+    from research.providers import create_provider, FallbackProvider, CachedProvider
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
-        
+
         # Default: create_provider uses cache=True
         provider = create_provider(session_dir, "duckduckgo")
         assert isinstance(provider, CachedProvider)
         assert isinstance(provider.primary, FallbackProvider)
-        
+
         # Without cache
         provider_no_cache = create_provider(session_dir, "duckduckgo", use_cache=False)
         assert isinstance(provider_no_cache, FallbackProvider)
@@ -280,17 +277,17 @@ def test_provider_creation():
 
 def test_provider_search_returns_diagnostics():
     """Provider search should return diagnostics even on failure."""
-    from research.providers import create_provider, DiagnosticCode
-    
+    from research.providers import create_provider
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
-        
+
         provider = create_provider(session_dir, "duckduckgo")
-        
+
         # The search should return results and diagnostics
         # (We can't reliably test actual search without network, but we can verify the interface)
         results, diag = provider.search("test query", max_results=3)
-        
+
         # Diagnostics should always be returned
         assert diag is not None
         # Provider name should be one of the valid providers in the chain
@@ -303,14 +300,14 @@ def test_provider_search_returns_diagnostics():
 def test_dedupe_urls_in_results():
     """Provider should dedupe URLs in results."""
     from research.providers import SearchResult
-    
+
     # Create duplicate URLs
     results = [
         SearchResult(title="A", url="https://example.com/a", snippet="", quality=0.8),
         SearchResult(title="B", url="https://example.com/a", snippet="", quality=0.9),
         SearchResult(title="C", url="https://example.com/b", snippet="", quality=0.7),
     ]
-    
+
     # Deduping should happen in the provider layer
     seen = set()
     deduped = []
@@ -318,7 +315,7 @@ def test_dedupe_urls_in_results():
         if r.url not in seen:
             seen.add(r.url)
             deduped.append(r)
-    
+
     assert len(deduped) == 2
 
 
@@ -327,15 +324,15 @@ def test_fallback_queries_generated():
     from research.providers import FallbackProvider, DuckDuckGoProvider
     from pathlib import Path
     import tempfile
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         session_dir = Path(tmpdir)
         primary = DuckDuckGoProvider(session_dir)
         fallback = FallbackProvider(primary)
-        
+
         # Generate fallback queries for a multi-word topic
         fallback_queries = fallback._generate_fallback_queries("python decorators tutorial")
-        
+
         assert len(fallback_queries) > 0
         assert all(isinstance(q, str) for q in fallback_queries)
 

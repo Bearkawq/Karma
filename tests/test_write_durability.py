@@ -15,12 +15,8 @@ from __future__ import annotations
 import json
 import os
 import stat
-import tempfile
-from pathlib import Path
-from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -1086,7 +1082,6 @@ class TestEpisodicRotationDirFsync:
         return es
 
     def test_dir_fsync_called_during_rotation(self, tmp_path):
-        from storage.episodic import EpisodicStore
         es = self._make_store_with_content(tmp_path)
         dir_fsynced = []
         real_fsync = os.fsync
@@ -1105,7 +1100,6 @@ class TestEpisodicRotationDirFsync:
         assert len(dir_fsynced) >= 1
 
     def test_rotation_preserves_readable_data(self, tmp_path):
-        from storage.episodic import EpisodicStore
         es = self._make_store_with_content(tmp_path, lines=20)
         es._rotate()
         assert not es._last_save_failed
@@ -1122,7 +1116,6 @@ class TestEpisodicRotationDirFsync:
         assert archive.exists()
 
     def test_dir_fsync_failure_sets_save_failed_flag(self, tmp_path):
-        from storage.episodic import EpisodicStore
         es = self._make_store_with_content(tmp_path)
         real_fsync = os.fsync
 
@@ -1142,7 +1135,6 @@ class TestEpisodicRotationDirFsync:
         assert es._last_save_failed
 
     def test_dir_fsync_failure_does_not_corrupt_data(self, tmp_path):
-        from storage.episodic import EpisodicStore
         es = self._make_store_with_content(tmp_path, lines=20)
         real_fsync = os.fsync
 
@@ -1167,7 +1159,6 @@ class TestEpisodicRotationDirFsync:
 
     def test_rotation_write_failure_does_not_set_flag(self, tmp_path):
         """If the atomic writes fail (not dir-fsync), _last_save_failed stays False."""
-        from storage.episodic import EpisodicStore
         es = self._make_store_with_content(tmp_path)
         with patch("storage.episodic.atomic_write_text", side_effect=OSError("write failed")):
             es._rotate()

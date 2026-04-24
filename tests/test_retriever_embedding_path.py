@@ -398,7 +398,6 @@ class TestCosineSimilarityRanking:
             mem = _memory_with_facts(tmp, {"unrelated": "completely unrelated content xyz"})
             agent = _fresh_agent(tmp)
             # Adapter returns orthogonal vectors — cosine similarity = 0
-            import math
             call_count = [0]
 
             class OrthogonalAdapter:
@@ -499,7 +498,6 @@ class TestRetrieverEmbeddingLive:
             mgr = get_agent_model_manager()
             mgr.initialize()
 
-            from agents.retriever_agent import RetrieverAgent
             from agents.base_agent import AgentContext
 
             with tempfile.TemporaryDirectory() as tmp:
@@ -528,7 +526,6 @@ class TestRetrieverEmbeddingLive:
             mgr = get_agent_model_manager()
             mgr.initialize()
 
-            from agents.retriever_agent import RetrieverAgent
             from agents.base_agent import AgentContext
 
             with tempfile.TemporaryDirectory() as tmp:
@@ -562,7 +559,6 @@ class TestRetrieverEmbeddingLive:
             mgr = get_agent_model_manager()
             mgr.initialize()
 
-            from agents.retriever_agent import RetrieverAgent
             from agents.base_agent import AgentContext
 
             with tempfile.TemporaryDirectory() as tmp:

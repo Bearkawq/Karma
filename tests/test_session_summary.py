@@ -1,8 +1,7 @@
 """Tests for session/boot summary and self-check introspection lanes."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from agent.agent_loop import AgentLoop, load_config
 

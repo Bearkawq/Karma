@@ -7,8 +7,7 @@ Handles: introspection, clarification, follow-up, continuation, summary.
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from core.dialogue import choose_response_goal, retrieval_mode_for_goal
 from core.conversation_state import ConversationState
@@ -374,7 +373,7 @@ class DialogueManager:
                 nearby = [a.get("gist", "") for a in cs.artifact_ledger
                           if a.get("gist", "").lower() != label and a.get("gist")][-6:]
                 if nearby:
-                    lines.append(f"Other items in the same result set:")
+                    lines.append("Other items in the same result set:")
                     for n in nearby:
                         lines.append(f"  - {n}")
             alts = cs.contrastive_alternatives()

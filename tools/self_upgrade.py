@@ -4,7 +4,6 @@ Scans Python files for common patterns, generates patch suggestions in data/upgr
 """
 
 import ast
-import os
 import re
 from datetime import datetime
 from pathlib import Path

@@ -27,14 +27,14 @@ class ScratchNote:
 
 class Scratchpad:
     """Persistent scratchpad for operator notes."""
-    
+
     def __init__(self, storage_path: Optional[str] = None):
         self._notes: List[ScratchNote] = []
         self._lock = Lock()
         self._storage_path = storage_path
         if storage_path:
             self._load()
-    
+
     def add_note(self, content: str, tags: Optional[List[str]] = None) -> ScratchNote:
         """Add a new note."""
         import uuid
@@ -44,13 +44,13 @@ class Scratchpad:
             timestamp=datetime.now().isoformat(),
             tags=tags or [],
         )
-        
+
         with self._lock:
             self._notes.append(note)
-        
+
         self._save()
         return note
-    
+
     def update_note(self, note_id: str, content: str) -> bool:
         """Update an existing note."""
         with self._lock:
@@ -61,7 +61,7 @@ class Scratchpad:
                     self._save()
                     return True
         return False
-    
+
     def delete_note(self, note_id: str) -> bool:
         """Delete a note."""
         with self._lock:
@@ -71,7 +71,7 @@ class Scratchpad:
                     self._save()
                     return True
         return False
-    
+
     def get_note(self, note_id: str) -> Optional[ScratchNote]:
         """Get a note by ID."""
         with self._lock:
@@ -79,17 +79,17 @@ class Scratchpad:
                 if note.note_id == note_id:
                     return note
         return None
-    
+
     def get_all_notes(self) -> List[ScratchNote]:
         """Get all notes."""
         with self._lock:
             return list(self._notes)
-    
+
     def get_recent_notes(self, limit: int = 20) -> List[ScratchNote]:
         """Get recent notes."""
         with self._lock:
             return self._notes[-limit:]
-    
+
     def search_notes(self, query: str) -> List[ScratchNote]:
         """Search notes by content."""
         with self._lock:
@@ -98,12 +98,12 @@ class Scratchpad:
                 n for n in self._notes
                 if query_lower in n.content.lower()
             ]
-    
+
     def get_notes_by_tag(self, tag: str) -> List[ScratchNote]:
         """Get notes with a specific tag."""
         with self._lock:
             return [n for n in self._notes if tag in n.tags]
-    
+
     def _save(self) -> None:
         """Persist to disk."""
         if not self._storage_path:
@@ -124,7 +124,7 @@ class Scratchpad:
                 json.dump(data, f, indent=2)
         except Exception:
             pass
-    
+
     def _load(self) -> None:
         """Load from disk."""
         if not self._storage_path:
@@ -146,7 +146,7 @@ class Scratchpad:
             ]
         except Exception:
             pass
-    
+
     def clear(self) -> None:
         """Clear all notes."""
         with self._lock:

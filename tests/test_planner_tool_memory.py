@@ -1,6 +1,4 @@
 """Tests for planner tool-memory evidence handling."""
-import pytest
-import inspect
 from core.planner import Planner
 
 

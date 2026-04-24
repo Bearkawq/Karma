@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from storage.persistence import load_json_file, quarantine_file, save_json_file
+from storage.persistence import quarantine_file, save_json_file
 
 _DECAY_RATE = 0.02
 
@@ -104,7 +104,6 @@ class FactStore:
 
     def compress(self) -> Dict[str, Any]:
         """Deduplicate, cluster, and decay stale facts."""
-        import re
         report = {"removed_dupes": 0, "clustered": 0, "decayed": 0, "pruned_dead": 0}
         with self._lock:
             # Dedup

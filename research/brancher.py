@@ -131,7 +131,7 @@ class SubtopicBrancher:
         # Early exit if queue is getting too large
         if len(self.queue) >= MAX_QUEUE_SIZE:
             return []
-        
+
         candidates = self._extract_candidates(texts, current_topic)
         scored = self._score_candidates(candidates)
 

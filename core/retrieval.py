@@ -28,6 +28,23 @@ _MODE_LIMITS = {
 }
 
 
+
+class _BoundedOrderedDict(OrderedDict):
+    """OrderedDict that evicts oldest entries even on direct insertion."""
+
+    def __init__(self, maxsize: int = 256):
+        super().__init__()
+        self.maxsize = maxsize
+
+    def __setitem__(self, key, value):
+        exists = key in self
+        super().__setitem__(key, value)
+        if exists:
+            self.move_to_end(key)
+        while len(self) > self.maxsize:
+            self.popitem(last=False)
+
+
 class EvidenceItem:
     """Single piece of retrieved evidence."""
     __slots__ = ("type", "value", "confidence", "relevance", "recency",
@@ -55,7 +72,9 @@ class EvidenceItem:
 class RetrievalBus:
     """Retrieve context bundles from memory strata for different agent phases."""
 
-    def __init__(self, memory, capability_map=None, data_dir: str = "data"):
+    def __init__(self, memory=None, capability_map=None, data_dir: str = "data"):
+        if memory is None:
+            memory = type("MemoryStub", (), {"facts": {}})()
         self._memory = memory
         self._cap_map = capability_map
         self._data_dir = Path(data_dir)
@@ -77,7 +96,7 @@ class RetrievalBus:
         # Retrieval metrics
         self._metrics: Dict[str, int] = defaultdict(int)
         # In-memory bundle cache to avoid recomputing identical retrievals every turn
-        self._bundle_cache: OrderedDict[Tuple[Any, ...], List[EvidenceItem]] = OrderedDict()
+        self._bundle_cache: OrderedDict[Tuple[Any, ...], List[EvidenceItem]] = _BoundedOrderedDict(256)
         self._cache_generation = 0
         self.tool_manager = None
         self.conversation_state = None

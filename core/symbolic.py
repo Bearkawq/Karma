@@ -9,11 +9,9 @@ This module implements:
 - Transparent reasoning traces
 """
 
-import json
 import re
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Optional
 from datetime import datetime
-from pathlib import Path
 
 
 def _levenshtein(a: str, b: str) -> int:
@@ -48,7 +46,7 @@ class SymbolicCore:
         self.actions = {}
         self.world_state = {}
         self.trace = []
-        
+
     def add_rule(self, pattern: str, intent: str, confidence: float = 0.8):
         """Add a pattern-based intent classification rule"""
         self.rules.append({
@@ -57,7 +55,7 @@ class SymbolicCore:
             'confidence': confidence
         })
         self._log_trace(f"Added rule for intent '{intent}' with pattern '{pattern}'")
-    
+
     def parse_intent(self, text: str) -> Optional[Dict[str, Any]]:
         """Alias for classify_intent; returns None if unknown."""
         res = self.classify_intent(text)
@@ -115,14 +113,14 @@ class SymbolicCore:
             'confidence': 0.1,
             'entities': {}
         }
-    
+
     def _extract_entities(self, text: str, pattern: re.Pattern) -> Dict[str, str]:
         """Extract entities from text using named regex groups."""
         match = pattern.search(text)
         if match:
             return {k: v for k, v in match.groupdict().items() if v is not None}
         return {}
-    
+
     @staticmethod
     def _fix_typos(text: str) -> str:
         """Try to correct misspelled command words using edit distance."""
@@ -220,50 +218,50 @@ class SymbolicCore:
         """Add an action definition"""
         self.actions[name] = action_def
         self._log_trace(f"Added action: {name}")
-    
+
     def plan(self, goal: str, context: Dict[str, Any] = None) -> List[str]:
         """HTN planning to achieve a goal"""
         self._log_trace(f"Planning for goal: {goal}")
-        
+
         if goal in self.actions:
             action = self.actions[goal]
             if self._check_preconditions(action, context):
                 self._log_trace(f"Found primitive action: {goal}")
                 return [goal]
-        
+
         # Try to find compound actions
         for action_name, action in self.actions.items():
             if goal in action.get('effects', []):
                 if self._check_preconditions(action, context):
                     self._log_trace(f"Found compound action: {action_name}")
                     return [action_name]
-        
+
         self._log_trace("No valid plan found")
         return []
-    
+
     def _check_preconditions(self, action: Dict[str, Any], context: Dict[str, Any] = None) -> bool:
         """Check if action preconditions are met"""
         if not action.get('preconditions'):
             return True
-        
+
         context = context or {}
         for condition in action['preconditions']:
             if condition not in self.world_state and condition not in context:
                 self._log_trace(f"Precondition not met: {condition}")
                 return False
-        
+
         self._log_trace("All preconditions met")
         return True
-    
+
     def update_world_state(self, state: Dict[str, Any]):
         """Update the world state"""
         self.world_state.update(state)
         self._log_trace(f"Updated world state: {state}")
-    
+
     def get_trace(self) -> List[Dict[str, Any]]:
         """Get reasoning trace"""
         return self.trace.copy()
-    
+
     def _log_trace(self, message: str):
         """Log reasoning step"""
         self.trace.append({
@@ -278,13 +276,13 @@ class SymbolicCore:
 # Example rule-based intent parser
 if __name__ == "__main__":
     sc = SymbolicCore()
-    
+
     # Add intent classification rules
     sc.add_rule(r'(?P<command>list|show).*files', 'list_files', 0.9)
     sc.add_rule(r'(?P<command>read).*file.*named (?P<filename>\w+)', 'read_file', 0.8)
     sc.add_rule(r'(?P<command>delete).*file.*named (?P<filename>\w+)', 'delete_file', 0.8)
     sc.add_rule(r'what.*can.*you.*do', 'list_capabilities', 0.9)
-    
+
     # Add action definitions
     sc.add_action('list_files', {
         'preconditions': ['filesystem_available'],
@@ -293,7 +291,7 @@ if __name__ == "__main__":
         'parameters': {'path': {'type': 'string', 'required': False}},
         'failure_modes': ['permission_denied', 'path_not_found']
     })
-    
+
     sc.add_action('read_file', {
         'preconditions': ['file_exists'],
         'effects': ['file_content_available'],
@@ -301,18 +299,18 @@ if __name__ == "__main__":
         'parameters': {'filename': {'type': 'string', 'required': True}},
         'failure_modes': ['file_not_found', 'permission_denied']
     })
-    
+
     # Test intent classification
     print("Intent Classification:")
     print(sc.classify_intent("List all files in my directory"))
     print(sc.classify_intent("Read the file named report.txt"))
     print(sc.classify_intent("What can you do?"))
-    
+
     # Test planning
     print("\nPlanning:")
     sc.update_world_state({'filesystem_available': True})
     print(sc.plan('list_files'))
-    
+
     # Show trace
     print("\nReasoning Trace:")
     for step in sc.get_trace():

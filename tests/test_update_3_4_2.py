@@ -1,7 +1,6 @@
 """Tests for v3.4.2: enriched subject content, file-role summaries, natural introspection."""
 
 from core.conversation_state import ConversationState
-from core.dialogue import classify_dialogue_act
 
 
 def _make_agent(tmp_path):

@@ -1,6 +1,6 @@
 """Tests for RetrieverAgent recent-task query routing and run_history preference."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
 

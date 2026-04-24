@@ -105,7 +105,6 @@ def test_golearn_learn_about_match():
 
 def test_golearn_dispatch_routes_correctly():
     """golearn intent should have tool='golearn' in action, not None."""
-    from agent.agent_loop import AgentLoop
     from core.grammar import grammar_match
 
     gram = grammar_match('golearn "python decorators" 5')

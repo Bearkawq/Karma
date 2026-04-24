@@ -1,6 +1,5 @@
 from agent.agent_loop import AgentLoop, load_config
 from core.runtime_governor import RuntimeGovernor
-from core.retrieval import RetrievalBus
 
 
 def test_runtime_governor_cools_down_tools():

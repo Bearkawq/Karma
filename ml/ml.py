@@ -11,39 +11,36 @@ No external ML frameworks or pretrained models.
 
 import json
 import math
-import random
-from typing import Dict, List, Any, Tuple, Optional
-from datetime import datetime
-import os
+from typing import Dict, List, Any, Tuple
 from pathlib import Path
 
 
 class NaiveBayesClassifier:
     """Naive Bayes classifier for intent classification"""
-    
+
     def __init__(self):
         self.class_counts = {}
         self.feature_counts = {}
         self.total_count = 0
         self.vocabulary = set()
         self.is_trained = False
-    
+
     def train(self, training_data: List[Dict[str, Any]]) -> None:
         """Train the Naive Bayes classifier"""
         self.class_counts = {}
         self.feature_counts = {}
         self.total_count = 0
         self.vocabulary = set()
-        
+
         for example in training_data:
             intent = example.get('intent')
             features = example.get('features', [])
-            
+
             if intent not in self.class_counts:
                 self.class_counts[intent] = 0
             self.class_counts[intent] += 1
             self.total_count += 1
-            
+
             for feature in features:
                 if feature not in self.feature_counts:
                     self.feature_counts[feature] = {}
@@ -51,14 +48,14 @@ class NaiveBayesClassifier:
                     self.feature_counts[feature][intent] = 0
                 self.feature_counts[feature][intent] += 1
                 self.vocabulary.add(feature)
-        
+
         self.is_trained = True
-    
+
     def classify(self, features: List[str]) -> Tuple[str, float]:
         """Classify input features using Naive Bayes"""
         if not self.is_trained:
             return 'unknown', 0.0
-        
+
         best_class = None
         best_log_score = float('-inf')
         log_scores: Dict[str, float] = {}
@@ -90,7 +87,7 @@ class NaiveBayesClassifier:
             confidence = 0.0
 
         return best_class, confidence
-    
+
     def save(self, file_path: str) -> None:
         """Save model to file"""
         model_data = {
@@ -100,15 +97,15 @@ class NaiveBayesClassifier:
             'vocabulary': list(self.vocabulary),
             'is_trained': self.is_trained
         }
-        
+
         with open(file_path, 'w') as f:
             json.dump(model_data, f, indent=2)
-    
+
     def load(self, file_path: str) -> None:
         """Load model from file"""
         with open(file_path, 'r') as f:
             model_data = json.load(f)
-        
+
         self.class_counts = model_data.get('class_counts', {})
         self.feature_counts = model_data.get('feature_counts', {})
         self.total_count = model_data.get('total_count', 0)
@@ -118,7 +115,7 @@ class NaiveBayesClassifier:
 
 class LogisticRegression:
     """Logistic regression classifier for candidate scoring"""
-    
+
     def __init__(self, learning_rate: float = 0.01, epochs: int = 100):
         self.learning_rate = learning_rate
         self.epochs = epochs
@@ -126,7 +123,7 @@ class LogisticRegression:
         self.intercept = 0.0
         self.classes = []
         self.is_trained = False
-    
+
     def train(self, training_data: List[Dict[str, Any]]) -> None:
         """Train logistic regression model"""
         if not training_data:
@@ -175,7 +172,7 @@ class LogisticRegression:
                 self.intercept -= self.learning_rate * error
 
         self.is_trained = True
-    
+
     def _predict_proba(self, features: Dict[str, float]) -> float:
         """Predict probability using sigmoid"""
         z = self.intercept
@@ -186,14 +183,14 @@ class LogisticRegression:
         # Sigmoid with overflow protection
         z = max(-500.0, min(500.0, z))
         return 1.0 / (1.0 + math.exp(-z))
-    
+
     def predict(self, features: Dict[str, float]) -> float:
         """Predict class probability"""
         if not self.is_trained:
             return 0.5
-        
+
         return self._predict_proba(features)
-    
+
     def save(self, file_path: str) -> None:
         """Save model to file"""
         model_data = {
@@ -204,15 +201,15 @@ class LogisticRegression:
             'epochs': self.epochs,
             'is_trained': self.is_trained
         }
-        
+
         with open(file_path, 'w') as f:
             json.dump(model_data, f, indent=2)
-    
+
     def load(self, file_path: str) -> None:
         """Load model from file"""
         with open(file_path, 'r') as f:
             model_data = json.load(f)
-        
+
         self.weights = model_data.get('weights', {})
         self.intercept = model_data.get('intercept', 0.0)
         self.classes = model_data.get('classes', [])
@@ -251,47 +248,47 @@ class MLModelManager:
         self.model_dir = Path('data/ml_models')
         self.model_dir.mkdir(parents=True, exist_ok=True)
         self.training_file = self.model_dir / 'intent_training.jsonl'
-    
+
     def train_intent_classifier(self, training_data: List[Dict[str, Any]]) -> None:
         """Train intent classifier"""
         classifier = NaiveBayesClassifier()
-        
+
         # Extract features (simple bag-of-words)
         processed_data = []
         for example in training_data:
             intent = example.get('intent')
             text = example.get('text', '')
-            
+
             # Simple feature extraction
             features = self._extract_features(text)
-            
+
             processed_data.append({
                 'intent': intent,
                 'features': features
             })
-        
+
         classifier.train(processed_data)
         classifier.save(self.model_dir / 'intent_classifier.json')
         self.models['intent_classifier'] = classifier
-    
+
     def train_candidate_scorer(self, training_data: List[Dict[str, Any]]) -> None:
         """Train candidate scorer"""
         scorer = LogisticRegression(learning_rate=0.1, epochs=50)
-        
+
         processed_data = []
         for example in training_data:
             features = example.get('features', {})
             label = example.get('label', 0.0)
-            
+
             processed_data.append({
                 'features': features,
                 'label': label
             })
-        
+
         scorer.train(processed_data)
         scorer.save(self.model_dir / 'candidate_scorer.json')
         self.models['candidate_scorer'] = scorer
-    
+
     def collect_training_example(self, text: str, intent: str) -> None:
         """Append a successful intent parse to the training file."""
         try:
@@ -328,37 +325,37 @@ class MLModelManager:
         """Classify intent using trained model"""
         if 'intent_classifier' not in self.models:
             self._load_model('intent_classifier')
-        
+
         classifier = self.models.get('intent_classifier')
         if not classifier:
             return 'unknown', 0.0
-        
+
         features = self._extract_features(text)
         return classifier.classify(features)
-    
+
     def score_candidate(self, features: Dict[str, float]) -> float:
         """Score candidate using trained model"""
         if 'candidate_scorer' not in self.models:
             self._load_model('candidate_scorer')
-        
+
         scorer = self.models.get('candidate_scorer')
         if not scorer:
             return 0.5
-        
+
         return scorer.predict(features)
-    
+
     def _extract_features(self, text: str) -> List[str]:
         """Extract simple features from text"""
         # Simple bag-of-words
         words = text.lower().split()
         return [w.strip('.,?!') for w in words if len(w) > 2]
-    
+
     def _load_model(self, model_name: str) -> None:
         """Load model from file"""
         model_path = self.model_dir / f'{model_name}.json'
         if not model_path.exists():
             return
-        
+
         if model_name == 'intent_classifier':
             classifier = NaiveBayesClassifier()
             classifier.load(model_path)
@@ -367,7 +364,7 @@ class MLModelManager:
             scorer = LogisticRegression()
             scorer.load(model_path)
             self.models[model_name] = scorer
-    
+
     def refine_actions(self, intent: dict, actions: List[dict]) -> List[dict]:
         """Optional ML-based refinement of candidate actions.
         If symbolic confidence >= 0.75, return original order (don't override strong match).
@@ -401,31 +398,31 @@ class MLModelManager:
         if model:
             return hasattr(model, 'is_trained') and model.is_trained
         return False
-    
+
     def get_model_info(self, model_name: str) -> Dict[str, Any]:
         """Get model information"""
         model = self.models.get(model_name)
         if not model:
             return { 'exists': False }
-        
+
         info = {
             'exists': True,
             'is_trained': getattr(model, 'is_trained', False),
             'type': type(model).__name__
         }
-        
+
         if hasattr(model, 'classes'):
             info['classes'] = getattr(model, 'classes', [])
-        
+
         return info
 
 
 # Example ML training and usage
 if __name__ == "__main__":
     ml_manager = MLModelManager()
-    
+
     print("ML Layer Tests:")
-    
+
     # Example training data
     intent_training_data = [
         { 'text': 'List all files in my directory', 'intent': 'list_files' },
@@ -439,11 +436,11 @@ if __name__ == "__main__":
         { 'text': 'Exit the program', 'intent': 'exit' },
         { 'text': 'Help me with something', 'intent': 'help' }
     ]
-    
+
     # Train intent classifier
     print("- Training intent classifier...")
     ml_manager.train_intent_classifier(intent_training_data)
-    
+
     # Test classification
     print("- Testing intent classification:")
     test_cases = [
@@ -453,31 +450,31 @@ if __name__ == "__main__":
         ('Whats my disk usage?', 'check_disk'),
         ('Help me', 'help')
     ]
-    
+
     for text, expected in test_cases:
         intent, confidence = ml_manager.classify_intent(text)
         print(f"  '{text}' -> {intent} ({confidence:.2f})")
-    
+
     # Example candidate scoring data
     candidate_training_data = [
-        { 
+        {
             'features': { 'preconditions_met': 1.0, 'cost': 1.0, 'similarity': 0.8 },
             'label': 0.9
         },
-        { 
+        {
             'features': { 'preconditions_met': 0.0, 'cost': 3.0, 'similarity': 0.2 },
             'label': 0.1
         },
-        { 
+        {
             'features': { 'preconditions_met': 1.0, 'cost': 2.0, 'similarity': 0.9 },
             'label': 0.8
         }
     ]
-    
+
     # Train candidate scorer
     print("- Training candidate scorer...")
     ml_manager.train_candidate_scorer(candidate_training_data)
-    
+
     # Test scoring
     print("- Testing candidate scoring:")
     test_candidates = [
@@ -485,11 +482,11 @@ if __name__ == "__main__":
         { 'preconditions_met': 0.0, 'cost': 3.0, 'similarity': 0.3 },
         { 'preconditions_met': 1.0, 'cost': 2.0, 'similarity': 0.8 }
     ]
-    
+
     for i, features in enumerate(test_candidates):
         score = ml_manager.score_candidate(features)
         print(f"  Candidate {i+1}: {score:.2f}")
-    
+
     # Model info
     print("- Model information:")
     print(f"Intent classifier: {ml_manager.get_model_info('intent_classifier')}")

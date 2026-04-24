@@ -40,7 +40,7 @@ class Excavation:
     pattern_found: Optional[str] = None
     recommendation: str = ""
     created_at: float = field(default_factory=time.time)
-    
+
     def add_layer(self, depth: FailureDepth, finding: str, evidence: list[str] = None):
         """Add an excavation layer."""
         self.layers.append(ExcavationLayer(
@@ -48,7 +48,7 @@ class Excavation:
             finding=finding,
             evidence=evidence or []
         ))
-    
+
     def summary(self) -> str:
         """Get summary of excavation."""
         lines = [f"Excavation {self.id}: {self.initial_failure}"]
@@ -63,37 +63,37 @@ class Excavation:
 
 class FailureArchaeologist:
     """Digs into failures systematically."""
-    
+
     def __init__(self, memory):
         self.memory = memory  # Reference to temporal-intensity memory
-    
+
     async def excavate(
-        self, failure_description: str, 
-        context: str = "", 
+        self, failure_description: str,
+        context: str = "",
         llm_provider=None
     ) -> Excavation:
         """Excavate a failure to 3 layers deep."""
         excavation = Excavation(initial_failure=failure_description)
-        
+
         # Layer 1: Surface Error
         surface = await self._dig_surface(failure_description, context, llm_provider)
         excavation.add_layer(FailureDepth.SURFACE, surface["finding"], surface["evidence"])
-        
+
         # Layer 2: Root Cause
         root = await self._dig_root(failure_description, surface["finding"], context, llm_provider)
         excavation.add_layer(FailureDepth.ROOT, root["finding"], root["evidence"])
-        
+
         # Layer 3: Pattern Discovery
         pattern = await self._dig_pattern(failure_description, root["finding"], excavation, llm_provider)
         if pattern["pattern"]:
             excavation.pattern_found = pattern["pattern"]
             excavation.add_layer(FailureDepth.PATTERN, pattern["finding"], pattern["evidence"])
-        
+
         # Generate recommendation
         excavation.recommendation = await self._generate_recommendation(
             excavation, llm_provider
         )
-        
+
         # Store in memory with high intensity
         self.memory.add(
             content=failure_description,
@@ -102,9 +102,9 @@ class FailureArchaeologist:
             emotional_intensity=0.9,
             tags=["failure", "archaeology", excavation.pattern_found or "no-pattern"]
         )
-        
+
         return excavation
-    
+
     async def _dig_surface(
         self, failure: str, context: str, llm
     ) -> dict:
@@ -120,12 +120,12 @@ Provide: finding and evidence (list of specific observations)
 """
             result = await llm(prompt)
             return {"finding": result, "evidence": [f"Direct failure: {failure}"]}
-        
+
         return {
             "finding": f"The task '{failure}' did not achieve its intended outcome.",
             "evidence": [f"Initial failure report: {failure}"]
         }
-    
+
     async def _dig_root(
         self, failure: str, surface_finding: str, context: str, llm
     ) -> dict:
@@ -142,12 +142,12 @@ Provide: finding and evidence (the chain of causation)
 """
             result = await llm(prompt)
             return {"finding": result, "evidence": [f"Surface: {surface_finding}"]}
-        
+
         return {
             "finding": "Root cause analysis pending - LLM not available.",
             "evidence": [f"Surface finding: {surface_finding}"]
         }
-    
+
     async def _dig_pattern(
         self, failure: str, root_finding: str, excavation: Excavation, llm
     ) -> dict:
@@ -155,14 +155,14 @@ Provide: finding and evidence (the chain of causation)
         # Check memory for similar failures
         similar = self.memory.recall(failure, top_k=10)
         similar_failures = [e for e in similar if e.outcome == "failure"]
-        
+
         if len(similar_failures) < 2:
             return {
                 "pattern": None,
                 "finding": "No pattern detected - first occurrence or isolated incident.",
                 "evidence": [f"Found {len(similar_failures)} similar failures"]
             }
-        
+
         if llm:
             prompt = f"""Current failure: {failure}
 Root cause: {root_finding}
@@ -178,13 +178,13 @@ Provide: pattern description and evidence (specific commonalities)
             result = await llm(prompt)
             # Extract pattern from result
             return {"pattern": "detected", "finding": result, "evidence": [f"Similar failures: {len(similar_failures)}"]}
-        
+
         return {
             "pattern": "detected",
             "finding": f"Pattern: {len(similar_failures)} similar failures share common elements.",
             "evidence": [f"Found {len(similar_failures)} related failures"]
         }
-    
+
     async def _generate_recommendation(
         self, excavation: Excavation, llm
     ) -> str:
@@ -201,9 +201,9 @@ Based on this 3-layer analysis, what specific action should be taken to:
 Provide a concrete recommendation.
 """
             return await llm(prompt)
-        
+
         return "Recommendation: Review layers above and address root cause."
-    
+
     def quick_dig(self, failure: str) -> Excavation:
         """Quick synchronous dig without LLM."""
         excavation = Excavation(initial_failure=failure)

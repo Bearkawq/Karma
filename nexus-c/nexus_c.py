@@ -16,7 +16,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 import uuid
 
 try:
@@ -39,11 +39,11 @@ NEXUS_PATH = Path("/home/mikoleye/work/nexus")
 sys.path.insert(0, str(NEXUS_PATH))
 
 # ============== IMPORTS FROM NEXUS ==============
-from core import NexusCore, IPosition, IPositionType, VoiceContribution, Decision
-from deliberation import DeliberationChamber, DecisionScope
+from core import NexusCore, VoiceContribution, Decision
+from deliberation import DeliberationChamber
 from memory import TemporalIntensityMemory
-from archaeology import FailureArchaeologist, FailureDepth
-from budget import BoundedAutonomySystem, DecisionScope as BudgetScope
+from archaeology import FailureArchaeologist
+from budget import BoundedAutonomySystem
 
 # ============== CONFIGURATION ==============
 OLLAMA_MODEL = "qwen2.5:7b"
@@ -85,7 +85,7 @@ class Tool:
     name: str = ""
     description: str = ""
     parameters: dict = field(default_factory=dict)
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         raise NotImplementedError
 
@@ -98,11 +98,11 @@ class BashTool(Tool):
         "description": {"type": "string", "required": False},
         "timeout": {"type": "integer", "default": 60}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         cmd = params.get("command", "")
         timeout = params.get("timeout", 60)
-        
+
         start = time.time()
         try:
             result = subprocess.run(
@@ -131,12 +131,12 @@ class ReadTool(Tool):
         "limit": {"type": "integer", "default": 1000},
         "offset": {"type": "integer", "default": 0}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         path = params.get("file_path", "")
         limit = params.get("limit", 1000)
         offset = params.get("offset", 0)
-        
+
         try:
             with open(path, 'r') as f:
                 f.seek(offset)
@@ -155,11 +155,11 @@ class WriteTool(Tool):
         "file_path": {"type": "string", "required": True},
         "content": {"type": "string", "required": True}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         path = params.get("file_path", "")
         content = params.get("content", "")
-        
+
         try:
             with open(path, 'w') as f:
                 f.write(content)
@@ -176,24 +176,24 @@ class EditTool(Tool):
         "old_string": {"type": "string", "required": True},
         "new_string": {"type": "string", "required": True}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         path = params.get("file_path", "")
         old = params.get("old_string", "")
         new = params.get("new_string", "")
-        
+
         try:
             with open(path, 'r') as f:
                 content = f.read()
-            
+
             if old not in content:
                 return ToolResult(tool=self.name, success=False, error="String not found in file")
-            
+
             new_content = content.replace(old, new)
-            
+
             with open(path, 'w') as f:
                 f.write(new_content)
-            
+
             return ToolResult(tool=self.name, success=True, output=f"Edited {path}")
         except Exception as e:
             return ToolResult(tool=self.name, success=False, error=str(e))
@@ -206,11 +206,11 @@ class GlobTool(Tool):
         "pattern": {"type": "string", "required": True},
         "path": {"type": "string", "default": "."}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         pattern = params.get("pattern", "*")
         base_path = params.get("path", context.working_dir)
-        
+
         try:
             p = Path(base_path)
             files = [str(f) for f in p.glob(pattern)]
@@ -227,11 +227,11 @@ class GrepTool(Tool):
         "path": {"type": "string", "default": "."},
         "include": {"type": "string", "default": "*"}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         pattern = params.get("pattern", "")
         base_path = params.get("path", ".")
-        
+
         try:
             result = subprocess.run(
                 f"grep -r '{pattern}' {base_path} --include='*.py' --include='*.ts' --include='*.js' 2>/dev/null | head -50",
@@ -255,10 +255,10 @@ class TaskTool(Tool):
         "task_id": {"type": "string", "required": False},
         "command": {"type": "string", "required": False}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         action = params.get("action", "list")
-        
+
         if action == "list":
             return ToolResult(tool=self.name, success=True, output="Task management available")
         elif action == "create":
@@ -272,7 +272,7 @@ class SleepTool(Tool):
     parameters = {
         "seconds": {"type": "number", "required": True}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         seconds = params.get("seconds", 1)
         time.sleep(seconds)
@@ -285,7 +285,7 @@ class WebSearchTool(Tool):
     parameters = {
         "query": {"type": "string", "required": True}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         query = params.get("query", "")
         try:
@@ -306,7 +306,7 @@ class ConfigTool(Tool):
         "key": {"type": "string", "required": False},
         "value": {"type": "string", "required": False}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         action = params.get("action", "get")
         if action == "get":
@@ -343,7 +343,7 @@ class EnterPlanModeTool(Tool):
     name = "EnterPlanMode"
     description = "Enter planning mode for complex tasks"
     parameters = {}
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         context.plan_mode = True
         return ToolResult(tool=self.name, success=True, output="Entered plan mode")
@@ -353,7 +353,7 @@ class ExitPlanModeTool(Tool):
     name = "ExitPlanMode"
     description = "Exit planning mode"
     parameters = {}
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         context.plan_mode = False
         return ToolResult(tool=self.name, success=True, output="Exited plan mode")
@@ -366,7 +366,7 @@ class NotebookEditTool(Tool):
         "file_path": {"type": "string", "required": True},
         "content": {"type": "string", "required": False}
     }
-    
+
     def execute(self, params: dict, context: ExecutionContext) -> ToolResult:
         file_path = params.get("file_path") or context.notebook_path
         content = params.get("content", "")
@@ -410,11 +410,11 @@ class RemoteTriggerTool(Tool):
 # ============== TOOL REGISTRY ==============
 class ToolRegistry:
     """Registry of all available tools."""
-    
+
     def __init__(self):
         self.tools: dict[str, Tool] = {}
         self._register_defaults()
-    
+
     def _register_defaults(self):
         """Register default tools."""
         self.register(BashTool())
@@ -432,15 +432,15 @@ class ToolRegistry:
         self.register(SendMessageTool())
         self.register(RemoteTriggerTool())
         self.register(NotebookEditTool())
-    
+
     def register(self, tool: Tool):
         """Register a tool."""
         self.tools[tool.name] = tool
-    
+
     def get(self, name: str) -> Optional[Tool]:
         """Get a tool by name."""
         return self.tools.get(name)
-    
+
     def list_tools(self) -> list[dict]:
         """List all available tools."""
         return [
@@ -451,19 +451,19 @@ class ToolRegistry:
 # ============== OLLAMA CONNECTOR ==============
 class OllamaConnector:
     """Connector to Ollama LLM."""
-    
+
     def __init__(self, model: str = OLLAMA_MODEL, timeout: int = OLLAMA_TIMEOUT):
         self.model = model
         self.timeout = timeout
         self._current_proc = None
-    
-    async def generate(self, prompt: str, system_prompt: str = "", 
+
+    async def generate(self, prompt: str, system_prompt: str = "",
                       tools: list[dict] = None) -> str:
         """Generate response from Ollama with timeout."""
-        
+
         # Build the full prompt with system and tools
         full_prompt = self._build_prompt(prompt, system_prompt, tools or [])
-        
+
         try:
             # Use asyncio subprocess for timeout control
             self._current_proc = await asyncio.create_subprocess_exec(
@@ -472,7 +472,7 @@ class OllamaConnector:
                 stderr=asyncio.subprocess.PIPE,
                 stdin=asyncio.subprocess.PIPE
             )
-            
+
             try:
                 stdout, stderr = await asyncio.wait_for(
                     self._current_proc.communicate(full_prompt.encode()),
@@ -500,21 +500,21 @@ class OllamaConnector:
                     except:
                         pass
                     self._current_proc = None
-                
+
         except Exception as e:
             return f"Error: {str(e)}"
-    
+
     def _build_prompt(self, prompt: str, system: str, tools: list[dict]) -> str:
         """Build the full prompt with tools."""
         full = f"{system}\n\n" if system else ""
         full += f"User: {prompt}\n\n"
-        
+
         if tools:
             full += "Available tools:\n"
             for t in tools:
                 full += f"- {t['name']}: {t['description']}\n"
             full += "\n"
-        
+
         full += (
             "Assistant: respond with an actionable plan. "
             "Name any tool you want to use and the exact target.\n"
@@ -524,7 +524,7 @@ class OllamaConnector:
 # ============== NEXUS-C CORE ==============
 class NexusC:
     """Main NEXUS-C Agent."""
-    
+
     def __init__(self, model: str = OLLAMA_MODEL):
         # NEXUS components
         self.core = NexusCore()
@@ -532,21 +532,21 @@ class NexusC:
         self.memory = TemporalIntensityMemory()
         self.archaeologist = FailureArchaeologist(self.memory)
         self.budget = BoundedAutonomySystem(self.core.list_voices())
-        
+
         # NEXUS-C components
         self.tools = ToolRegistry()
         self.ollama = OllamaConnector(model)
         self.console = Console() if Console else None
-        
+
         # Session
         self.session_id = str(uuid.uuid4())[:8]
         self.messages: list[Message] = []
         self.context = ExecutionContext(session_id=self.session_id)
         self._ollama_proc = None
-        
+
         # Setup LLM provider in deliberation
         self._setup_llm()
-    
+
     async def cleanup(self):
         """Clean up resources on exit."""
         if self.ollama._current_proc:
@@ -555,12 +555,12 @@ class NexusC:
                 await asyncio.wait_for(self.ollama._current_proc.wait(), timeout=1.0)
             except:
                 pass
-    
+
     def _setup_llm(self):
         """Setup Ollama as LLM provider for deliberation."""
         async def ollama_provider(prompt: str) -> str:
             return await self.ollama.generate(prompt)
-        
+
         self.deliberation.set_llm_provider(ollama_provider)
 
     def _log(self, message: str):
@@ -666,7 +666,7 @@ class NexusC:
             seen.add(key)
             unique.append(plan)
         return unique
-    
+
     async def think(self, task: str, use_llm: bool = False) -> dict:
         """Process a task through NEXUS-C deliberation.
         
@@ -675,7 +675,7 @@ class NexusC:
             use_llm: If True, use Ollama for deliberation (slow). If False, skip LLM (fast).
         """
         self._display_block("NEXUS-C Thinking", task)
-        
+
         # Fast path: skip deliberation for simple auto-detected tasks
         simple_tools = {
             "status": ("Glob", {"pattern": "*"}),
@@ -687,7 +687,7 @@ class NexusC:
             "show files": ("Glob", {"pattern": "*"}),
             "tools": ("Glob", {"pattern": "*.py"}),
         }
-        
+
         # Check for conversational inputs (greetings, questions, etc.)
         conversational = {
             "hello": "Hello! I'm NEXUS-C. I can help you with tasks like listing files, reading files, running commands, or answering questions. What would you like me to do?",
@@ -699,9 +699,9 @@ class NexusC:
             "help": "I can help with: listing files (list files), reading files (read [path]), running commands (run [command]), searching (grep), and general questions. Just ask!",
             "what can you do": "I can: list files, read/write/edit files, run bash commands, grep searches, web search, and chat with you. Just tell me what you need!",
         }
-        
+
         task_lower = task.lower().strip()
-        
+
         # Check conversational responses first
         if task_lower in conversational:
             return {
@@ -709,7 +709,7 @@ class NexusC:
                 "contributions": [],
                 "tool_results": []
             }
-        
+
         # Check simple tools
         if task_lower in simple_tools:
             tool_name, params = simple_tools[task_lower]
@@ -724,21 +724,21 @@ class NexusC:
                     "error": tool_result.error
                 }]
             }
-        
+
         # Classify decision scope
         scope = self.budget.classify_decision(task)
-        
+
         # Check budget - skip showing internal details
         voices = self.core.list_voices()
         can_approve, msg = self.budget.check_approval(scope, voices, human_available=True)
-        
+
         # Deliberate
         result = await self._deliberate_with_timeout(task)
-        
+
         # Simple, human-readable output
         if result.contributions:
             self._log(f"Analyzed by {len(result.contributions)} voices")
-        
+
         tool_plan = self._plan_tool_execution(task, result.decision.chosen_path)
         tool_results = []
         for plan in tool_plan[:2]:
@@ -752,7 +752,7 @@ class NexusC:
             emotional_intensity=result.decision.confidence,
             tags=["deliberation", scope.value]
         )
-        
+
         return {
             "task": task,
             "scope": scope.value,
@@ -771,19 +771,19 @@ class NexusC:
                 for tool_result in tool_results
             ],
         }
-    
+
     async def execute_tool(self, tool_name: str, params: dict) -> ToolResult:
         """Execute a tool."""
         tool = self.tools.get(tool_name)
         if not tool:
             return ToolResult(tool=tool_name, success=False, error=f"Tool not found: {tool_name}")
-        
+
         self._log(f"→ Running {tool_name}...")
         try:
             result = tool.execute(params, self.context)
         except Exception as e:
             result = ToolResult(tool=tool_name, success=False, error=f"Unhandled tool exception: {e}")
-        
+
         # Record to memory
         self.memory.add(
             content=f"{tool_name}: {params}",
@@ -792,24 +792,24 @@ class NexusC:
             emotional_intensity=1.0 if result.success else 0.9,
             tags=["tool", tool_name]
         )
-        
+
         # If failure, run archaeology
         if not result.success:
-            self._log(f"\n[Running Failure Archaeology]")
+            self._log("\n[Running Failure Archaeology]")
             exc = await self.archaeologist.excavate(
                 f"Tool {tool_name} failed: {result.error}"
             )
             self._log(exc.summary())
-        
+
         return result
-    
+
     async def run(self, prompt: str) -> str:
         """Main run loop: think → execute → respond."""
         result = await self.think(prompt)
         tool_results = result.get("tool_results", [])
-        
+
         response = result.get("decision", "Done")
-        
+
         if tool_results:
             lines = []
             for tr in tool_results:
@@ -823,12 +823,12 @@ class NexusC:
                 else:
                     error = tr.get("error", "Unknown error")
                     lines.append(f"• {tool} failed: {error}")
-            
+
             if lines:
                 response += "\n\n" + "\n".join(lines)
-        
+
         return response
-    
+
     def status(self) -> str:
         """Get agent status."""
         return f"""NEXUS-C Status
@@ -867,7 +867,7 @@ async def interactive_mode(agent: NexusC):
     print("NEXUS-C Interactive Mode")
     print("="*50)
     print("Type 'quit' or 'exit' to end session\n")
-    
+
     try:
         while True:
             try:
@@ -875,14 +875,14 @@ async def interactive_mode(agent: NexusC):
                 if prompt.lower() in ['quit', 'exit', 'q']:
                     print("\nGoodbye!")
                     break
-                
+
                 if not prompt.strip():
                     continue
-                
+
                 # Process the prompt
                 result = await agent.run(prompt)
                 print(f"\n{result[:500]}")
-                
+
             except KeyboardInterrupt:
                 print("\n\nGoodbye!")
                 break
@@ -894,31 +894,31 @@ async def interactive_mode(agent: NexusC):
 async def main():
     """CLI entry point."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="NEXUS-C Agent")
     parser.add_argument("command", nargs="?", default="status")
     parser.add_argument("task", nargs="?", help="Task to process")
     parser.add_argument("--model", default=OLLAMA_MODEL, help="Ollama model")
     parser.add_argument("-i", "--interactive", action="store_true", help="Interactive mode")
-    
+
     args = parser.parse_args()
-    
+
     agent = NexusC(model=args.model)
-    
+
     try:
         if args.interactive:
             await interactive_mode(agent)
         elif args.command == "status":
             print(agent.status())
-        
+
         elif args.command == "think" and args.task:
             result = await agent.run(args.task)
             print(f"\n{result}")
-        
+
         elif args.command == "tools":
             for t in agent.tools.list_tools():
                 print(f"  {t['name']}: {t['description']}")
-        
+
         else:
             print("Commands:")
             print("  nexus_c status                    - Show status")

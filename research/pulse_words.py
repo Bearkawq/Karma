@@ -95,10 +95,10 @@ def translate_diagnostic(code: Optional[str], message: Optional[str]) -> str:
     """Translate a diagnostic code/message pair to readable text."""
     if message and message in PROVIDER_CODE_WORDS.values():
         return message
-    
+
     if code in PROVIDER_CODE_WORDS:
         return PROVIDER_CODE_WORDS[code]
-    
+
     return message or "Unknown"
 
 
@@ -106,7 +106,7 @@ def translate_result_origin(origin: Optional[str]) -> str:
     """Translate result origin to readable text."""
     if not origin:
         return "Unknown source"
-    
+
     origin_map = {
         "live": "Fresh web search",
         "cache": "Saved knowledge",
@@ -114,7 +114,7 @@ def translate_result_origin(origin: Optional[str]) -> str:
         "local": "Local knowledge",
         "live_failed": "Live failed, used saved",
     }
-    
+
     return origin_map.get(origin, origin)
 
 
@@ -122,21 +122,21 @@ def translate_cache_status(status: Optional[str]) -> str:
     """Translate cache status to readable text."""
     if not status:
         return "Unknown"
-    
+
     status_map = {
         "cache_hit": "Found saved knowledge",
         "cache_miss": "No saved knowledge",
         "cache_partial": "Some saved, some new",
         "cache_replay_only": "Only saved knowledge available",
     }
-    
+
     return status_map.get(status, status)
 
 
 def translate_golearn_result(result: Dict) -> str:
     """Translate a golearn result to readable summary."""
     lines = []
-    
+
     status = result.get("status", "unknown")
     if status == "completed":
         lines.append("✓ GoLearn completed")
@@ -144,21 +144,21 @@ def translate_golearn_result(result: Dict) -> str:
         lines.append("✗ GoLearn failed")
     else:
         lines.append(f"• GoLearn {status}")
-    
+
     # Show what was acquired
     provider = result.get("provider", "")
     if provider:
         lines.append(f"  Provider: {provider}")
-    
+
     accepted = result.get("accepted_sources", 0)
     if accepted > 0:
         lines.append(f"  ✓ Found {accepted} useful sources")
-    
+
     # Show origin
     origin = result.get("result_origin", "")
     if origin:
         lines.append(f"  Source: {translate_result_origin(origin)}")
-    
+
     # Show if cached
     cached = result.get("accepted_sources_cached", 0)
     live = result.get("accepted_sources_live", 0)
@@ -166,28 +166,28 @@ def translate_golearn_result(result: Dict) -> str:
         lines.append("  Using saved knowledge (live search failed)")
     elif cached > 0 and live > 0:
         lines.append(f"  Mix: {live} fresh, {cached} saved")
-    
+
     # Show blockers if any
     if result.get("provider_code") == "provider_exhausted":
         lines.append("  ✗ All search providers failed")
-    
+
     return "\n".join(lines)
 
 
 def translate_ingest_result(result: Dict) -> str:
     """Translate an ingest result to readable summary."""
     lines = []
-    
+
     if result.get("success"):
         lines.append("✓ Ingestion complete")
     else:
         lines.append("✗ Ingestion failed")
-    
+
     # Stats
     scanned = result.get("output", {}).get("content", "")
     if "Files scanned" in scanned:
         lines.append(f"  {scanned}")
-    
+
     return "\n".join(lines)
 
 
@@ -226,7 +226,7 @@ def build_feed_me_suggestion(topic: str, subsystem: str) -> tuple:
         "coding_patterns": ("05_coding_patterns/", "Design patterns, architecture"),
         "systems": ("06_systems/", "OS, networking docs"),
     }
-    
+
     folder, reason = suggestions.get(topic.lower(), ("00_inbox/", "General docs"))
     return folder, f"Needed for {subsystem} - {topic}"
 
@@ -234,7 +234,7 @@ def build_feed_me_suggestion(topic: str, subsystem: str) -> tuple:
 def get_status_summary(pulse_data: Dict) -> str:
     """Get a short status summary."""
     lines = []
-    
+
     # Blockers - if there are blockers, show them instead of wins (avoid contradiction)
     blockers = pulse_data.get("blockers", [])
     if blockers:
@@ -244,19 +244,19 @@ def get_status_summary(pulse_data: Dict) -> str:
         wins = pulse_data.get("wins", [])
         if wins:
             lines.append(f"✓ {wins[0]['message'][:50]}")
-    
+
     # Needs
     needs = pulse_data.get("needs", [])
     if needs:
         lines.append(f"→ Need: {needs[0]['topic']}")
-    
+
     # Feed Me
     feed_me = pulse_data.get("feed_me", [])
     if feed_me:
         topic = feed_me[0].get('requested_topic') or feed_me[0].get('topic') or feed_me[0].get('requested_topic', '')
         lines.append(f"📥 Feed Me: {topic}")
-    
+
     if not lines:
         return "No recent activity"
-    
+
     return " | ".join(lines)

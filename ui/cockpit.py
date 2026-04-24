@@ -1,7 +1,6 @@
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Ensure project root is on sys.path so agent/core/research imports work
 _project_root = str(Path(__file__).resolve().parent.parent)
@@ -42,8 +41,7 @@ except Exception as e:
     Tabs = _DummyTabs
     TEXTUAL_IMPORT_ERROR = e
 
-from agent.bootstrap import load_config, build_agent, get_version
-from agent.agent_loop import AgentLoop
+from agent.bootstrap import load_config, build_agent
 
 
 def tail_lines(path: Path, n: int = 200) -> str:

@@ -109,13 +109,13 @@ def update_worker_state(
     """Update a worker's state file atomically."""
     bp = get_bridge_path()
     worker_path = get_worker_path(role, bp)
-    
+
     # Load existing state or create new
     if worker_path.exists():
         state = json.loads(worker_path.read_text())
     else:
         state = {"role": role}
-    
+
     # Update fields
     state.update({
         "status": status,
@@ -133,20 +133,20 @@ def update_worker_state(
         "last_error": error or state.get("last_error", ""),
         "changed_files": changed_files or state.get("changed_files", []),
     })
-    
+
     # Atomic write
     _atomic_write(worker_path, json.dumps(state, indent=2))
-    
+
     # Append event
     append_event(
         event_type="worker_state_update",
         worker=role,
         data={"status": status, "task": current_task, "progress": progress_percent},
     )
-    
+
     # Auto-refresh planner summary
     _auto_refresh_summary()
-    
+
     return state
 
 def get_worker_state(role: str) -> dict | None:
@@ -211,10 +211,10 @@ def get_events(limit: int = 50, worker: str = "") -> list[dict]:
     """Read recent events from the log."""
     bp = get_bridge_path()
     event_file = bp / "events" / "events.jsonl"
-    
+
     if not event_file.exists():
         return []
-    
+
     events = []
     with open(event_file) as f:
         for line in f:
@@ -226,7 +226,7 @@ def get_events(limit: int = 50, worker: str = "") -> list[dict]:
                 continue  # skip partial/corrupt lines left by a mid-write crash
             if not worker or e.get("worker") == worker:
                 events.append(e)
-    
+
     return events[-limit:]
 
 def get_changed_files(limit: int = 20) -> list[dict]:
@@ -250,7 +250,7 @@ def generate_planner_summary() -> dict:
     bp = get_bridge_path()
     workers_dir = bp / "workers"
     threshold = get_stale_threshold()
-    
+
     summary = {
         "generated_at": _get_timestamp(),
         "stale_threshold_seconds": threshold,
@@ -266,31 +266,31 @@ def generate_planner_summary() -> dict:
         "stale_workers": [],
         "actionable_items": [],
     }
-    
+
     # Check each worker
     now = datetime.now(timezone.utc)
-    
+
     for worker_file in workers_dir.glob("*.json"):
         role = worker_file.stem
         state = json.loads(worker_file.read_text())
-        
+
         status = state.get("status", "idle")
         last_update = state.get("last_update", "")
-        
+
         # Check freshness (updated in last 30 seconds)
         try:
             last_time = datetime.fromisoformat(last_update.replace("Z", "+00:00"))
             is_fresh = (now - last_time).total_seconds() < 30
         except ValueError:
             is_fresh = False
-        
+
         # Check staleness
         try:
             last_time = datetime.fromisoformat(last_update.replace("Z", "+00:00"))
             is_stale = (now - last_time).total_seconds() > threshold
         except ValueError:
             is_stale = False
-        
+
         # Decision requests (highest priority)
         if state.get("needs_decision"):
             summary["decision_requests"].append({
@@ -299,13 +299,13 @@ def generate_planner_summary() -> dict:
                 "suggested_action": state.get("suggested_next_action"),
                 "blockers": state.get("blockers", []),
             })
-        
+
         # Blocked workers
         if status == "blocked" or state.get("blockers"):
             summary["blocked_workers"].append(state)
-        
+
         # Collect pending handoffs from outbox only (not worker state to avoid dupes)
-        
+
         # Fresh updates (dedupe by worker)
         if is_fresh:
             if not any(f["worker"] == role for f in summary["fresh_updates"]):
@@ -315,7 +315,7 @@ def generate_planner_summary() -> dict:
                     "task": state.get("current_task"),
                     "update": last_update,
                 })
-        
+
         # Other status categories
         if status == "active" and not is_fresh:
             summary["active_workers"].append(state)
@@ -325,11 +325,11 @@ def generate_planner_summary() -> dict:
             summary["failed_workers"].append(state)
         elif status == "idle":
             summary["idle_workers"].append(state)
-        
+
         # Stale workers
         if is_stale:
             summary["stale_workers"].append({"role": role, "last_update": last_update})
-    
+
     # Collect pending handoffs from outbox files (after worker iteration to dedupe)
     outbox_files = list((bp / "outbox").glob("*.json"))
     seen_handoffs = set()
@@ -346,10 +346,10 @@ def generate_planner_summary() -> dict:
                 })
         except:
             pass
-    
+
     # Get recent changed files
     summary["recent_changed_files"] = get_changed_files(limit=10)
-    
+
     # Build actionable items in priority order
     for item in summary["decision_requests"]:
         summary["actionable_items"].append({
@@ -358,7 +358,7 @@ def generate_planner_summary() -> dict:
             "task": item["task"],
             "priority": 1,
         })
-    
+
     for w in summary["blocked_workers"]:
         summary["actionable_items"].append({
             "type": "blocked",
@@ -367,7 +367,7 @@ def generate_planner_summary() -> dict:
             "blockers": w.get("blockers", []),
             "priority": 2,
         })
-    
+
     for h in summary["pending_handoffs"]:
         summary["actionable_items"].append({
             "type": "handoff",
@@ -376,7 +376,7 @@ def generate_planner_summary() -> dict:
             "task": h["task"],
             "priority": 3,
         })
-    
+
     for f in summary["fresh_updates"]:
         summary["actionable_items"].append({
             "type": "fresh_update",
@@ -385,25 +385,25 @@ def generate_planner_summary() -> dict:
             "task": f["task"],
             "priority": 4,
         })
-    
+
     # Sort actionable items by priority
     summary["actionable_items"].sort(key=lambda x: x["priority"])
-    
+
     # Write planner summary
     summary_path = bp / "planner" / "summary.json"
     _atomic_write(summary_path, json.dumps(summary, indent=2))
-    
+
     # Also write markdown summary
     md_summary = _generate_markdown_summary(summary)
     md_path = bp / "planner" / "summary.md"
     _atomic_write(md_path, md_summary)
-    
+
     return summary
 
 def _generate_markdown_summary(summary: dict) -> str:
     """Generate markdown summary for humans with improved ordering."""
     lines = ["# Planner Summary", "", f"Generated: {summary['generated_at']}", ""]
-    
+
     # Decision requests (highest priority)
     if summary["decision_requests"]:
         lines.append("## 🔴 NEEDS DECISION")
@@ -413,7 +413,7 @@ def _generate_markdown_summary(summary: dict) -> str:
                 lines.append(f"  - Blocker: {b}")
             lines.append(f"  - Suggested: {d.get('suggested_action', 'N/A')}")
         lines.append("")
-    
+
     # Blocked workers
     if summary["blocked_workers"]:
         lines.append("## 🟠 Blocked Workers")
@@ -422,35 +422,35 @@ def _generate_markdown_summary(summary: dict) -> str:
             for b in w.get("blockers", []):
                 lines.append(f"  - Blocker: {b}")
         lines.append("")
-    
+
     # Pending handoffs
     if summary["pending_handoffs"]:
         lines.append("## 🔵 Pending Handoffs")
         for h in summary["pending_handoffs"]:
             lines.append(f"- **{h['from']}** -> **{h['to']}**: {h.get('task', 'N/A')}")
         lines.append("")
-    
+
     # Fresh updates
     if summary["fresh_updates"]:
         lines.append("## 🟢 Fresh Updates")
         for f in summary["fresh_updates"]:
             lines.append(f"- **{f['worker']}**: {f.get('status')} - {f.get('task', 'N/A')}")
         lines.append("")
-    
+
     # Recent changed files
     if summary["recent_changed_files"]:
         lines.append("## 📝 Recent Changed Files")
         for cf in summary["recent_changed_files"][:5]:
             lines.append(f"- {cf['file']} ({cf['worker']}, {cf['type']})")
         lines.append("")
-    
+
     # Stale workers
     if summary["stale_workers"]:
         lines.append("## ⚪ Stale Workers")
         for s in summary["stale_workers"]:
             lines.append(f"- **{s['role']}**: last update {s.get('last_update', 'unknown')}")
         lines.append("")
-    
+
     # Active workers
     if summary["active_workers"]:
         lines.append("## ⏳ Active Workers")
@@ -458,18 +458,18 @@ def _generate_markdown_summary(summary: dict) -> str:
             pct = w.get("progress_percent", 0)
             lines.append(f"- **{w['role']}**: {w.get('current_task', 'N/A')} ({pct}%)")
         lines.append("")
-    
+
     # Completed workers
     if summary["completed_workers"]:
         lines.append("## ✅ Completed Workers")
         for w in summary["completed_workers"]:
             lines.append(f"- **{w['role']}**: {', '.join(w.get('output_files', []))}")
         lines.append("")
-    
-    if not any([summary["decision_requests"], summary["blocked_workers"], 
+
+    if not any([summary["decision_requests"], summary["blocked_workers"],
                 summary["active_workers"], summary["fresh_updates"]]):
         lines.append("All workers idle or completed.")
-    
+
     return "\n".join(lines)
 
 def publish_handoff(
@@ -480,7 +480,7 @@ def publish_handoff(
 ) -> dict:
     """Publish a handoff from one worker to another."""
     bp = get_bridge_path()
-    
+
     handoff = {
         "id": str(uuid.uuid4())[:8],
         "timestamp": _get_timestamp(),
@@ -490,11 +490,11 @@ def publish_handoff(
         "context": context or {},
         "status": "pending",  # pending, accepted, completed
     }
-    
+
     # Write to outbox
     outbox_file = bp / "outbox" / f"{from_role}_to_{to_role}_{handoff['id']}.json"
     _atomic_write(outbox_file, json.dumps(handoff, indent=2))
-    
+
     # Update source worker state
     update_worker_state(
         role=from_role,
@@ -502,7 +502,7 @@ def publish_handoff(
         current_task="",
         handoff_target=to_role,
     )
-    
+
     # Update target worker state
     update_worker_state(
         role=to_role,
@@ -510,17 +510,17 @@ def publish_handoff(
         current_task=task,
         progress_percent=0,
     )
-    
+
     # Append event
     append_event(
         event_type="handoff",
         worker=from_role,
         data={"to": to_role, "task": task},
     )
-    
+
     # Auto-refresh summary
     _auto_refresh_summary()
-    
+
     return handoff
 
 def claim_task(role: str, task: str, files: list | None = None, changed_files: list | None = None) -> dict:
@@ -533,14 +533,14 @@ def claim_task(role: str, task: str, files: list | None = None, changed_files: l
         progress_percent=0,
         changed_files=changed_files,
     )
-    
+
     append_event(
         event_type="task_claim",
         worker=role,
         data={"task": task, "files": files or []},
         changed_files=changed_files,
     )
-    
+
     return state
 
 def complete_task(
@@ -561,14 +561,14 @@ def complete_task(
         suggested_next_action=next_action,
         changed_files=changed_files,
     )
-    
+
     append_event(
         event_type="task_complete",
         worker=role,
         data={"artifacts": artifacts or [], "next_worker": next_worker},
         changed_files=changed_files,
     )
-    
+
     return state
 
 def mark_blocked(role: str, blocker: str, decision_needed: str = "", changed_files: list | None = None) -> dict:
@@ -576,7 +576,7 @@ def mark_blocked(role: str, blocker: str, decision_needed: str = "", changed_fil
     state = get_worker_state(role)
     blockers = state.get("blockers", []) if state else []
     blockers.append(blocker)
-    
+
     state = update_worker_state(
         role=role,
         status="blocked",
@@ -585,7 +585,7 @@ def mark_blocked(role: str, blocker: str, decision_needed: str = "", changed_fil
         suggested_next_action=decision_needed,
         changed_files=changed_files,
     )
-    
+
     append_event(
         event_type="worker_blocked",
         worker=role,
@@ -593,7 +593,7 @@ def mark_blocked(role: str, blocker: str, decision_needed: str = "", changed_fil
         severity="warning",
         changed_files=changed_files,
     )
-    
+
     return state
 
 def record_file_operation(
@@ -609,7 +609,7 @@ def record_file_operation(
         data={"operation": operation, "task": task_context, "files": files},
         changed_files=files,
     )
-    
+
     # Update worker's changed_files
     state = get_worker_state(role)
     if state:
@@ -621,10 +621,10 @@ def get_planner_summary() -> dict:
     """Read the current planner summary."""
     bp = get_bridge_path()
     summary_path = bp / "planner" / "summary.json"
-    
+
     if summary_path.exists():
         return json.loads(summary_path.read_text())
-    
+
     # Generate if doesn't exist
     return generate_planner_summary()
 
@@ -632,7 +632,7 @@ def get_worker_statuses() -> dict:
     """Get quick status of all workers."""
     bp = get_bridge_path()
     workers_dir = bp / "workers"
-    
+
     statuses = {}
     for worker_file in workers_dir.glob("*.json"):
         state = json.loads(worker_file.read_text())
@@ -642,7 +642,7 @@ def get_worker_statuses() -> dict:
             "progress": state.get("progress_percent"),
             "needs_decision": state.get("needs_decision"),
         }
-    
+
     return statuses
 
 def get_actionable_items() -> list:
@@ -662,7 +662,7 @@ def get_pending_handoffs() -> list:
 def assign_task_via_inbox(task: str, assigned_to: str, context: dict | None = None) -> dict:
     """Simple assignment: write task to inbox for worker to pick up."""
     bp = get_bridge_path()
-    
+
     assignment = {
         "id": str(uuid.uuid4())[:8],
         "timestamp": _get_timestamp(),
@@ -671,53 +671,53 @@ def assign_task_via_inbox(task: str, assigned_to: str, context: dict | None = No
         "context": context or {},
         "status": "pending",
     }
-    
+
     inbox_file = bp / "inbox" / f"{assigned_to}_{assignment['id']}.json"
     _atomic_write(inbox_file, json.dumps(assignment, indent=2))
-    
+
     append_event(
         event_type="task_assigned",
         worker=assigned_to,
         data={"task": task, "source": "planner"},
     )
-    
+
     _auto_refresh_summary()
-    
+
     return assignment
 
 def get_inbox_tasks(worker: str = "") -> list:
     """Get pending tasks from inbox."""
     bp = get_bridge_path()
     inbox = bp / "inbox"
-    
+
     tasks = []
     pattern = f"{worker}_*.json" if worker else "*.json"
-    
+
     for f in inbox.glob(pattern):
         tasks.append(json.loads(f.read_text()))
-    
+
     return sorted(tasks, key=lambda x: x.get("timestamp", ""))
 
 def accept_inbox_task(worker: str, task_id: str) -> dict | None:
     """Worker accepts a task from inbox."""
     bp = get_bridge_path()
     inbox_file = bp / "inbox" / f"{worker}_{task_id}.json"
-    
+
     if not inbox_file.exists():
         return None
-    
+
     task = json.loads(inbox_file.read_text())
     task["status"] = "accepted"
     task["accepted_at"] = _get_timestamp()
-    
+
     # Move to archive
     archive_file = bp / "archive" / f"{worker}_{task_id}.json"
     _atomic_write(archive_file, json.dumps(task, indent=2))
-    
+
     # Remove from inbox
     inbox_file.unlink()
-    
+
     # Claim the task
     claim_task(worker, task["task"], task.get("context", {}).get("files"))
-    
+
     return task

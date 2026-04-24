@@ -1,6 +1,5 @@
 """Tests for v3.3.8: bootstrap, extracted modules, storage split, version."""
 
-from pathlib import Path
 
 
 # ── bootstrap ────────────────────────────────────────────────────────
@@ -158,7 +157,6 @@ def test_memory_system_facade(tmp_path):
 # ── version consistency ──────────────────────────────────────────────
 
 def test_config_version_matches_bootstrap():
-    import json
     from agent.bootstrap import VERSION, load_config
     cfg = load_config()
     assert cfg["system"]["version"] == VERSION

@@ -6,7 +6,7 @@ It summarizes logs, plans, artifacts, search results, receipts, and docs.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import time
 
 from agents.base_agent import (

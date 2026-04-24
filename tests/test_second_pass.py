@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from agent.agent_loop import AgentLoop, load_config
 from tools.tool_interface import ShellTool

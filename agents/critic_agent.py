@@ -20,7 +20,7 @@ class CriticAgent(BaseAgent):
     Analyzes plans and results for issues, missing steps,
     contradictions, and areas for improvement.
     """
-    
+
     def __init__(self):
         super().__init__("critic", "critic")
         self._capabilities = AgentCapabilities(
@@ -31,10 +31,10 @@ class CriticAgent(BaseAgent):
             tags=["review", "analysis", "quality"],
         )
         self._status = AgentStatus.READY
-    
+
     def get_capabilities(self) -> AgentCapabilities:
         return self._capabilities
-    
+
     _SYSTEM = (
         "You are a hard critic. Find real issues only. No praise. No padding. "
         "Output a bullet list of flaws. If nothing is wrong, output 'OK'. Max 5 bullets."
@@ -100,60 +100,60 @@ class CriticAgent(BaseAgent):
             self._record_execution(False)
             return AgentResult(success=False, error=str(e),
                                execution_time_ms=(time.time() - start_time) * 1000)
-    
+
     def _review_plan(self, plan: List) -> Dict[str, Any]:
         """Review a task plan."""
         issues = []
         suggestions = []
-        
+
         if not plan:
             issues.append("Plan is empty")
             return {"issues": issues, "suggestions": suggestions, "score": 0}
-        
+
         # Check for missing steps
         step_nums = [s.get("step") for s in plan if "step" in s]
         if step_nums and max(step_nums) != len(plan):
             issues.append("Step numbering is inconsistent")
-        
+
         # Check for vague actions
         for step in plan:
             if not step.get("action"):
                 issues.append(f"Step {step.get('step')} has no action")
             if not step.get("target"):
                 suggestions.append(f"Step {step.get('step')} has no specific target")
-        
+
         # Calculate score
         score = max(0, 100 - len(issues) * 20 - len(suggestions) * 5)
-        
+
         return {
             "issues": issues,
             "suggestions": suggestions,
             "score": score,
             "step_count": len(plan),
         }
-    
+
     def _review_result(self, result: Dict) -> Dict[str, Any]:
         """Review an execution result."""
         issues = []
         suggestions = []
-        
+
         success = result.get("success", True)
         if not success:
             issues.append("Execution failed")
             error = result.get("error")
             if error:
                 issues.append(f"Error: {error}")
-        
+
         output = result.get("output")
         if output is None:
             suggestions.append("No output generated")
-        
+
         return {
             "issues": issues,
             "suggestions": suggestions,
             "success": success,
         }
-    
+
     def _review_run_artifact(
         self,
         content: Any,

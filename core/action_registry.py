@@ -18,11 +18,11 @@ class ActionRegistry:
     Allows actions to be registered and dispatched without modifying
     a large conditional block.
     """
-    
+
     def __init__(self):
         self._handlers: Dict[str, ActionHandler] = {}
         self._direct_intents: Dict[str, Optional[str]] = {}
-    
+
     def register(self, name: str, handler: ActionHandler, tool_name: Optional[str] = None) -> None:
         """Register an action handler.
         
@@ -33,23 +33,23 @@ class ActionRegistry:
         """
         self._handlers[name] = handler
         self._direct_intents[name] = tool_name
-    
+
     def get_handler(self, name: str) -> Optional[ActionHandler]:
         """Get a registered handler by name."""
         return self._handlers.get(name)
-    
+
     def get_tool_name(self, name: str) -> Optional[str]:
         """Get the tool name for an action."""
         return self._direct_intents.get(name)
-    
+
     def is_registered(self, name: str) -> bool:
         """Check if an action is registered."""
         return name in self._handlers
-    
+
     def list_actions(self) -> list[str]:
         """List all registered action names."""
         return list(self._handlers.keys())
-    
+
     def execute(self, name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a registered action.
         

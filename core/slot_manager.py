@@ -39,17 +39,17 @@ class SlotState:
 
 class SlotManager:
     """Manages model slots and role assignments."""
-    
+
     # Default slots
     DEFAULT_SLOTS = [
         "planner_slot",
-        "coder_slot", 
+        "coder_slot",
         "summarizer_slot",
         "embedder_slot",
         "navigator_slot",
         "general_language_slot",
     ]
-    
+
     # Role to slot mapping
     ROLE_TO_SLOT = {
         "planner": "planner_slot",
@@ -59,7 +59,7 @@ class SlotManager:
         "navigator": "navigator_slot",
         "critic": "general_language_slot",
     }
-    
+
     def __init__(self, storage_path: Optional[str] = None):
         self._slots: Dict[str, SlotAssignment] = {}
         self._slot_states: Dict[str, SlotState] = {}
@@ -74,7 +74,7 @@ class SlotManager:
         # Load from disk if available
         if storage_path:
             self._load()
-    
+
     def assign_model(
         self,
         slot_name: str,
@@ -93,21 +93,21 @@ class SlotManager:
         """
         if slot_name not in self._slots:
             return False
-        
+
         assignment = self._slots[slot_name]
         assignment.assigned_model_id = model_id
         assignment.deterministic_only = deterministic
         assignment.last_updated = datetime.now().isoformat()
-        
+
         # Update state
         state = self._slot_states[slot_name]
         state.assigned_model_id = model_id
         state.is_deterministic = deterministic
         state.status = "idle"
-        
+
         self._save()
         return True
-    
+
     def assign_role(
         self,
         role: str,
@@ -128,18 +128,18 @@ class SlotManager:
         if slot:
             return self.assign_model(slot, model_id, deterministic)
         return False
-    
+
     def get_slot(self, slot_name: str) -> Optional[SlotAssignment]:
         """Get slot assignment."""
         return self._slots.get(slot_name)
-    
+
     def get_role_assignment(self, role: str) -> Optional[SlotAssignment]:
         """Get assignment for a role."""
         slot = self.ROLE_TO_SLOT.get(role)
         if slot:
             return self._slots.get(slot)
         return None
-    
+
     def get_all_slots(self) -> List[Dict[str, Any]]:
         """Get all slots with current state."""
         result = []
@@ -157,7 +157,7 @@ class SlotManager:
                 "status": state.status,
             })
         return result
-    
+
     def get_all_roles(self) -> List[Dict[str, Any]]:
         """Get all roles with assignments."""
         result = []
@@ -174,22 +174,22 @@ class SlotManager:
                     "status": state.status,
                 })
         return result
-    
+
     def set_slot_loaded(self, slot_name: str, loaded: bool) -> None:
         """Update slot load state."""
         if slot_name in self._slot_states:
             self._slot_states[slot_name].model_loaded = loaded
             self._slot_states[slot_name].status = "active" if loaded else "idle"
-    
+
     def set_slot_error(self, slot_name: str, error: str) -> None:
         """Mark slot as errored."""
         if slot_name in self._slot_states:
             self._slot_states[slot_name].status = "error"
-    
+
     def is_compatible(self, slot_name: str, model_capability: str) -> bool:
         """Check if a model capability is compatible with a slot."""
         slot_lower = slot_name.lower()
-        
+
         if "embed" in slot_lower:
             return model_capability in ["embedding", "llm"]
         elif "summar" in slot_lower:
@@ -200,7 +200,7 @@ class SlotManager:
             return True  # Any model works
         else:
             return True  # Default allow
-    
+
     def get_compatible_models(
         self,
         slot_name: str,
@@ -216,17 +216,17 @@ class SlotManager:
                 capability = model.get("metadata", {}).get("capabilities", {}).get("supports_embed", False)
                 if capability:
                     capability = "embedding"
-            
+
             if self.is_compatible(slot_name, capability):
                 compatible.append(model)
-        
+
         return compatible
-    
+
     def _save(self) -> None:
         """Save assignments to disk."""
         if not self._storage_path:
             return
-        
+
         data = {
             slot_name: {
                 "assigned_model_id": assignment.assigned_model_id,
@@ -236,9 +236,9 @@ class SlotManager:
             }
             for slot_name, assignment in self._slots.items()
         }
-        
+
         atomic_write_text(Path(self._storage_path), json.dumps(data, indent=2))
-    
+
     @property
     def load_quarantined(self) -> bool:
         """True if the slots file was unreadable/corrupt at last load."""

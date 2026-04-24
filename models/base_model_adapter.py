@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 from enum import Enum
 
@@ -59,28 +58,28 @@ class BaseModelAdapter(ABC):
     Adapters provide a uniform interface to local models.
     Karma doesn't care about model family - only capabilities.
     """
-    
+
     def __init__(self, metadata: ModelMetadata):
         self.metadata = metadata
         self._status = ModelStatus.UNLOADED
         self._last_error: Optional[str] = None
-    
+
     @property
     def model_id(self) -> str:
         return self.metadata.model_id
-    
+
     @property
     def status(self) -> ModelStatus:
         return self._status
-    
+
     @property
     def is_loaded(self) -> bool:
         return self._status == ModelStatus.READY
-    
+
     @property
     def last_error(self) -> Optional[str]:
         return self._last_error
-    
+
     @abstractmethod
     def load(self) -> bool:
         """Load the model into memory.
@@ -89,7 +88,7 @@ class BaseModelAdapter(ABC):
             True if load successful
         """
         pass
-    
+
     @abstractmethod
     def unload(self) -> bool:
         """Unload the model from memory.
@@ -98,7 +97,7 @@ class BaseModelAdapter(ABC):
             True if unload successful
         """
         pass
-    
+
     @abstractmethod
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text completion.
@@ -110,7 +109,7 @@ class BaseModelAdapter(ABC):
             Generated text
         """
         pass
-    
+
     def embed(self, text: str) -> List[float]:
         """Generate embeddings.
         
@@ -121,7 +120,7 @@ class BaseModelAdapter(ABC):
             Embedding vector
         """
         raise NotImplementedError(f"{self.model_id} does not support embeddings")
-    
+
     def classify(self, text: str, labels: List[str]) -> Dict[str, float]:
         """Classify text into labels.
         
@@ -133,7 +132,7 @@ class BaseModelAdapter(ABC):
             Label -> confidence mapping
         """
         raise NotImplementedError(f"{self.model_id} does not support classification")
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get model statistics."""
         return {
@@ -157,19 +156,19 @@ class BaseModelAdapter(ABC):
 
 class NullModelAdapter(BaseModelAdapter):
     """Null model for when no model is available."""
-    
+
     def __init__(self):
         super().__init__(ModelMetadata(
             model_id="null",
             model_type=ModelType.LLM,
         ))
         self._status = ModelStatus.UNLOADED
-    
+
     def load(self) -> bool:
         return False
-    
+
     def unload(self) -> bool:
         return True
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         raise RuntimeError("No model available")

@@ -7,7 +7,6 @@ Covers the contamination fixes introduced to resolve:
 """
 import re
 import sys
-import types
 from pathlib import Path
 
 import pytest
@@ -229,7 +228,6 @@ def test_identity_adjacent_queries_use_base_templates(query):
 
 def test_seat_skips_conversational_are_you_queries():
     """_try_seat_response must return None for 'are you X' phrasing."""
-    import types as _types
     from agent.agent_loop import AgentLoop
 
     # Build a minimal stub that exposes _SEAT_CONV_SKIP

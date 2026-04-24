@@ -11,7 +11,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from research.crawler import (
     MAX_PAGE_SIZE,
@@ -36,17 +36,17 @@ class BrowserSearchProvider(SearchProvider):
         results, diag = self._search_ddg_lite(query, max_results)
         if results:
             return results, diag
-        
+
         results, diag = self._search_brave(query, max_results)
         if results:
             return results, diag
-        
+
         return self._search_local(query, max_results)
 
     def _search_ddg_lite(self, query: str, max_results: int) -> tuple[List[SearchResult], ProviderDiagnostics]:
         encoded = urllib.parse.quote_plus(query)
         url = f"https://lite.duckduckgo.com/lite/?q={encoded}"
-        
+
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -57,7 +57,7 @@ class BrowserSearchProvider(SearchProvider):
                 message="DDG Lite failed",
                 provider=self.name,
             )
-        
+
         results = self._parse_ddg(raw, max_results)
         if results:
             for r in results:
@@ -72,7 +72,7 @@ class BrowserSearchProvider(SearchProvider):
     def _search_brave(self, query: str, max_results: int) -> tuple[List[SearchResult], ProviderDiagnostics]:
         encoded = urllib.parse.quote_plus(query)
         url = f"https://search.brave.com/search?q={encoded}"
-        
+
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -83,7 +83,7 @@ class BrowserSearchProvider(SearchProvider):
                 message="Brave failed",
                 provider=self.name,
             )
-        
+
         results = self._parse_brave(raw, max_results)
         if results:
             for r in results:
@@ -100,7 +100,7 @@ class BrowserSearchProvider(SearchProvider):
             from research.ingestor import SeedIngestor
             ingestor = SeedIngestor()
             items = ingestor.search_knowledge(query, limit=max_results)
-            
+
             results = []
             for item in items:
                 content = item.get("content", "") or item.get("text", "")
@@ -111,7 +111,7 @@ class BrowserSearchProvider(SearchProvider):
                         snippet=content[:200].replace("\n", " "),
                         quality=0.8,
                     ))
-            
+
             if results:
                 return results, ProviderDiagnostics(
                     code=DiagnosticCode.CACHE_HIT,
@@ -120,7 +120,7 @@ class BrowserSearchProvider(SearchProvider):
                 )
         except Exception:
             pass
-        
+
         return [], ProviderDiagnostics(
             code=DiagnosticCode.PROVIDER_EXHAUSTED,
             message="All methods failed",
@@ -172,17 +172,17 @@ class BrowserSearchProvider(SearchProvider):
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=timeout or FETCH_TIMEOUT) as resp:
                 raw = resp.read(MAX_PAGE_SIZE).decode("utf-8", errors="replace")
-            
+
             text = re.sub(r"<script[^>]*>.*?</script>", "", raw, flags=re.DOTALL | re.IGNORECASE)
             text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
             text = re.sub(r"<[^>]+>", " ", text)
             text = html.unescape(text)
             text = re.sub(r"[ \t]+", " ", text)
-            
+
             self._artifact_counter += 1
             path = self.web_dir / f"artifact_{self._artifact_counter}.txt"
             path.write_text(text[:10000], encoding="utf-8")
-            
+
             return {"url": url, "content": text[:10000], "path": str(path), "size": len(text)}
         except Exception:
             return None

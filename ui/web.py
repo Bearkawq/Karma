@@ -39,7 +39,7 @@ _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from agent.bootstrap import load_config, build_agent, get_version, PROJECT_ROOT
+from agent.bootstrap import load_config, build_agent, get_version
 from agent.agent_loop import AgentLoop
 
 # Request tracking for stale response protection
@@ -1062,7 +1062,6 @@ def get_slots():
 def assign_slot():
     """Assign a model to a slot or role."""
     from core.slot_manager import get_slot_manager
-    from models import get_model_registry
 
     agent = get_agent()
     revision = agent.get_revision()

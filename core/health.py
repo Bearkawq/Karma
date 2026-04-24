@@ -5,7 +5,6 @@ v2: Adds repair classification, outcome tracking, and lazy-file detection.
 
 from __future__ import annotations
 import json
-import os
 import importlib
 from datetime import datetime
 from pathlib import Path

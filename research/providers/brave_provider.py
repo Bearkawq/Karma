@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from research.crawler import (
     MAX_PAGE_SIZE,
@@ -42,7 +42,7 @@ class BraveSearchProvider(SearchProvider):
         """Search Brave Search HTML and return results with diagnostics."""
         encoded = urllib.parse.quote_plus(query)
         url = f"https://search.brave.com/reserve?q={encoded}&count={max_results}"
-        
+
         try:
             req = urllib.request.Request(url, headers={
                 "User-Agent": USER_AGENT,
@@ -106,47 +106,47 @@ class BraveSearchProvider(SearchProvider):
     def _parse_results(self, html_text: str, max_results: int) -> List[SearchResult]:
         """Parse Brave Search results."""
         results: List[SearchResult] = []
-        
+
         link_patterns = [
             re.compile(r'class="result[^"]*"[^>]*href="([^"]+)"', re.DOTALL),
             re.compile(r'<a[^>]+href="(https?://[^"]+)"[^>]*>', re.DOTALL),
         ]
-        
+
         title_patterns = [
             re.compile(r'class="title[^"]*"[^>]*>(.*?)</a>', re.DOTALL),
             re.compile(r'<h3[^>]*>(.*?)</h3>', re.DOTALL),
         ]
-        
+
         snippet_patterns = [
             re.compile(r'class="snippet[^"]*"[^>]*>(.*?)</div>', re.DOTALL),
             re.compile(r'class="description[^"]*"[^>]*>(.*?)</', re.DOTALL),
         ]
-        
+
         links = []
         for pat in link_patterns:
             links = pat.findall(html_text)
             if links:
                 break
-        
+
         titles = []
         for pat in title_patterns:
             titles = pat.findall(html_text)
             if titles:
                 break
-        
+
         snippets = []
         for pat in snippet_patterns:
             snippets = pat.findall(html_text)
             if snippets:
                 break
-        
+
         for i, url in enumerate(links[:max_results]):
             if not url.startswith("http"):
                 continue
             title = self._strip_html(titles[i]) if i < len(titles) else "Untitled"
             snippet = self._strip_html(snippets[i]) if i < len(snippets) else ""
             results.append(SearchResult(title=title, url=url, snippet=snippet))
-        
+
         return results
 
     def _score_domain(self, url: str) -> float:

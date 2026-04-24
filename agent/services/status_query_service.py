@@ -168,7 +168,6 @@ class StatusQueryService:
     # -- live status ----------------------------------------------------------
 
     def get_live_status_snapshot(self) -> Dict[str, Any]:
-        from agent.services.run_history_service import format_review_targets
 
         snap: Dict[str, Any] = {
             "current_task": self._state.get("current_task"),

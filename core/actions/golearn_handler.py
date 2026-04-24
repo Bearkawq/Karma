@@ -12,10 +12,10 @@ from research.session import GoLearnSession
 
 class GoLearnHandler:
     """Handler for GoLearn research sessions."""
-    
+
     def __init__(self, agent):
         self.agent = agent
-    
+
     def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a golearn research session."""
         topic = params.get("topic", "")
@@ -62,7 +62,7 @@ class GoLearnHandler:
                     "output": result,
                     "error": f"Search provider failed: {provider_diag or provider_code}. Try again later or with a different topic.",
                 }
-            
+
             if stop_reason in ("low_yield", "queue_exhausted"):
                 diag_msg = provider_diag or f"Research completed with limited results ({stop_reason}). Try a broader topic."
                 return {
@@ -71,14 +71,14 @@ class GoLearnHandler:
                     "error": None,
                     "diagnostic": diag_msg,
                 }
-            
+
             if not acquired_useful_results:
                 return {
                     "success": False,
                     "output": result,
                     "error": f"Research completed but no useful content was acquired. Provider: {provider_diag or provider_code or 'unknown'}",
                 }
-            
+
             return {
                 "success": True,
                 "output": result,

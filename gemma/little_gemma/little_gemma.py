@@ -4,9 +4,7 @@ Little Gemma - Phone Command Center
 Role: Lightweight workflow controller, summarizer, escalation gateway to STG
 """
 
-import os
 import sys
-import json
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
@@ -114,23 +112,23 @@ def load_role():
 def init_little_gemma():
     """Initialize little Gemma on phone."""
     print("Initializing Little Gemma...")
-    
+
     # Create role file
     ROLE_FILE.write_text(ROLE)
     print(f"  Created: {ROLE_FILE}")
-    
+
     # Create memory file if not exists
     if not MEMORY_FILE.exists():
         MEMORY_FILE.write_text(DEFAULT_MEMORY)
         print(f"  Created: {MEMORY_FILE}")
-    
+
     # Create bridge directory structure
     bridge_dir = Path("/storage/emulated/0/karma/bridge")
     bridge_dir.mkdir(parents=True, exist_ok=True)
     for subdir in ["inbox", "outbox", "planner"]:
         (bridge_dir / subdir).mkdir(exist_ok=True)
     print(f"  Created bridge: {bridge_dir}")
-    
+
     print("Little Gemma initialized!")
     return True
 
@@ -161,7 +159,7 @@ def main():
         elif sys.argv[1] == "role":
             print(load_role())
             return
-    
+
     # Default: show status
     print("Little Gemma - Phone Command Center")
     print("Usage: little_gemma.py [init|status|memory|role]")

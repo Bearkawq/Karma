@@ -2,7 +2,6 @@
 
 import os
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -10,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def test_result_state_completed():
     """Test completed state when run finishes normally with useful results."""
     from research.truth_layer import determine_result_state, ResultState
-    
+
     state, summary = determine_result_state(
         stop_reason="budget_exhausted",
         provider_code="provider_ok",
@@ -19,7 +18,7 @@ def test_result_state_completed():
         accepted_sources_local=0,
         useful_artifacts=10,
     )
-    
+
     assert state == ResultState.COMPLETED
     assert "live search" in summary.lower()
 
@@ -27,7 +26,7 @@ def test_result_state_completed():
 def test_result_state_blocked():
     """Test blocked state when live search is blocked."""
     from research.truth_layer import determine_result_state, ResultState
-    
+
     state, summary = determine_result_state(
         stop_reason="low_yield",
         provider_code="provider_exhausted",
@@ -36,7 +35,7 @@ def test_result_state_blocked():
         accepted_sources_local=0,
         useful_artifacts=0,
     )
-    
+
     assert state == ResultState.BLOCKED
     assert "blocked" in summary.lower() or "unavailable" in summary.lower()
 
@@ -44,7 +43,7 @@ def test_result_state_blocked():
 def test_result_state_cache_only():
     """Test cache_only state when only cache is used."""
     from research.truth_layer import determine_result_state, ResultState
-    
+
     state, summary = determine_result_state(
         stop_reason="budget_exhausted",
         provider_code="provider_exhausted",
@@ -53,7 +52,7 @@ def test_result_state_cache_only():
         accepted_sources_local=0,
         useful_artifacts=8,
     )
-    
+
     assert state == ResultState.CACHE_ONLY
     assert "cache" in summary.lower()
 
@@ -61,7 +60,7 @@ def test_result_state_cache_only():
 def test_result_state_partial():
     """Test partial state when run stops early."""
     from research.truth_layer import determine_result_state, ResultState
-    
+
     state, summary = determine_result_state(
         stop_reason="low_yield",
         provider_code="low_yield",
@@ -70,7 +69,7 @@ def test_result_state_partial():
         accepted_sources_local=0,
         useful_artifacts=3,
     )
-    
+
     assert state == ResultState.PARTIAL
     assert "stopped early" in summary.lower() or "low" in summary.lower()
 
@@ -78,7 +77,7 @@ def test_result_state_partial():
 def test_result_state_mixed():
     """Test mixed state when using both live and cached sources."""
     from research.truth_layer import determine_result_state, ResultState
-    
+
     state, summary = determine_result_state(
         stop_reason="budget_exhausted",
         provider_code="provider_ok",
@@ -87,7 +86,7 @@ def test_result_state_mixed():
         accepted_sources_local=0,
         useful_artifacts=10,
     )
-    
+
     assert state == ResultState.MIXED
     assert "mix" in summary.lower()
 
@@ -95,7 +94,7 @@ def test_result_state_mixed():
 def test_followup_patterns():
     """Test that follow-up patterns match correctly."""
     from research.truth_layer import FOLLOWUP_PATTERNS
-    
+
     # These should match
     assert "any errors?" in FOLLOWUP_PATTERNS["errors"]
     assert "what failed?" in FOLLOWUP_PATTERNS["failed"]
@@ -108,11 +107,11 @@ def test_followup_patterns():
 def test_handle_followup_errors():
     """Test error follow-up handling."""
     from research.truth_layer import handle_followup
-    
+
     pulse_data = {
         "blockers": [{"message": "All search providers failed", "severity": "warning", "subsystem": "golearn"}],
     }
-    
+
     result = handle_followup("any errors?", pulse_data, None)
     assert result is not None
     assert "search providers" in result.lower() or "blocked" in result.lower()
@@ -121,11 +120,11 @@ def test_handle_followup_errors():
 def test_handle_followup_needs():
     """Test needs follow-up handling."""
     from research.truth_layer import handle_followup
-    
+
     pulse_data = {
         "needs": [{"topic": "python", "description": "Need more Python docs", "urgency": 2}],
     }
-    
+
     result = handle_followup("what do you need?", pulse_data, None)
     assert result is not None
     assert "python" in result.lower()
@@ -134,13 +133,13 @@ def test_handle_followup_needs():
 def test_handle_followup_feed():
     """Test feed follow-up handling."""
     from research.truth_layer import handle_followup
-    
+
     pulse_data = {
         "feed_me": [
             {"requested_topic": "python", "suggested_folder": "01_python/", "reason": "Need docs", "urgency": 2}
         ],
     }
-    
+
     result = handle_followup("what should i feed you?", pulse_data, None)
     assert result is not None
     assert "python" in result.lower() or "feed" in result.lower()
@@ -149,14 +148,14 @@ def test_handle_followup_feed():
 def test_handle_followup_blockers():
     """Test blockers follow-up handling."""
     from research.truth_layer import handle_followup
-    
+
     pulse_data = {
         "blockers": [
             {"message": "Live search blocked", "severity": "warning", "subsystem": "golearn"},
             {"message": "Low quality results", "severity": "warning", "subsystem": "golearn"},
         ],
     }
-    
+
     result = handle_followup("what are the blockers?", pulse_data, None)
     assert result is not None
     assert "blocker" in result.lower()
@@ -165,7 +164,7 @@ def test_handle_followup_blockers():
 def test_translate_result_for_display():
     """Test result translation for display."""
     from research.truth_layer import translate_result_for_display
-    
+
     result = {
         "session": {
             "stop_reason": "budget_exhausted",
@@ -176,7 +175,7 @@ def test_translate_result_for_display():
             "useful_artifacts": 10,
         }
     }
-    
+
     translated = translate_result_for_display(result)
     assert "[COMPLETED]" in translated
     assert "live" in translated.lower()
@@ -185,7 +184,7 @@ def test_translate_result_for_display():
 def test_grammar_status_query():
     """Test that status query patterns match in grammar."""
     from core.grammar import grammar_match
-    
+
     tests = [
         "any errors?",
         "what failed?",
@@ -193,7 +192,7 @@ def test_grammar_status_query():
         "what should i feed you?",
         "what are the blockers?",
     ]
-    
+
     for t in tests:
         result = grammar_match(t)
         assert result is not None, f"Should match: {t}"

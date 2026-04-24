@@ -33,7 +33,7 @@ class IPosition:
     decision_style: str = "balanced"  # aggressive, cautious, balanced
     creativity: int = 5  # 1-10
     skepticism: int = 5  # 1-10
-    
+
     def __post_init__(self):
         if not self.name:
             self.name = self.role_type.value.capitalize()
@@ -79,13 +79,13 @@ class ExecutionResult:
 
 class NexusCore:
     """Core NEXUS system with I-Position voices."""
-    
+
     def __init__(self):
         self.voices = self._create_voices()
         self.overseer = self._create_overseer()
         self.history: list[Decision] = []
         self.deliberation_count = 0
-    
+
     def _create_voices(self) -> list[IPosition]:
         """Create the 4 primary I-Position voices."""
         return [
@@ -130,7 +130,7 @@ class NexusCore:
                 skepticism=7
             )
         ]
-    
+
     def _create_overseer(self) -> IPosition:
         """Create the metacognitive overseer."""
         return IPosition(
@@ -143,7 +143,7 @@ class NexusCore:
             creativity=6,
             skepticism=6
         )
-    
+
     def get_voice(self, role_type: IPositionType) -> Optional[IPosition]:
         """Get a specific voice by type."""
         if role_type == IPositionType.OVERSEER:
@@ -152,11 +152,11 @@ class NexusCore:
             if voice.role_type == role_type:
                 return voice
         return None
-    
+
     def list_voices(self) -> list[str]:
         """List all voice names."""
         return [v.name for v in self.voices] + [self.overseer.name]
-    
+
     def get_architecture_summary(self) -> str:
         """Get a summary of the NEXUS architecture."""
         summary = "NEXUS Multi-Voice Deliberative System\n"
@@ -165,9 +165,9 @@ class NexusCore:
         for voice in self.voices:
             summary += f"  • {voice.name} ({voice.role_type.value}): {voice.description}\n"
             summary += f"    Strengths: {', '.join(voice.strengths)}\n\n"
-        summary += f"\nMETACOGNITIVE OVERSEER:\n"
+        summary += "\nMETACOGNITIVE OVERSEER:\n"
         summary += f"  • {self.overseer.name}: {self.overseer.description}\n"
-        summary += f"    Intervenes when: confidence < 50% or agents looping\n"
+        summary += "    Intervenes when: confidence < 50% or agents looping\n"
         return summary
 
 
