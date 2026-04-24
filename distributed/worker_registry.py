@@ -1,11 +1,14 @@
 """Worker Registry - Registry for distributed worker nodes.
 
-Manages registration and discovery of worker nodes (Dell, Galaxy S25+, Pi, etc.).
+Manages registration and discovery of worker nodes. The local node defaults to
+STG because that is the active machine for this deployment; override with the
+KARMA_LOCAL_NODE_ID / KARMA_LOCAL_NODE_NAME environment variables when needed.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -46,10 +49,17 @@ class WorkerNode:
 class WorkerRegistry:
     """Registry for distributed worker nodes."""
 
-    def __init__(self, storage_path: Optional[str] = None, auto_register_local: bool = True):
+    def __init__(
+        self,
+        storage_path: Optional[str] = None,
+        auto_register_local: bool = True,
+        local_node_id: Optional[str] = None,
+        local_node_name: Optional[str] = None,
+    ):
         self._workers: Dict[str, WorkerNode] = {}
         self._storage_path = storage_path
-        self._local_node_id = "dell"
+        self._local_node_id = local_node_id or os.environ.get("KARMA_LOCAL_NODE_ID", "stg")
+        self._local_node_name = local_node_name or os.environ.get("KARMA_LOCAL_NODE_NAME", "STG")
         self._load()
         if auto_register_local and self._local_node_id not in self._workers:
             self.register_local()
@@ -122,9 +132,9 @@ class WorkerRegistry:
     def register_local(self) -> WorkerNode:
         return self.register(
             node_id=self._local_node_id,
-            name="Dell",
-            host="localhost",
-            port=5000,
+            name=self._local_node_name,
+            host=os.environ.get("KARMA_LOCAL_HOST", "localhost"),
+            port=int(os.environ.get("KARMA_LOCAL_PORT", "5000")),
             capabilities=WorkerCapabilities(
                 can_plan=True,
                 can_execute=True,
@@ -133,9 +143,9 @@ class WorkerRegistry:
                 can_criticize=True,
                 can_navigate=True,
                 can_embed=True,
-                has_gpu=False,
-                memory_mb=16000,
-                max_concurrent_tasks=4,
+                has_gpu=os.environ.get("KARMA_LOCAL_HAS_GPU", "0") in ("1", "true", "yes"),
+                memory_mb=int(os.environ.get("KARMA_LOCAL_MEMORY_MB", "16000")),
+                max_concurrent_tasks=int(os.environ.get("KARMA_LOCAL_MAX_TASKS", "4")),
             ),
             roles=[
                 "planner",
@@ -151,6 +161,7 @@ class WorkerRegistry:
 
     def get_summary(self) -> Dict[str, Any]:
         return {
+            "local_node_id": self._local_node_id,
             "total": len(self._workers),
             "online": len(self.get_by_status("online")),
             "offline": len(self.get_by_status("offline")),
