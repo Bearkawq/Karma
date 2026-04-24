@@ -12,8 +12,21 @@ from pathlib import Path
 from typing import Any
 
 
+def _fsync_parent_dir(path: Path) -> None:
+    """Best-effort fsync of a file's parent directory after rename/unlink."""
+    try:
+        dir_fd = os.open(str(path.parent), os.O_RDONLY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+    except Exception:
+        pass
+
+
 def atomic_write_text(path: Path, text: str):
-    """Write text to file atomically via temp + rename."""
+    """Write text to file atomically via temp + rename + parent-dir fsync."""
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=path.name + '.', suffix='.tmp', dir=str(path.parent))
     try:
@@ -22,6 +35,7 @@ def atomic_write_text(path: Path, text: str):
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp_name, path)
+        _fsync_parent_dir(path)
     finally:
         if os.path.exists(tmp_name):
             try:
@@ -32,6 +46,7 @@ def atomic_write_text(path: Path, text: str):
 
 def quarantine_file(path: Path, reason: str = 'corrupt'):
     """Move a corrupt file to a .bak suffix so it doesn't block loading."""
+    path = Path(path)
     if not path.exists():
         return None
     target = path.with_suffix(path.suffix + f'.{reason}.bak')
@@ -41,6 +56,7 @@ def quarantine_file(path: Path, reason: str = 'corrupt'):
         idx += 1
     try:
         os.replace(path, target)
+        _fsync_parent_dir(path)
         return target
     except Exception:
         return None
@@ -48,6 +64,7 @@ def quarantine_file(path: Path, reason: str = 'corrupt'):
 
 def load_json_file(path: Path, default: Any = None):
     """Load a JSON file, quarantining if corrupt."""
+    path = Path(path)
     if not path.exists():
         return default if default is not None else {}
     try:
@@ -60,4 +77,4 @@ def load_json_file(path: Path, default: Any = None):
 
 def save_json_file(path: Path, data: Any):
     """Save data as JSON atomically."""
-    atomic_write_text(path, json.dumps(data, indent=2))
+    atomic_write_text(Path(path), json.dumps(data, indent=2, default=str))
