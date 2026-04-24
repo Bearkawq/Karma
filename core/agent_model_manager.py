@@ -1,37 +1,33 @@
-"""Agent Model Manager - Main orchestration for agents and models.
-
-Ties together agents, models, identity guard, and role router
-into a cohesive modular execution framework.
-"""
+"""Agent Model Manager - orchestration for functional agents and local models."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import json
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from agents.base_agent import BaseAgent, AgentContext, AgentResult, NullAgent
-from agents import get_agent_by_role, get_all_agents
-
-from models.base_model_adapter import BaseModelAdapter, NullModelAdapter
-from models import get_model_registry, get_all_model_adapters
-from models.local_llm_adapter import create_llm_adapter
+from agents import get_all_agents
+from agents.base_agent import AgentContext, BaseAgent
+from core.identity_guard import get_identity_guard
+from core.response_normalizer import get_response_normalizer
+from core.role_router import get_role_router
+from models.base_model_adapter import BaseModelAdapter
 from models.local_embedding_adapter import create_embedding_adapter
-
-from core.identity_guard import IdentityGuard, get_identity_guard
-from core.role_router import RoleRouter, get_role_router, InvocationMode, RouteDecision
-from core.response_normalizer import ResponseNormalizer, get_response_normalizer
+from models.local_llm_adapter import create_llm_adapter
 
 
 @dataclass
 class PipelineResult:
     """Result from the agent/model pipeline."""
+
     success: bool
     output: Any
     error: Optional[str] = None
     role_used: Optional[str] = None
     model_used: Optional[str] = None
-    pipeline_type: str = "karma_only"  # karma_only, agent_only, model_assisted, mixed
+    pipeline_type: str = "karma_only"
     execution_time_ms: float = 0.0
     identity_guard_applied: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -40,6 +36,7 @@ class PipelineResult:
 @dataclass
 class ManagerConfig:
     """Configuration for agent/model manager."""
+
     enable_agents: bool = True
     enable_models: bool = True
     default_to_deterministic: bool = True
@@ -48,231 +45,231 @@ class ManagerConfig:
 
 
 def get_slot_manager(storage_path: Optional[str] = None):
-    """Compatibility shim: expose get_slot_manager at module level for tests.
-
-    Delegates to core.slot_manager.get_slot_manager.
-    """
+    """Compatibility shim for tests."""
     from core.slot_manager import get_slot_manager as _gsm
+
     return _gsm(storage_path)
 
 
 class AgentModelManager:
-    """Manages agents and models for Karma.
-    
-    This is the main orchestration layer that:
-    - Registers available agents and models
-    - Routes tasks to appropriate agents/models
-    - Applies identity guard to all outputs
-    - Falls back to deterministic behavior when needed
-    """
-    
+    """Manages agents and local model adapters for Karma."""
+
+    _DEFAULT_MODEL_REGISTRY = [
+        {
+            "model_id": "qwen3:4b",
+            "type": "llm",
+            "backend": "ollama",
+            "roles": ["planner", "executor", "critic"],
+            "context_window": 32768,
+            "max_tokens": 4096,
+        },
+        {
+            "model_id": "granite3.3:2b",
+            "type": "llm",
+            "backend": "ollama",
+            "roles": ["summarizer", "navigator"],
+            "context_window": 8192,
+            "max_tokens": 2048,
+        },
+        {
+            "model_id": "nomic-embed-text",
+            "type": "embedding",
+            "backend": "ollama",
+            "roles": ["retriever"],
+            "embedding_dim": 768,
+        },
+    ]
+
     def __init__(self, config: Optional[ManagerConfig] = None):
         self.config = config or ManagerConfig()
-        
-        # Core components
         self.identity_guard = get_identity_guard()
         self.role_router = get_role_router()
         self.response_normalizer = get_response_normalizer()
-        
-        # Agent registry
         self._agents: Dict[str, BaseAgent] = {}
         self._agent_enabled: Dict[str, bool] = {}
-        
-        # Model registry
         self._models: Dict[str, BaseModelAdapter] = {}
         self._model_enabled: Dict[str, bool] = {}
-        
-        # State
         self._initialized = False
-        self._no_model_mode = True  # Start in no-model mode
-    
-    def initialize(self) -> None:
-        """Initialize the manager with default agents and models.
+        self._no_model_mode = True
 
-        If Ollama is reachable, registers real local adapters and wires
-        slot assignments. Falls back to mock adapters so the system is
-        always functional without a GPU.
+    def initialize(self) -> None:
+        """Initialize agents and model adapters.
+
+        Model registry is loaded from config/model_registry.json when present.
+        Built-in defaults are used only as fallback. If Ollama or configured
+        models are unavailable, Karma remains usable in deterministic mode.
         """
         if self._initialized:
             return
 
-        # Register default agents
-        all_agents = get_all_agents()
-        for role, agent in all_agents.items():
+        for role, agent in get_all_agents().items():
             self.register_agent(role, agent)
 
-        # Try Ollama first
-        from models.local_llm_adapter import _ollama_available, _ollama_model_present
+        from models.local_llm_adapter import _ollama_available
 
-        if _ollama_available():
-            self._no_model_mode = False
-            self._register_ollama_models()
+        if _ollama_available() and self.config.enable_models:
+            loaded_count = self._register_ollama_models()
+            self._no_model_mode = loaded_count == 0
+            if loaded_count == 0:
+                self._register_mock_models()
         else:
-            # Deterministic fallback
-            llm = create_llm_adapter("mock_llm", backend="mock")
-            self.register_model("mock_llm", llm)
-
-            emb = create_embedding_adapter("mock_embed", backend="mock")
-            self.register_model("mock_embed", emb)
+            self._register_mock_models()
+            self._no_model_mode = True
 
         self._initialized = True
 
-    # --- Seat mapping constants ---
-    # These match config/model_preferences.json and config/model_registry.json
-    _OLLAMA_LLM_SEATS = [
-        # (model_id, roles, max_tokens, context_window)
-        ("qwen3:4b",     ["planner", "executor", "critic"],   4096, 32768),
-        ("granite3.3:2b",["summarizer", "navigator"],         2048,  8192),
-    ]
-    _OLLAMA_EMBED_SEATS = [
-        # (model_id, roles, embedding_dim)
-        ("nomic-embed-text", ["retriever"], 768),
-    ]
+    def _project_root(self) -> Path:
+        return Path(__file__).resolve().parent.parent
 
-    def _register_ollama_models(self) -> None:
-        """Register Ollama-backed adapters and wire slot assignments."""
+    def _data_dir(self) -> Path:
+        return self._project_root() / "data"
+
+    def _load_model_registry(self) -> List[Dict[str, Any]]:
+        path = self._project_root() / "config" / "model_registry.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            models = data.get("models", [])
+            if isinstance(models, list) and models:
+                return [m for m in models if isinstance(m, dict)]
+        except Exception:
+            pass
+        return list(self._DEFAULT_MODEL_REGISTRY)
+
+    def _slot_manager(self):
+        from core.slot_manager import get_slot_manager as _gsm
+
+        return _gsm(str(self._data_dir() / "slot_assignments.json"))
+
+    def _register_mock_models(self) -> None:
+        llm = create_llm_adapter("mock_llm", backend="mock")
+        self.register_model("mock_llm", llm)
+        emb = create_embedding_adapter("mock_embed", backend="mock")
+        self.register_model("mock_embed", emb)
+
+    def _register_ollama_models(self) -> int:
+        """Register configured Ollama adapters and assign roles to slots."""
         from models.local_llm_adapter import _ollama_model_present
-        from core.slot_manager import get_slot_manager
-        import os
 
-        base_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-        slot_mgr = get_slot_manager(
-            os.path.join(base_dir, "slot_assignments.json")
-        )
+        loaded_count = 0
+        slot_mgr = self._slot_manager()
 
-        for model_id, roles, max_tokens, ctx in self._OLLAMA_LLM_SEATS:
+        for entry in self._load_model_registry():
+            model_id = entry.get("model_id")
+            backend = entry.get("backend", "ollama")
+            model_type = entry.get("type", "llm")
+            roles = entry.get("roles", []) or []
+            if not model_id or backend != "ollama":
+                continue
             if not _ollama_model_present(model_id):
                 continue
-            adapter = create_llm_adapter(
-                model_id=model_id,
-                backend="ollama",
-                max_tokens=max_tokens,
-                context_window=ctx,
-            )
-            self.register_model(model_id, adapter)
-            if not adapter.load():
-                # Surface the failure but don't abort — other models may still load.
-                print(f"[karma] Warning: model '{model_id}' registered but failed to load: {adapter.last_error}")
-                continue
-            for role in roles:
-                slot_mgr.assign_role(role, model_id)
 
-        for model_id, roles, embedding_dim in self._OLLAMA_EMBED_SEATS:
-            if not _ollama_model_present(model_id):
-                continue
-            adapter = create_embedding_adapter(
-                model_id=model_id,
-                backend="ollama",
-                embedding_dim=embedding_dim,
-            )
+            if model_type == "embedding":
+                adapter = create_embedding_adapter(
+                    model_id=model_id,
+                    backend="ollama",
+                    embedding_dim=int(entry.get("embedding_dim", 768)),
+                )
+            else:
+                adapter = create_llm_adapter(
+                    model_id=model_id,
+                    backend="ollama",
+                    max_tokens=int(entry.get("max_tokens", 4096)),
+                    context_window=int(entry.get("context_window", 8192)),
+                )
+
             self.register_model(model_id, adapter)
             if not adapter.load():
-                print(f"[karma] Warning: embedding model '{model_id}' registered but failed to load: {adapter.last_error}")
+                print(
+                    f"[karma] Warning: model '{model_id}' registered but failed to load: "
+                    f"{adapter.last_error}"
+                )
                 continue
+
+            loaded_count += 1
             for role in roles:
-                slot_mgr.assign_role(role, model_id)
-    
-    # --- Agent Management ---
-    
+                slot_mgr.assign_role(str(role), model_id)
+
+        return loaded_count
+
     def register_agent(self, role: str, agent: BaseAgent) -> None:
-        """Register an agent for a role."""
         self._agents[role] = agent
         self._agent_enabled[role] = True
-    
+
     def unregister_agent(self, role: str) -> bool:
-        """Unregister an agent."""
         if role in self._agents:
             del self._agents[role]
             del self._agent_enabled[role]
             return True
         return False
-    
+
     def enable_agent(self, role: str) -> bool:
-        """Enable an agent."""
         if role in self._agent_enabled:
             self._agent_enabled[role] = True
             return True
         return False
-    
+
     def disable_agent(self, role: str) -> bool:
-        """Disable an agent."""
         if role in self._agent_enabled:
             self._agent_enabled[role] = False
             return True
         return False
-    
+
     def get_agent(self, role: str) -> Optional[BaseAgent]:
-        """Get agent by role."""
         if role in self._agents and self._agent_enabled.get(role, False):
             return self._agents[role]
         return None
-    
+
     def get_available_agents(self) -> List[Dict[str, Any]]:
-        """Get all available agents with status."""
         result = []
         for role, agent in self._agents.items():
-            result.append({
-                "role": role,
-                "enabled": self._agent_enabled.get(role, False),
-                "status": agent.status.value,
-                "capabilities": agent.get_capabilities().__dict__,
-            })
+            result.append(
+                {
+                    "role": role,
+                    "enabled": self._agent_enabled.get(role, False),
+                    "status": agent.status.value,
+                    "capabilities": agent.get_capabilities().__dict__,
+                }
+            )
         return result
-    
-    # --- Model Management ---
-    
+
     def register_model(self, model_id: str, model: BaseModelAdapter) -> None:
-        """Register a model."""
         self._models[model_id] = model
         self._model_enabled[model_id] = True
-    
+
     def unregister_model(self, model_id: str) -> bool:
-        """Unregister a model."""
         if model_id in self._models:
-            # Unload first
             self._models[model_id].unload()
             del self._models[model_id]
             del self._model_enabled[model_id]
             return True
         return False
-    
+
     def load_model(self, model_id: str) -> bool:
-        """Load a model into memory."""
         if model_id not in self._models:
             return False
-        
-        model = self._models[model_id]
-        return model.load()
-    
+        return self._models[model_id].load()
+
     def unload_model(self, model_id: str) -> bool:
-        """Unload a model from memory."""
         if model_id not in self._models:
             return False
-        
-        model = self._models[model_id]
-        return model.unload()
-    
+        return self._models[model_id].unload()
+
     def get_available_models(self) -> List[Dict[str, Any]]:
-        """Get all available models with status."""
         result = []
         for model_id, model in self._models.items():
-            result.append({
-                "model_id": model_id,
-                "enabled": self._model_enabled.get(model_id, False),
-                "status": model.status.value,
-                "metadata": model.get_stats(),
-            })
+            result.append(
+                {
+                    "model_id": model_id,
+                    "enabled": self._model_enabled.get(model_id, False),
+                    "status": model.status.value,
+                    "metadata": model.get_stats(),
+                }
+            )
         return result
-    
+
     def get_loaded_models(self) -> List[str]:
-        """Get list of loaded model IDs."""
-        return [
-            model_id for model_id, model in self._models.items()
-            if model.is_loaded
-        ]
-    
-    # --- Pipeline Execution ---
-    
+        return [model_id for model_id, model in self._models.items() if model.is_loaded]
+
     def execute(
         self,
         task: str,
@@ -280,27 +277,15 @@ class AgentModelManager:
         explicit_role: Optional[str] = None,
         force_no_model: bool = None,
     ) -> PipelineResult:
-        """Execute task through the pipeline.
-        
-        This is the main entry point for processing tasks through
-        agents and models with identity protection.
-        """
         start_time = time.time()
-        
-        # Initialize if needed
         if not self._initialized:
             self.initialize()
-        
+
         context = context or {}
-        
-        # Determine if we should use models
         if force_no_model is None:
             force_no_model = self._no_model_mode
-        
-        # Get available models
+
         available_models = self.get_loaded_models() if not force_no_model else []
-        
-        # Route to appropriate agent
         decision = self.role_router.route(
             task=task,
             intent=context.get("intent"),
@@ -308,20 +293,16 @@ class AgentModelManager:
             available_models=available_models,
             force_no_model=force_no_model,
         )
-        
-        # Execute based on routing
+
         if decision.role == "none" or decision.role is None:
-            # No agent needed - Karma handles directly
             return PipelineResult(
                 success=True,
                 output=context.get("input", task),
                 pipeline_type="karma_only",
                 execution_time_ms=(time.time() - start_time) * 1000,
             )
-        
-        # Get the agent
+
         agent = self.get_agent(decision.role)
-        
         if agent is None:
             return PipelineResult(
                 success=False,
@@ -330,8 +311,7 @@ class AgentModelManager:
                 pipeline_type="karma_only",
                 execution_time_ms=(time.time() - start_time) * 1000,
             )
-        
-        # Build agent context
+
         agent_context = AgentContext(
             task=task,
             input_data=context,
@@ -340,22 +320,12 @@ class AgentModelManager:
             config=context.get("config", {}),
             metadata=context.get("metadata", {}),
         )
-        
-        # Execute agent
         agent_result = agent.run(agent_context)
-        
-        # Apply identity guard
         raw_output = agent_result.output if agent_result.success else agent_result.error
         guard_result = self.identity_guard.guard(raw_output, context)
-        
-        # Normalize response
         final_output = self.response_normalizer.normalize(guard_result.output)
-        
-        # Determine pipeline type
-        pipeline_type = "agent_only"
-        if decision.model_used:
-            pipeline_type = "model_assisted"
-        
+        pipeline_type = "model_assisted" if decision.model_used else "agent_only"
+
         return PipelineResult(
             success=agent_result.success,
             output=final_output,
@@ -371,11 +341,8 @@ class AgentModelManager:
                 "agent_stats": agent.get_stats(),
             },
         )
-    
-    # --- Status ---
-    
+
     def get_status(self) -> Dict[str, Any]:
-        """Get overall system status."""
         return {
             "initialized": self._initialized,
             "no_model_mode": self._no_model_mode,
@@ -396,7 +363,6 @@ _global_manager: Optional[AgentModelManager] = None
 
 
 def get_agent_model_manager() -> AgentModelManager:
-    """Get global agent model manager."""
     global _global_manager
     if _global_manager is None:
         _global_manager = AgentModelManager()
