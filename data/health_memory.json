@@ -4,6 +4,13 @@
     "severity": "warning",
     "suggestion": "Truncate events.jsonl to reduce size",
     "subsystem": "logging",
+    "timestamp": "2026-04-19T00:24:30.395733"
+  },
+  {
+    "issue": "Events log is 34.2MB",
+    "severity": "warning",
+    "suggestion": "Truncate events.jsonl to reduce size",
+    "subsystem": "logging",
     "timestamp": "2026-04-19T00:24:30.755134"
   },
   {
@@ -1391,12 +1398,5 @@
     "suggestion": "Truncate events.jsonl to reduce size",
     "subsystem": "logging",
     "timestamp": "2026-04-19T07:02:57.649492"
-  },
-  {
-    "issue": "cache test issue",
-    "severity": "warning",
-    "suggestion": "none",
-    "subsystem": "tests",
-    "timestamp": "2026-04-24T20:14:29.452735"
   }
 ]
