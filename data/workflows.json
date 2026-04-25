@@ -10,7 +10,7 @@
     "success_count": 4764,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.153362",
-    "last_used": "2026-04-24T20:08:15.750746",
+    "last_used": "2026-04-24T20:16:51.645719",
     "shape": {
       "intent": "list_files",
       "entity_types": [
@@ -59,7 +59,7 @@
     "success_count": 817,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.391428",
-    "last_used": "2026-04-24T20:07:56.630596",
+    "last_used": "2026-04-24T20:16:35.305934",
     "shape": {
       "intent": "self_check",
       "entity_types": [],
@@ -105,7 +105,7 @@
     "success_count": 1225,
     "confidence": 1.0,
     "created": "2026-03-09T19:30:33.820451",
-    "last_used": "2026-04-24T20:08:07.481244",
+    "last_used": "2026-04-24T20:16:44.643890",
     "shape": {
       "intent": "list_capabilities",
       "entity_types": [],
@@ -147,7 +147,7 @@
     "success_count": 1212,
     "confidence": 1.0,
     "created": "2026-03-12T01:09:23.685031",
-    "last_used": "2026-04-24T20:08:10.251487",
+    "last_used": "2026-04-24T20:16:45.967610",
     "shape": {
       "intent": "search_files",
       "entity_types": [
